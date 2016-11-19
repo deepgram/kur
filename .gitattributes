@@ -1,0 +1,6 @@
+*		text=auto
+*.py	text
+*.yml	text
+*.pyc	binary
+*.pyo	binary
+*.patch	text
