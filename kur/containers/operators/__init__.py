@@ -16,5 +16,7 @@ limitations under the License.
 
 from .. import ParsingError
 from .operator import Operator
+from .container_group import ContainerGroup
+from .debug import Debug
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
