@@ -1,0 +1,675 @@
+"""
+Copyright 2016 Deepgram
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
+import os
+import copy
+import warnings
+import logging
+from ..engine import ScopeStack
+from ..reader import Reader
+from ..containers import Container
+from ..containers.layers import Placeholder
+from ..model import Model, Trainer, Evaluator, EvaluationHook, OutputHook
+from ..backend import Backend
+from ..optimizer import Optimizer, Adam
+from ..loss import Loss
+from ..providers import Provider, BatchProvider, ShuffleProvider
+from ..supplier import Supplier
+from ..utils import merge_dict
+from ..loggers import Logger
+
+logger = logging.getLogger(__name__)
+
+################################################################################
+class Specification:
+	""" Class for loading and parsing specification files.
+	"""
+
+	DEFAULT_OPTIMIZER = Adam
+	DEFAULT_PROVIDER = BatchProvider
+
+	############################################################################
+	def __init__(self, source, engine):
+		""" Creates a new specification.
+
+			# Arguments
+
+			source: str or dict. If it is a string, it is interpretted as a
+				filename to an on-disk specification file. Otherwise, it is
+				interpretted as an already-loaded, but unparsed, specification
+				file.
+			engine: Engine instance. The templating engine to use in parsing.
+		"""
+		if isinstance(source, str):
+			filename = os.path.expanduser(os.path.expandvars(source))
+			if not os.path.isfile(filename):
+				raise IOError('No such file found: {}. Path was expanded to: '
+					'{}.'.format(source, filename))
+			source = Reader.read_file(filename)
+			self.filename = filename
+			self.data = source
+		else:
+			self.filename = None
+			self.data = dict(source)
+
+		self.containers = None
+		self.model = None
+		self.backend = None
+		self.engine = engine
+
+	############################################################################
+	def parse(self):
+		""" Parses the specification.
+		"""
+
+		logger.info('Parsing specification...')
+
+		# These are reserved section names.
+		# The first name in each tuple is the one that we should rely on
+		# internally when we reference `self.data` in Specification.
+		builtin = {
+			'settings' : ('settings', ),
+			'train' : ('train', 'training'),
+			'validate' : ('validate', 'validation'),
+			'test' : ('test', 'testing'),
+			'evaluate' : ('evaluate', 'evaluation'),
+			'model' : ('model', ),
+			'loss' : ('loss', )
+		}
+
+		# The scope stack.
+		stack = []
+
+		# Add default entries.
+		stack.append({
+			'filename' : self.filename,
+			'raw' : copy.deepcopy(self.data),
+			'parsed' : self.data
+		})
+
+		# Parse the settings (backends, globals, hyperparameters, ...)
+		self._parse_section(
+			self.engine, builtin['settings'], stack, include_key=False)
+
+		# Parse all of the "action" sections.
+		self._parse_section(
+			self.engine, builtin['train'], stack, include_key=True)
+		self._parse_section(
+			self.engine, builtin['validate'], stack, include_key=True)
+		self._parse_section(
+			self.engine, builtin['test'], stack, include_key=True)
+		self._parse_section(
+			self.engine, builtin['evaluate'], stack, include_key=True)
+
+		# Parse the model.
+		self.containers = self._parse_model(
+			self.engine, builtin['model'], stack, required=True)
+
+		# Parse the loss function.
+		self._parse_section(
+			self.engine, builtin['loss'], stack, include_key=True)
+
+		# Check for unused keys.
+		for key in self.data.keys():
+			for section in builtin.values():
+				if key in section:
+					break
+			else:
+				warnings.warn('Unexpected section in specification: "{}". This '
+					'section will be ignored.', SyntaxWarning)
+
+	############################################################################
+	def apply_provider_knowledge(self, provider):
+		""" Enables inference of tensor shapes by modifying the parsed
+			containers given provider information.
+		"""
+		return
+		logger.debug('Applying provider-inferred shapes to input layers.')
+		if provider.keys is None:
+			logger.debug('No provider keys available. Cannot infer shapes.')
+			return
+
+		sources = dict(zip(provider.keys, provider.sources))
+		for container in self.containers:
+			for target in container.get_children(
+					recursive=True, include_self=True
+				):
+				if not isinstance(target, Placeholder):
+					continue
+
+				logger.debug('Trying to infer shape for input "%s"',
+					target.name)
+
+				if target.name not in sources:
+					logger.warning('Could not find a data source for model '
+						'input "%s". Maybe you meant one of these: %s',
+						target.name, ', '.join(provider.keys()))
+					continue
+
+				source = sources.pop(target.name)
+				shape = source.shape()
+
+				if target.shape is None:
+					logger.debug('Inferred shape for input "%s": %s',
+						target.name, shape)
+					target.set_shape(shape)
+
+				elif target.shape != shape:
+					logger.warning('The input placeholder "%s" in the model '
+						'has an explicit shape %s which disagrees with the '
+						'shape of the corresponding data source %s.',
+						target.name, target.shape, source.shape())
+
+				else:
+					logger.debug('Input "%s" already has a shape.',
+						target.name)
+
+	############################################################################
+	def get_model(self, provider=None):
+		""" Returns the parsed Model instance.
+		"""
+		if self.model is None:
+			if self.containers is None:
+				raise ValueError('No such model available.')
+			self.model = Model(
+				backend=self.get_backend(),
+				containers=self.containers
+			)
+			self.model.parse(self.engine)
+			if provider is not None:
+				self.model.apply_provider_knowledge(provider)
+			self.model.build()
+		return self.model
+
+	############################################################################
+	def get_backend(self):
+		""" Creates a new backend from the specification.
+
+			# Return value
+
+			Backend instance
+
+			# Notes
+
+			- If no "global" section exists, or if no "backend" section exists
+			  in the "global" section, this will try to instantiate any
+			  supported backend installed on the system.
+			- This passes `self.data['global']['backend']` to the Backend
+			  factory method, if such keys exist; otherwise, it passes None to
+			  the factory method.
+		"""
+		if self.backend is None:
+			self.backend = Backend.from_specification(
+				self.data.get('settings', {}).get('backend')
+			)
+		return self.backend
+
+	############################################################################
+	def get_provider(self, section):
+		""" Creates the provider corresponding to a part of the specification.
+
+			# Arguments
+
+			section: str. The name of the section to load the provider for.
+
+			# Return value
+
+			If the section exists and has at least the "data" or "provider"
+			section defined, then this returns a Provider instance. Otherwise,
+			returns None.
+		"""
+		if section in self.data:
+			section = self.data[section]
+			if not any(k in section for k in ('data', 'provider')):
+				return None
+		else:
+			return None
+
+		supplier_list = section.get('data') or []
+		if not isinstance(supplier_list, (list, tuple)):
+			raise ValueError('"data" section should be a list.')
+		suppliers = [Supplier.from_specification(x) for x in supplier_list]
+
+		provider_spec = dict(section.get('provider') or {})
+		if 'name' in provider_spec:
+			provider = Provider.get_provider_by_name(provider_spec.pop('name'))
+		else:
+			provider = Specification.DEFAULT_PROVIDER
+
+		# TODO: merge_dict is good for different columns, but we may need to
+		#       concatenate columns with the same names. Need ConcatenateSource.
+		return provider(
+			sources=merge_dict(
+				*[supplier.get_sources() for supplier in suppliers]
+			),
+			**provider_spec		# Everything remaining are parameters.
+		)
+
+	############################################################################
+	def get_training_function(self):
+		""" Returns a function that will train the model.
+		"""
+		if 'train' not in self.data:
+			raise ValueError('Cannot construct training function. There is a '
+				'missing "train" section.')
+
+		if 'log' in self.data['train']:
+			log = Logger.from_specification(self.data['train']['log'])
+		else:
+			log = None
+
+		epochs = self.data['train'].get('epochs')
+
+		provider = self.get_provider('train')
+
+		if 'validate' in self.data:
+			validation = self.get_provider('validate')
+			validation_weights = self.data['validate'].get('weights')
+			if validation_weights is None:
+				best_valid = None
+			elif isinstance(validation_weights, str):
+				best_valid = validation_weights
+			elif isinstance(validation_weights, dict):
+				best_valid = validation_weights.get('save_best')
+			else:
+				raise ValueError('Unknown type for validation weights: {}'
+					.format(validation_weights))
+		else:
+			validation = None
+			best_valid = None
+
+		train_weights = self.data['train'].get('weights')
+		if train_weights is None:
+			initial_weights = best_train = last_weights = None
+		elif isinstance(train_weights, str):
+			initial_weights = train_weights
+			best_train = train_weights if best_valid is None else None
+			last_weights = None
+			initial_must_exist = False
+		elif isinstance(train_weights, dict):
+			initial_weights = train_weights.get('initial')
+			best_train = train_weights.get('save_best')
+			last_weights = train_weights.get('last')
+			initial_must_exist = train_weights.get('must_exist', False)
+		else:
+			raise ValueError('Unknown weight specification for training: {}'
+				.format(train_weights))
+
+		expand = lambda x: os.path.expanduser(os.path.expandvars(x))
+		initial_weights, best_train, best_valid, last_weights = [
+			expand(x) if x is not None else x for x in
+				(initial_weights, best_train, best_valid, last_weights)
+		]
+
+		model = self.get_model(provider)
+		trainer = self.get_trainer()
+
+		def func():
+			""" Trains a model from a pre-packaged specification file.
+			"""
+			if initial_weights is not None:
+				if os.path.isfile(initial_weights):
+					model.restore(initial_weights)
+				elif initial_must_exist:
+					logger.error('Configuration indicates that the weight file '
+						'must exist, but the weight file was not found.')
+					raise ValueError('Missing initial weight file. If you want '
+						'to proceed anyway, set "must_exist" to "no" under the '
+						'training "weights" section.')
+				else:
+					logger.info('Ignoring missing initial weights: %s. If this '
+						'is undesireable, set "must_exist" to "yes" in the '
+						'approriate "weights" section.', initial_weights)
+			return trainer.train(
+				provider=provider,
+				validation=validation,
+				epochs=epochs,
+				log=log,
+				best_train=best_train,
+				best_valid=best_valid,
+				last_weights=last_weights
+			)
+
+		return func
+
+	############################################################################
+	def get_testing_function(self):
+		""" Returns a function that will test the model.
+		"""
+		if 'test' not in self.data:
+			raise ValueError('Cannot construct testing function. There is a '
+				'missing "test" section.')
+
+		provider = self.get_provider('test')
+
+		# No reason to shuffle things for this.
+		if isinstance(provider, ShuffleProvider):
+			provider.randomize = False
+
+		weights = self.data['test'].get('weights')
+		if weights is None:
+			initial_weights = None
+		elif isinstance(weights, str):
+			initial_weights = weights
+		elif isinstance(weights, dict):
+			initial_weights = weights.get('initial')
+		else:
+			raise ValueError('Unknown weight specification for testing: {}'
+				.format(weights))
+
+		expand = lambda x: os.path.expanduser(os.path.expandvars(x))
+		if initial_weights is not None:
+			initial_weights = expand(initial_weights)
+
+		model = self.get_model(provider)
+		trainer = self.get_trainer(with_optimizer=False)
+
+		def func():
+			""" Tests a model from a pre-packaged specification file.
+			"""
+			if initial_weights is not None:
+				if os.path.isfile(initial_weights):
+					model.restore(initial_weights)
+				else:
+					logger.error('No weight file found: %s. We will just '
+						'proceed with default-initialized weights. This will '
+						'test that the system works, but the results will be '
+						'terrible.', initial_weights)
+			else:
+				logger.warning('No weight file specified. We will just '
+					'proceed with default-initialized weights. This will '
+					'test that the system works, but the results will be '
+					'terrible.')
+			return trainer.test(
+				provider=provider,
+				validating=False
+			)
+
+		return func
+
+	############################################################################
+	def get_trainer(self, with_optimizer=True):
+		""" Creates a new Trainer from the specification.
+
+			# Return value
+
+			Trainer instance.
+		"""
+		return Trainer(
+			model=self.get_model(),
+			loss=self.get_loss(),
+			optimizer=self.get_optimizer() if with_optimizer else None
+		)
+
+	############################################################################
+	def get_optimizer(self):
+		""" Creates a new Optimizer from the specification.
+
+			# Return value
+
+			Optimizer instance.
+		"""
+		if 'train' not in self.data:
+			raise ValueError('Cannot construct optimizer. There is a missing '
+				'"train" section.')
+
+		spec = dict(self.data['train'].get('optimizer', {}))
+		if 'name' in spec:
+			optimizer = Optimizer.get_optimizer_by_name(spec.pop('name'))
+		else:
+			optimizer = Specification.DEFAULT_OPTIMIZER
+
+		return optimizer(**spec)
+
+	############################################################################
+	def get_loss(self):
+		""" Creates a new Loss from the specification.
+
+			# Return value
+
+			If 'loss' is defined, then this returns a dictionary whose keys are
+			output layer names and whose respective values are Loss instances.
+			Otherwise, this returns None.
+		"""
+		if 'loss' not in self.data:
+			return None
+
+		spec = self.data['loss']
+		if not isinstance(spec, (list, tuple)):
+			raise ValueError('"loss" section expects a list of loss functions.')
+
+		result = {}
+		for entry in spec:
+			entry = dict(entry)
+			target = entry.pop('target', None)
+			if target is None:
+				raise ValueError('Each loss function in the "loss" list '
+					'must have a "target" entry which names the output layer '
+					'it is attached to.')
+
+			name = entry.pop('name', None)
+			if name is None:
+				raise ValueError('Each loss function in the "loss" list '
+					'must have a "name" entry which names the loss function to '
+					'use for that output.')
+
+			result[target] = Loss.get_loss_by_name(name)(**entry)
+
+		return result
+
+	############################################################################
+	def get_evaluation_function(self):
+		""" Returns a function that will evaluate the model.
+		"""
+		if 'evaluate' not in self.data:
+			raise ValueError('Cannot construct evaluation function. There is a '
+				'missing "evaluate" section.')
+
+		provider = self.get_provider('evaluate')
+
+		# No reason to shuffle things for this.
+		if isinstance(provider, ShuffleProvider):
+			provider.randomize = False
+
+		weights = self.data['evaluate'].get('weights')
+		if weights is None:
+			initial_weights = None
+		elif isinstance(weights, str):
+			initial_weights = weights
+		elif isinstance(weights, dict):
+			initial_weights = weights.get('initial')
+		else:
+			raise ValueError('Unknown weight specification for evaluation: {}'
+				.format(weights))
+
+		destination = self.data['evaluate'].get('output')
+		if isinstance(destination, str):
+			destination = OutputHook(path=destination)
+		elif isinstance(destination, dict):
+			destination = OutputHook(**destination)
+		elif destination is not None:
+			ValueError('Expected a string or dictionary value for "output" in '
+				'"evaluate". Received: {}'.format(destination))
+
+		hooks = self.data['evaluate'].get('hooks', [])
+		if not isinstance(hooks, (list, tuple)):
+			raise ValueError('"hooks" should be a list of hook specifications.')
+		hooks = [EvaluationHook.from_specification(spec) for spec in hooks]
+
+		expand = lambda x: os.path.expanduser(os.path.expandvars(x))
+		if initial_weights is not None:
+			initial_weights = expand(initial_weights)
+
+		model = self.get_model(provider)
+		evaluator = self.get_evaluator()
+
+		def func():
+			""" Evaluates a model from a pre-packaged specification file.
+			"""
+			if initial_weights is not None:
+				if os.path.isfile(initial_weights):
+					model.restore(initial_weights)
+				else:
+					logger.error('No weight file found: %s. We will just '
+						'proceed with default-initialized weights. This will '
+						'test that the system works, but the results will be '
+						'terrible.', initial_weights)
+			else:
+				logger.warning('No weight file specified. We will just '
+					'proceed with default-initialized weights. This will '
+					'test that the system works, but the results will be '
+					'terrible.')
+			result, truth = evaluator.evaluate(
+				provider=provider,
+				callback=None
+			)
+			for hook in hooks:
+				result = hook.apply(result, truth)
+			if destination is not None:
+				result = destination.apply(result, truth)
+			return result
+
+		return func
+
+	############################################################################
+	def get_evaluator(self):
+		""" Creates a new Evaluator from the specification.
+
+			# Return value
+
+			Evaluator instance.
+		"""
+		return Evaluator(
+			model=self.get_model()
+		)
+
+	############################################################################
+	def _parse_model(self, engine, section, stack, *, required=True):
+		""" Parses the top-level "model" entry.
+
+			# Arguments
+
+			engine: Engine instance. The templating engine to use in evaluation.
+			section: str or list of str. The key indicating which top-level
+				entry to parse. If a list, the first matching key is used; this
+				allows for multiple aliases to the same section.
+			stack: list. The list of scope dictionaries to use in evaluation.
+			required: bool (default: True). If True, an exception is raised if
+				the key is not present in the specification.
+
+			# Return value
+
+			If the model section is found, the list of containers is returned.
+			If the model section is not found but is required, an exception is
+			raised. If the model section is not found and isn't required, None
+			is returned.
+		"""
+		if isinstance(section, str):
+			section = (section, )
+
+		key = None		# Not required, but shuts pylint up.
+		for key in section:
+			if key in self.data:
+				break
+		else:
+			if required:
+				raise ValueError(
+					'Missing required section: {}'.format(', '.join(section)))
+			else:
+				return None
+
+		if not isinstance(self.data[key], (list, tuple)):
+			raise ValueError(
+				'Section "{}" should contain a list of layers.'.format(key))
+
+		containers = [
+			Container.create_container_from_data(entry)
+			for entry in self.data[key]
+		]
+
+		with ScopeStack(engine, stack):
+			for container in containers:
+				container.parse(engine)
+
+		return containers
+
+	############################################################################
+	def _parse_section(self, engine, section, stack, *,
+		required=False, include_key=True):
+		""" Parses a single top-level entry in the specification.
+
+			# Arguments
+
+			engine: Engine instance. The templating engine to use in evaluation.
+			section: str or list of str. The key indicating which top-level
+				entry to parse. If a list, the first matching key is used; this
+				allows for multiple aliases to the same section.
+			stack: list. The list of scope dictionaries to use in evaluation.
+			required: bool (default: False). If True, an exception is raised if
+				the key is not present in the specification.
+			include_key: bool (default: False). If True, the parsed section is
+				added to the scope stack as a dictionary with a single item,
+				whose key is the name of the parsed section, and whose value is
+				the evaluated section. If False, then the evaluated section is
+				added directly to the scope stack (it must evaluate to a
+				dictionary for this to work).
+
+			# Return value
+
+			The parsed section.
+
+			# Note
+
+			- This will replace the values of `self.data` with the evaluated
+			  version.
+		"""
+		if isinstance(section, str):
+			section = (section, )
+
+		logger.debug('Parsing specification section: %s', section[0])
+
+		key = None		# Not required, but shuts pylint up.
+		for key in section:
+			if key in self.data:
+				break
+		else:
+			if required:
+				raise ValueError(
+					'Missing required section: {}'.format(', '.join(section)))
+			else:
+				return None
+
+		with ScopeStack(engine, stack):
+			evaluated = engine.evaluate(self.data[key], recursive=True)
+
+		if include_key:
+			stack.append({key : evaluated})
+		else:
+			if evaluated is not None:
+				if not isinstance(evaluated, dict):
+					raise ValueError(
+						'Section "{}" should contain key/value pairs.'
+						.format(key))
+				stack.append(evaluated)
+
+		# Now, just in case this was aliased, let's make sure we keep our naming
+		# scheme consistent.
+		for key in section:
+			self.data[key] = evaluated
+
+		return evaluated
+
+#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
