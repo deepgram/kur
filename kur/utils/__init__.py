@@ -21,6 +21,6 @@ from .importhelp import can_import
 from .network import download_file
 from .timer import Timer
 from .critical import CriticalSection
-import idx
+from . import idx
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
