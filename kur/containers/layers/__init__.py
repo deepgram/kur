@@ -17,6 +17,12 @@ limitations under the License.
 from .. import ParsingError
 from .layer import Layer
 from .placeholder import Placeholder
+from .parallel import Parallel
+from .expand import Expand
+from .convolution import Convolution
 from .reuse import Reuse
+from .flatten import Flatten
+from .dense import Dense
+from .activation import Activation
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

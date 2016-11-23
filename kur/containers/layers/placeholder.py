@@ -100,6 +100,19 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 	def _build(self, backend):
 		""" Create the backend-specific placeholder.
 		"""
-		raise ValueError('Unknown or unsupported backend: {}'.format(backend))
+		if backend.get_name() == 'keras':
+
+			if self.shape is None:
+				raise ParsingError(
+					'Placeholder "{}" requires a shape.'.format(self.name))
+
+			import keras.layers as L			# pylint: disable=import-error
+			yield L.Input(
+				shape=self.shape,
+				name=self.name
+			)
+
+		else:
+			raise ValueError('Unknown or unsupported backend: {}'.format(backend))
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
