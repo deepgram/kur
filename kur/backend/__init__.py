@@ -15,5 +15,6 @@ limitations under the License.
 """
 
 from .backend import Backend
+from .keras_backend import KerasBackend
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
