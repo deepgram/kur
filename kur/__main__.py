@@ -21,6 +21,8 @@ from .utils import logcolor
 from .parsing import Specification
 from .engine import JinjaEngine
 
+logger = logging.getLogger(__name__)
+
 ################################################################################
 def parse_specification(filename, engine):
 	""" Parses a specification file.
@@ -62,6 +64,28 @@ def evaluate(args):
 	func()
 
 ################################################################################
+def build(args):
+	""" Builds a model.
+	"""
+	spec = parse_specification(args.specification, args.engine)
+	spec.get_model()
+
+	if args.compile == 'none':
+		return
+	elif args.compile == 'train':
+		target = spec.get_trainer(with_optimizer=True)
+	elif args.compile == 'test':
+		target = spec.get_trainer(with_optimizer=False)
+	elif args.compile == 'evaluate':
+		target = spec.get_evaluator() # pylint: disable=redefined-variable-type
+	else:
+		logger.error('Unhandled compilation target: %s. This is a bug.',
+			args.compile)
+		return
+
+	target.compile()
+
+################################################################################
 def parse_args():
 	""" Constructs an argument parser and returns the parsed arguments.
 	"""
@@ -90,6 +114,15 @@ def parse_args():
 	subparser.add_argument('specification', nargs='?',
 		help='The specification file to use.')
 	subparser.set_defaults(func=evaluate)
+
+	subparser = subparsers.add_parser('build',
+		help='Tries to build a model. This is useful for debugging a model.')
+	subparser.add_argument('specification', nargs='?',
+		help='The specification file to use.')
+	subparser.add_argument('-c', '--compile',
+		choices=['none', 'train', 'test', 'evaluate'], default='none',
+		help='Also try to compile the specified variation of the model.')
+	subparser.set_defaults(func=build)
 
 	return parser.parse_args()
 
