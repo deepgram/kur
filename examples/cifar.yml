@@ -1,0 +1,83 @@
+---
+
+settings:
+
+  # Where to get the data
+  cifar: "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
+  sha256: "6d958be074577803d12ecdefd02955f39262c83c16fe9348329d7fe0b5c001ce"
+
+  # Backend to use
+  backend:
+    name: keras
+
+  # Hyperparameters
+  cnn:
+    size: [2, 2]
+    strides: [1, 1]
+
+# The model itself.
+# This is parsed immediately after the "parameters" block.
+model:
+  - input: images
+  - convolution:
+      kernels: 64
+      size: "{{ cnn.size }}"
+      strides: "{{ cnn.strides }}"
+      activation: relu
+  - convolution:
+      kernels: 64
+      size: "{{ cnn.size }}"
+      strides: "{{ cnn.strides }}"
+      activation: relu
+  - flatten:
+  - dense:
+      size: 10
+  - activation: softmax
+    name: labels
+        
+training:
+  data:
+    - cifar: &cifar
+        url: "{{ cifar }}"
+        sha256: "{{ sha256 }}"
+        parts: [1, 2, 3, 4]
+  provider:
+    name: batch_provider
+    batch_size: 32
+    num_batches: 2
+  log: log
+  epochs: 2
+  weights:
+    initial: cifar.best.valid.w
+    save_best: cifar.best.train.w
+    last: cifar.last.w
+
+  optimizer:
+    name: adam
+    learning_rate: 0.001
+
+validate:
+  data:
+    - cifar:
+       <<: *cifar
+       parts: 5
+  provider:
+    num_batches: 2
+  weights: cifar.best.valid.w
+
+test: &test
+  data:
+    - cifar:
+       <<: *cifar
+       parts: test
+  weights: cifar.best.valid.w
+  provider:
+    num_batches: 10
+
+evaluate:
+  <<: *test
+
+loss:
+  - target: labels
+    name: categorical_crossentropy
+...
