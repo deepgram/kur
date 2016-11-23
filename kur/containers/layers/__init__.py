@@ -17,5 +17,6 @@ limitations under the License.
 from .. import ParsingError
 from .layer import Layer
 from .placeholder import Placeholder
+from .reuse import Reuse
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
