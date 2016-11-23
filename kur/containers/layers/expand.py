@@ -45,10 +45,14 @@ class Expand(Layer):					# pylint: disable=too-few-public-methods
 		# Always call the parent.
 		super()._parse(engine)
 
-		# Parse self
-		if 'dimension' not in self.args:
-			raise ParsingError('Missing "dimension" key from expand container.')
-		self.dimension = engine.evaluate(self.args['dimension'])
+		if isinstance(self.args, dict) and 'dimension' in self.args:
+			self.dimension = engine.evaluate(self.args['dimension'])
+		elif isinstance(self.args, (str, int)):
+			self.dimension = self.args
+		else:
+			raise ParsingError('The arguments to the "expand" layer must be an '
+				'integer, or dictionary with a "dimension" key and an integer '
+				'value.')
 		try:
 			self.dimension = int(self.dimension)
 		except ValueError:

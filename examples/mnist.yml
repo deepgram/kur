@@ -5,8 +5,7 @@ settings:
 
 model:
   - input: images
-  - expand:
-      dimension: 0
+  - expand: 0
   - convolution:
       kernels: 64
       size: [2, 2]
