@@ -35,13 +35,22 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 
 		super()._parse(engine)
 
-		if 'size' not in self.args:
-			raise ParsingError('Missing key "size" in Dense layer.')
-		self.size = engine.evaluate(self.args['size'], recursive=True)
+		if isinstance(self.args, dict):
+			self.size = engine.evaluate(self.args['size'], recursive=True)
+		elif isinstance(self.args, list):
+			self.size = engine.evaluate(self.args, recursive=True)
+		else:
+			self.size = self.args
+
+		if not isinstance(self.size, (tuple, list)):
+			self.size = [self.size]
+
 		try:
-			self.size = int(self.size)
+			for i, v in enumerate(self.size):
+				self.size[i] = int(v)
 		except ValueError:
-			raise ParsingError('Key "size" in Dense layer must be an integer.')
+			raise ParsingError('Key "size" in Dense layer must be an integer '
+				'or a list of integers. Received: {}'.format(self.size))
 
 	############################################################################
 	def _build(self, backend):
@@ -50,8 +59,12 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 		if backend.get_name() == 'keras':
 
 			import keras.layers as L			# pylint: disable=import-error
+
+			for v in self.size[:-1]:
+				yield L.Dense(output_dim=v)
+
 			yield L.Dense(
-				output_dim=self.size,
+				output_dim=self.size[-1],
 				name=self.name
 			)
 
