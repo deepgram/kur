@@ -1,0 +1,57 @@
+---
+
+settings:
+  mnist: "http://yann.lecun.com/exdb/mnist"
+
+model:
+  - input: images
+  - expand:
+      dimension: 0
+  - convolution:
+      kernels: 64
+      size: [2, 2]
+      strides: [1, 1]
+      activation: relu
+  - flatten:
+  - dense:
+      size: 10
+  - activation: softmax
+    name: labels
+        
+training:
+  data:
+    - mnist:
+        images:
+          url: "{{ mnist }}/train-images-idx3-ubyte.gz"
+          sha256: 440fcabf73cc546fa21475e81ea370265605f56be210a4024d2ca8f203523609
+        labels:
+          url: "{{ mnist }}/train-labels-idx1-ubyte.gz"
+          sha256: 3552534a0a558bbed6aed32b30c495cca23d567ec52cac8be1a0730e8010255c
+  provider:
+    num_batches: 10
+  epochs: 10
+  weights: mnist.w
+
+validate: &validate
+  data:
+    - mnist:
+        images:
+          url: "{{ mnist }}/t10k-images-idx3-ubyte.gz"
+          checksum: 8d422c7b0a1c1c79245a5bcf07fe86e33eeafee792b84584aec276f5a2dbc4e6
+        labels:
+          url: "{{ mnist }}/t10k-labels-idx1-ubyte.gz"
+          checksum: f7ae60f92e00ec6debd23a6088c31dbd2371eca3ffa0defaefb259924204aec6
+  weights: mnist.w
+
+test: *validate
+
+evaluate:
+  <<: *validate
+  output: mnist.results.pkl
+  hooks:
+    - mnist
+
+loss:
+  - target: labels
+    name: categorical_crossentropy
+...

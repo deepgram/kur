@@ -16,5 +16,6 @@ limitations under the License.
 
 from .supplier import Supplier
 from .numpy_dict import NumpyDictSupplier
+from .mnist import MnistSupplier
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
