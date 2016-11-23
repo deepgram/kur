@@ -37,7 +37,11 @@ class Adam(Optimizer):
 	def get_optimizer(self, backend):
 		""" Returns a backend-specific instantiation of the optimizer.
 		"""
-		raise ValueError('Unsupported backend "{}" for optimizer "{}"'
-			.format(backend.get_name(), self.get_name()))
+		if backend.get_name() == 'keras':
+			import keras.optimizers as O		# pylint: disable=import-error
+			return O.Adam(lr=self.learning_rate)
+		else:
+			raise ValueError('Unsupported backend "{}" for optimizer "{}"'
+				.format(backend.get_name(), self.get_name()))
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

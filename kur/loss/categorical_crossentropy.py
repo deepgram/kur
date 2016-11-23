@@ -31,7 +31,10 @@ class CategoricalCrossentropy(Loss):
 	############################################################################
 	def get_loss(self, backend):
 
-		raise ValueError('Unsupported backend "{}" for loss function "{}"'
-			.format(backend.get_name(), self.get_name()))
+		if backend.get_name() == 'keras':
+			return 'categorical_crossentropy'
+		else:
+			raise ValueError('Unsupported backend "{}" for loss function "{}"'
+				.format(backend.get_name(), self.get_name()))
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
