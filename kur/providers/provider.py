@@ -118,8 +118,19 @@ class Provider:							# pylint: disable=too-few-public-methods
 		elif len_set:
 			# Finite sources have differing lengths.
 			self.entries = min(lens)
-			logger.info('Mixed source lengths. Make sure you know what you are '
-				'doing.')
+			if logger.isEnabledFor(logging.INFO):
+				if self.keys is None:
+					msg = 'Sizes are: {}'.format(
+						', '.join(str(x) for x in lens)
+					)
+				else:
+					msg = 'Sizes are: {}'.format(
+						', '.join('{}={}'.format(k, v)
+							for k, v in zip(self.keys, lens)
+						)
+					)
+				logger.info('Mixed source lengths. Make sure you know what you '
+					'are doing. %s', msg)
 		else:
 			# There are no finite sources.
 			self.entries = None
