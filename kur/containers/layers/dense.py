@@ -21,12 +21,15 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 	""" A fully-connected layer.
 	"""
 
+	DEFAULT_AUTO_FLATTEN = True
+
 	############################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new dense layer.
 		"""
 		super().__init__(*args, **kwargs)
 		self.size = None
+		self.auto_flatten = None
 
 	############################################################################
 	def _parse(self, engine):
@@ -37,10 +40,16 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 
 		if isinstance(self.args, dict):
 			self.size = engine.evaluate(self.args['size'], recursive=True)
+			self.auto_flatten = engine.evaluate(
+				self.args.get('flatten', Dense.DEFAULT_AUTO_FLATTEN),
+				recursive=True
+			)
 		elif isinstance(self.args, list):
 			self.size = engine.evaluate(self.args, recursive=True)
+			self.auto_flatten = Dense.DEFAULT_AUTO_FLATTEN
 		else:
 			self.size = self.args
+			self.auto_flatten = Dense.DEFAULT_AUTO_FLATTEN
 
 		if not isinstance(self.size, (tuple, list)):
 			self.size = [self.size]
@@ -52,6 +61,10 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 			raise ParsingError('Key "size" in Dense layer must be an integer '
 				'or a list of integers. Received: {}'.format(self.size))
 
+		if not isinstance(self.auto_flatten, bool):
+			raise ParsingError('"auto_flatten" key in Dense layer must be '
+				'boolean. Received: {}'.format(self.auto_flatten))
+
 	############################################################################
 	def _build(self, backend):
 		""" Create the backend-specific placeholder.
@@ -59,6 +72,9 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 		if backend.get_name() == 'keras':
 
 			import keras.layers as L			# pylint: disable=import-error
+
+			if self.auto_flatten:
+				yield L.Flatten()
 
 			for v in self.size[:-1]:
 				yield L.Dense(output_dim=v)
