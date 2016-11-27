@@ -23,14 +23,14 @@ import sys
 import sphinx_rtd_theme
 
 # Help Sphinx find Kur.
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 # We don't want to import Kur to get the version--this would our dependencies to
 # be installed as well. So we'll just directly compile and execute the version
 # module we use for tracking the project version.
 version_module = {}
 exec(
-	compile(open("../kur/version.py").read(), "../kur/version.py", 'exec'),
+	compile(open("../../kur/version.py").read(), "../../kur/version.py", 'exec'),
 	version_module
 )
 project_release = version_module['__version__']
@@ -97,7 +97,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = []
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
