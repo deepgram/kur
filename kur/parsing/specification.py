@@ -20,7 +20,7 @@ import warnings
 import logging
 from ..engine import ScopeStack
 from ..reader import Reader
-from ..containers import Container
+from ..containers import Container, ParsingError
 from ..containers.layers import Placeholder
 from ..model import Model, Trainer, Evaluator, EvaluationHook, OutputHook
 from ..backend import Backend
@@ -28,7 +28,7 @@ from ..optimizer import Optimizer, Adam
 from ..loss import Loss
 from ..providers import Provider, BatchProvider, ShuffleProvider
 from ..supplier import Supplier
-from ..utils import merge_dict
+from ..utils import merge_dict, mergetools
 from ..loggers import Logger
 
 logger = logging.getLogger(__name__)
@@ -58,9 +58,12 @@ class Specification:
 			if not os.path.isfile(filename):
 				raise IOError('No such file found: {}. Path was expanded to: '
 					'{}.'.format(source, filename))
-			source = Reader.read_file(filename)
 			self.filename = filename
-			self.data = source
+			self.data = self.parse_source(
+				engine,
+				source=filename,
+				context='top-level'
+			)
 		else:
 			self.filename = None
 			self.data = dict(source)
@@ -605,6 +608,87 @@ class Specification:
 				container.parse(engine)
 
 		return containers
+
+	############################################################################
+	def parse_source(self, engine, *,
+		source=None, context=None, loaded=None):
+		""" Parses a source, and its includes (recursively), and returns the
+			merged sources.
+		"""
+		def get_id(filename):
+			""" Returns a tuple which uniquely identifies a file.
+
+				This function follows symlinks.
+			"""
+			filename = os.path.expanduser(os.path.expandvars(filename))
+			stat = os.stat(filename)
+			return (stat.st_dev, stat.st_ino)
+
+		# Process the "loaded" iterable.
+		loaded = loaded or set()
+
+		if isinstance(source, str):
+			filename = source
+			strategy = None
+		elif isinstance(source, dict):
+			if 'source' not in source:
+				raise ParsingError('Error while parsing source file {}. '
+					'Missing required "source" key in the include '
+					'dictionary: {}.'.format(context, source))
+			filename = source.pop('source')
+			strategy = source.pop('method', None)
+			for k in source:
+				warnings.warn('Warning while parsing source file {}. '
+					'Ignoring extra key in an "include" dictionary: {}.'
+					.format(context, k))
+		else:
+			raise ParsingError('Error while parsing source file {}. '
+				'Expected each "include" to be a string or a dictionary. '
+				'Received: {}'.format(context, source))
+
+		logger.info('Parsing source: %s, included by %s.', source, context)
+
+		expanded = os.path.expanduser(os.path.expandvars(filename))
+		if not os.path.isfile(expanded):
+			raise IOError('Error while parsing source file {}. No such '
+				'source file found: {}. Path was expanded to: {}'.format(
+				context, filename, expanded))
+		file_id = get_id(expanded)
+		if file_id in loaded:
+			logger.warning('Skipping an already included source file: %s. '
+				'This may have unintended consequences, since the merge '
+				'order may result in different final results. You should '
+				'refactor your specification to avoid circular includes.',
+				expanded)
+			return {}
+		else:
+			loaded.add(file_id)
+
+		data = Reader.read_file(expanded)
+
+		new_sources = data.pop('include', [])
+		engine.evaluate(new_sources, recursive=True)
+		if isinstance(new_sources, str):
+			new_sources = [new_sources]
+		elif not isinstance(new_sources, (list, tuple)):
+			raise ValueError('Error while parsing file: {}. All "include" '
+				'sections must be a single source file or a list of source '
+				'files. Instead we received: {}'.format(
+					expanded, new_sources))
+
+		for x in new_sources:
+			data = mergetools.deep_merge(
+				self.parse_source(
+					engine,
+					source=x,
+					context=expanded,
+					loaded=loaded
+				),
+				data,
+				strategy=strategy
+			)
+
+		return data
 
 	############################################################################
 	def _parse_section(self, engine, section, stack, *,

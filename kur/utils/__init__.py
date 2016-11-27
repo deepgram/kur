@@ -22,5 +22,6 @@ from .network import download_file
 from .timer import Timer
 from .critical import CriticalSection
 from . import idx
+from . import mergetools
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
