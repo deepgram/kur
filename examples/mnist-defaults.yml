@@ -1,40 +1,67 @@
 ---
-
-settings:
-  mnist: "http://yann.lecun.com/exdb/mnist"
-
+# Declare the loss function that is used during training/validation/testing.
 loss:
+  # It is a list of loss functions, one for each model output.
+  # The MNIST example only has one output, named "labels".
   - target: labels
     name: categorical_crossentropy
 
-training:
+# The "include" section in "mnist.yml" is magical, and will merge this section
+# into the section in "mnist.yml".
+train:
+  # Let's include checksums for all of the data we download.
   data:
     - mnist:
         images:
           sha256: 440fcabf73cc546fa21475e81ea370265605f56be210a4024d2ca8f203523609
         labels:
           sha256: 3552534a0a558bbed6aed32b30c495cca23d567ec52cac8be1a0730e8010255c
+
+  # As we discuss in "Examples" in the documentation, we only train on the first
+  # batches each epoch. This is just to make getting through the MNIST example
+  # nice and quick on slow/CPU-only machines. If you have a GPU, feel free to
+  # remove the "provider:" section entirely.
   provider:
     num_batches: 10
-  epochs: 10
-  weights: mnist.w
 
+  # How many epochs to train for.
+  epochs: 10
+
+# Here, we use the MNIST test set as a validation set (more generally, you'll
+# want train, validation, and test sets; but we ignore this for the MNIST
+# example). The funky "&validation" is just a YAML anchor, so we can reference
+# this section later.
 validate: &validate
   data:
     - mnist:
         images:
-          url: "{{ mnist }}/t10k-images-idx3-ubyte.gz"
+          url: "http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz"
           sha256: 8d422c7b0a1c1c79245a5bcf07fe86e33eeafee792b84584aec276f5a2dbc4e6
         labels:
-          url: "{{ mnist }}/t10k-labels-idx1-ubyte.gz"
+          url: "http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz"
           sha256: f7ae60f92e00ec6debd23a6088c31dbd2371eca3ffa0defaefb259924204aec6
+
+  # Where to save the model weights that have the lowest validation loss.
   weights: mnist.w
 
+# Let's define the test set, used if you execute something like:
+# $ kur test mnist.yml
+# The funky "*validation" is just a YAML alias, so we basically are setting the
+# "test" section" to be the same as the "validate" section.
 test: *validate
 
+# This is the evaluation section, used during `kur evaluate mnist.yml`.
+# The funky "<<: *validate" is just YAML, and basically means "copy all of the
+# keys from 'validate', and then add/replace the 
 evaluate:
   <<: *validate
+
+  # Where do we want to store the output file?
+  # Here, we are just storing it as a Python pickle.
   output: mnist.results.pkl
+
+  # This is a list of post-processing hooks. Here, we want to produce the
+  # digit-by-digit accuracy table (just called "mnist").
   hooks:
     - mnist
 ...
