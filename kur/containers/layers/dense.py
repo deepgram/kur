@@ -21,7 +21,7 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 	""" A fully-connected layer.
 	"""
 
-	DEFAULT_AUTO_FLATTEN = True
+	DEFAULT_AUTO_FLATTEN = False
 
 	############################################################################
 	def __init__(self, *args, **kwargs):
