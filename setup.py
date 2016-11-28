@@ -108,8 +108,6 @@ setup(
 	package_data={
 		'': ['*.txt', '*.rst', '*.md']
 	},
-	# Use either package_data, or this plus a "MANIFEST.in" file.
-	#include_package_data=True,
 
 	# Dependencies
 	install_requires=[
@@ -118,7 +116,12 @@ setup(
 		'pylint',
 		'numpy',
 		'requests',
-		'tqdm'
+		'tqdm',
+
+		# Keras - the default backend
+		'keras',
+		'theano',
+		'h5py'
 	],
 	dependency_links=[
 	],
