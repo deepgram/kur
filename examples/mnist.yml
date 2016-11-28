@@ -1,5 +1,5 @@
 ---
-training:
+train:
   data:
     - mnist:
         images:
@@ -13,6 +13,7 @@ model:
       kernels: 64
       size: [2, 2]
   - activation: relu
+  - flatten:
   - dense: 10
   - activation: softmax
     name: labels
