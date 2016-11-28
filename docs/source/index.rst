@@ -3,9 +3,14 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. |LICENSE| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
+   :target: https://github.com/deepgram/kur/blob/master/LICENSE
+
 ******************************
 Kur: Descriptive Deep Learning
 ******************************
+
+|LICENSE|
 
 Contents:
 
