@@ -25,13 +25,14 @@ To do this:
 Actually Building Everything
 ----------------------------
 
-Then you can build the documentation with:
+From the root of the repository, enter the documentation directory (``cd docs``)
+and then you can build the documentation with:
 
 .. code:: bash
 
 	$ make html
 
-This will put the root HTML page at ``docs/_build/html/index.html`` relative to
+This will put the root HTML page at ``docs/build/html/index.html`` relative to
 the root of the repository.
 
 .. note::
