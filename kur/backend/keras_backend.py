@@ -17,13 +17,14 @@ limitations under the License.
 import contextlib
 import io
 import re
+import sys
 import logging
 import numpy
 from . import Backend
 from ..containers import Layer
 from ..loss import Loss
 from ..model import ExtensionState
-from ..utils import can_import
+from ..utils import can_import, EnvironmentalVariable
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ class KerasBackend(Backend):
 		# Dependencies
 
 		- keras
+		- theano OR tensorflow
 		- h5py
 	"""
 
@@ -47,22 +49,45 @@ class KerasBackend(Backend):
 		)
 
 	############################################################################
-	def __init__(self, *args, **kwargs):
+	def __init__(self, backend=None, *args, **kwargs):
 		""" Creates a new Keras backend.
 
 			As per the base class documentation, we should do all necessary
 			Keras-related initialization here, including checking obvious things
 			like "Is Keras installed?" or "Is a backend installed?"
+
+			# Arguments
+
+			backend: str or None (default: None). The Keras backend to use
+				(either "theano" or "tensorflow"). None uses the system default.
 		"""
 
 		super().__init__(*args, **kwargs)
+
+		if backend is not None:
+			if 'keras' in sys.modules:
+				import keras.backend as K
+				if K.backend() != backend:
+					logger.warning('Keras was already imported by the time the '
+						'Kur backend was instantiated. Kur was asked to use '
+						'Keras %s backend, but Keras is already using %s. We '
+						'cannot change the Keras backend at this point, so we '
+						'will try to work with the currently loaded backend. '
+						'In the future, try to let Kur manage importing Keras.',
+						backend, K.backend()
+					)
 
 		# Make sure Keras is loaded.
 		# Now, Keras always prints out a "Using {Theano|TensorFlow} backend."
 		# statement that is frankly unbecoming. So we'll just gobble it up here.
 		x = io.StringIO()
 		with contextlib.redirect_stderr(x):
-			import keras		# pylint: disable=import-error,unused-variable
+
+			with EnvironmentalVariable(KERAS_BACKEND=backend):
+				import keras	# pylint: disable=import-error,unused-variable
+
+		# And now we can set the dimension ordering.
+		keras.backend.set_image_dim_ordering('th')
 
 	############################################################################
 	@classmethod

@@ -23,5 +23,6 @@ from .timer import Timer
 from .critical import CriticalSection
 from . import idx
 from . import mergetools
+from .environtools import EnvironmentalVariable
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
