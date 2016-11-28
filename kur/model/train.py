@@ -99,7 +99,7 @@ class Trainer:
 		with tqdm.tqdm(
 					total=len(provider),
 					unit='samples',
-					desc=desc[0]
+					desc='{}, loss=N/A'.format(desc[0])
 				) as pbar:
 
 			# Present each batch to the network.
@@ -130,6 +130,10 @@ class Trainer:
 				n_entries = new_entries
 
 				# Update the progress bar
+				pbar.set_description('{}, loss={:.3f}'.format(
+					desc[0],
+					sum(test_loss.values())
+				))
 				pbar.update(batch_size)
 
 		if not n_entries:
@@ -259,11 +263,12 @@ class Trainer:
 
 					n_entries = new_entries
 
-					# Update the progress bar with the current batch loss.
-					# Note that "batch loss" is, in some sense, just the
-					# instantaneous training loss.
+					# Update the progress bar with the current loss.
+					# Note that `batch_loss` is, in some sense, just the
+					# instantaneous training loss. `train_loss` is the average
+					# loss across the entire training set so far.
 					pbar.set_description('Epoch {}/{}, loss={:.3f}'.format(
-						epoch+1, epochs, sum(batch_loss.values())
+						epoch+1, epochs, sum(train_loss.values())
 					))
 					pbar.update(batch_size)
 
