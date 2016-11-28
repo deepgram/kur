@@ -24,7 +24,7 @@ def deep_merge(*args, strategy=None):
 
 		args: tuple. The list of data structures that should be merged.
 		strategy: str or None (default: None). The strategy to use in merging
-			the data structures. If None, it defaults to "merge". See
+			the data structures. If None, it defaults to "blend". See
 			`Strategies` below.
 
 		# Strategies
@@ -36,7 +36,7 @@ def deep_merge(*args, strategy=None):
 		  dictionaries, but only the last value is kept if the types are
 		  different.
 		- blend: dictionaries are merged recursively (as with "merge").
-		  List/tuples are also merged in a similar manner.
+		  List/tuples are also merged in a similar manner, elementwise.
 		- concat: dictionaries are merged recursively (as with "merge").
 		  List/tuples are concatenated.
 	"""
@@ -45,7 +45,7 @@ def deep_merge(*args, strategy=None):
 		'merge' : _merge,
 		'blend' : _blend,
 		'concat' : _concat
-	}.get(strategy or 'merge')
+	}.get(strategy or 'blend')
 	if func is None:
 		raise ValueError('Invalid strategy: {}'.format(strategy))
 
@@ -63,7 +63,22 @@ def deep_merge(*args, strategy=None):
 def _blend(x, y):
 	""" Implements the "blend" strategy for `deep_merge`.
 	"""
-	raise NotImplementedError
+	if isinstance(x, (dict, OrderedDict)):
+		if not isinstance(y, (dict, OrderedDict)):
+			return y
+		return _merge(x, y, recursion_func=_blend)
+
+	if isinstance(x, (list, tuple)):
+		if not isinstance(y, (list, tuple)):
+			return y
+		result = [_blend(*i) for i in zip(x, y)]
+		if len(x) > len(y):
+			result += x[len(y):]
+		elif len(x) < len(y):
+			result += y[len(x):]
+		return result
+
+	return y
 
 ################################################################################
 def _concat(x, y):
@@ -72,9 +87,11 @@ def _concat(x, y):
 	raise NotImplementedError
 
 ################################################################################
-def _merge(x, y):
+def _merge(x, y, recursion_func=None):
 	""" Implements the "merge" strategy for `deep_merge`.
 	"""
+	recursion_func = recursion_func or _merge
+
 	if not any(isinstance(i, (dict, OrderedDict)) for i in (x, y)):
 		return y
 
@@ -82,7 +99,7 @@ def _merge(x, y):
 
 	for k, v in x.items():
 		if k in y:
-			result[k] = _merge(v, y[k])
+			result[k] = recursion_func(v, y[k])
 		else:
 			result[k] = v
 
