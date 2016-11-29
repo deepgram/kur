@@ -1,4 +1,5 @@
 .. toctree::
-	:maxdepth: 2
+   :maxdepth: 2
 
-	build_docs
+   upcoming
+   build_docs

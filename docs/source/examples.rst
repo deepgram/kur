@@ -2,6 +2,8 @@
 Examples
 ********
 
+.. _the_mnist_example:
+
 MNIST: Handwriting Recognition
 ==============================
 
@@ -123,13 +125,15 @@ If you tweak this file, probably the big thing you want to remove is the
 batches every epoch. Just delete the line or comment it out, and Kur will train
 on the whole dataset.
 
+.. _cifar_10:
+
 CIFAR-10: Image Classification
 ==============================
 
 Okay, MNIST was pretty cool, but Kur can do much, much more. Imagine if you
 wanted to have an arbitrary number of convolution layers. Imagine if each
 convolution should have a different number of kernels. Imagine if you truly
-wnat *flexibility*. You've come to the right place.
+want *flexibility*. You've come to the right place.
 
 Flexibility: Variables
 ----------------------
@@ -435,6 +439,8 @@ As in the MNIST case, ``num_batches`` tells Kur to only train on that many
 batches of data each epoch (mostly so that if you don't have a nice GPU, the
 example still finishes in a reasonable amount of time). The ``batch_size`` value
 indicates the number of training samples that should be used in each batch.
+
+.. _using_binary_logger:
 
 The ``train`` section also has a ``log: cifar-log`` line. This tells Kur to
 save a log file to ``cifar-log`` (in the current working directory). This log

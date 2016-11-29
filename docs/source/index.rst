@@ -15,9 +15,13 @@ Kur: Descriptive Deep Learning
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    examples
+   tutorial
+   getting_started
+   specification
+   containers
    misc
 
 Introduction
@@ -35,8 +39,8 @@ deep learning system because:
 - **COMING SOON**: You can share your models (in whole or part) with the
   community, making it incredibly easy to collaborate on sophisticated models.
 
-Go ahead and give it a whirl: :ref:`get_the_code` and then look through our
-:ref:`short_examples`!
+Go ahead and give it a whirl: :ref:`get_the_code` and then :ref:`Try It Out
+<short_examples>`! Then build your own model in our :doc:`tutorial`.
 
 What is Kur?
 ------------
@@ -48,7 +52,7 @@ specification files that are simple to read and author, meaning that you can
 get started building sophisticated models *without ever needing to code*. Even
 so, Kur exposes a friendly and extensible API to support advanced deep learning
 architectures or workflows. Excited? Jump straight into the
-:ref:`short_examples`.
+:ref:`examples <short_examples>`.
 
 How is Kur Different?
 ---------------------
@@ -146,6 +150,9 @@ MNIST: Handwriting recognition
 Excited yet? Try tweaking the ``mnist.yml`` file, and then continue the
 tutorial over on the :ref:`Examples <continue_examples>` page to see more
 awesome stuff!
+
+The YAML specification that Kur uses is described in more detail in the
+:doc:`getting_started` page.
 
 Indices and tables
 ==================
