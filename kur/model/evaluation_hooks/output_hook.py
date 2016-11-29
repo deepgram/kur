@@ -15,7 +15,10 @@ limitations under the License.
 """
 
 import pickle
+import logging
 from . import EvaluationHook
+
+logger = logging.getLogger(__name__)
 
 ################################################################################
 class OutputHook(EvaluationHook):
@@ -31,11 +34,15 @@ class OutputHook(EvaluationHook):
 
 	############################################################################
 	@staticmethod
-	def _save_as_pickle(target, data):
+	def _save_as_pickle(target, data, truth=None):
 		""" Saves a file as a Python 3 pickle.
 		"""
+		logger.info('Saving model output as pickle: %s', target)
+		result = {'result' : data}
+		if truth is not None:
+			result['truth'] = truth
 		with open(target, 'wb') as fh:
-			pickle.dump(data, fh)
+			pickle.dump(result, fh)
 
 	############################################################################
 	def __init__(self, path=None, format=None, **kwargs): \
@@ -67,7 +74,8 @@ class OutputHook(EvaluationHook):
 		"""
 		self.saver(
 			target=self.path,
-			data=data
+			data=data,
+			truth=truth
 		)
 		return data
 
