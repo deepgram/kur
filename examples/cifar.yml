@@ -46,7 +46,7 @@ train:
   epochs: 2
   weights:
     initial: cifar.best.valid.w
-    save_best: cifar.best.train.w
+    best: cifar.best.train.w
     last: cifar.last.w
 
   optimizer:

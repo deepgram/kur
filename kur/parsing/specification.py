@@ -286,7 +286,7 @@ class Specification:
 			elif isinstance(validation_weights, str):
 				best_valid = validation_weights
 			elif isinstance(validation_weights, dict):
-				best_valid = validation_weights.get('save_best')
+				best_valid = validation_weights.get('best')
 			else:
 				raise ValueError('Unknown type for validation weights: {}'
 					.format(validation_weights))
@@ -304,7 +304,7 @@ class Specification:
 			initial_must_exist = False
 		elif isinstance(train_weights, dict):
 			initial_weights = train_weights.get('initial')
-			best_train = train_weights.get('save_best')
+			best_train = train_weights.get('best')
 			last_weights = train_weights.get('last')
 			initial_must_exist = train_weights.get('must_exist', False)
 		else:
