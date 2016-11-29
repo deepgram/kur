@@ -143,7 +143,9 @@ class Evaluator:
 								}
 							for k in truth:
 								truth[k][n_entries:(n_entries+batch_size)] = \
-									batch[k][:]
+									batch[k][:].reshape(
+										(-1,) + truth[k].shape[1:]
+									)
 				else:
 					callback(evaluated, truth)
 
