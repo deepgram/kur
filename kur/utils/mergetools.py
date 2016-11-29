@@ -60,7 +60,7 @@ def deep_merge(*args, strategy=None):
 		return result
 
 ################################################################################
-def _blend(x, y):
+def _blend(x, y):								# pylint: disable=invalid-name
 	""" Implements the "blend" strategy for `deep_merge`.
 	"""
 	if isinstance(x, (dict, OrderedDict)):
@@ -81,13 +81,23 @@ def _blend(x, y):
 	return y
 
 ################################################################################
-def _concat(x, y):
+def _concat(x, y):								# pylint: disable=invalid-name
 	""" Implements the "concat" strategy for `deep_merge`.
 	"""
-	raise NotImplementedError
+	if isinstance(x, (dict, OrderedDict)):
+		if not isinstance(y, (dict, OrderedDict)):
+			return y
+		return _merge(x, y, recursion_func=_concat)
+
+	if isinstance(x, (list, tuple)):
+		if not isinstance(y, (list, tuple)):
+			return y
+		return [i for i in (*x, *y)]
+
+	return y
 
 ################################################################################
-def _merge(x, y, recursion_func=None):
+def _merge(x, y, recursion_func=None):			# pylint: disable=invalid-name
 	""" Implements the "merge" strategy for `deep_merge`.
 	"""
 	recursion_func = recursion_func or _merge
