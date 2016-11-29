@@ -73,7 +73,7 @@ test: &test
 
 evaluate:
   <<: *test
-  output: cifar.results.pkl
+  destination: cifar.results.pkl
 
 loss:
   - target: labels

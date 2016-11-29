@@ -58,7 +58,7 @@ evaluate:
 
   # Where do we want to store the output file?
   # Here, we are just storing it as a Python pickle.
-  output: mnist.results.pkl
+  destination: mnist.results.pkl
 
   # This is a list of post-processing hooks. Here, we want to produce the
   # digit-by-digit accuracy table (just called "mnist").

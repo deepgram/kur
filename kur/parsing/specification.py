@@ -512,14 +512,14 @@ class Specification:
 			raise ValueError('Unknown weight specification for evaluation: {}'
 				.format(weights))
 
-		destination = self.data['evaluate'].get('output')
+		destination = self.data['evaluate'].get('destination')
 		if isinstance(destination, str):
 			destination = OutputHook(path=destination)
 		elif isinstance(destination, dict):
 			destination = OutputHook(**destination)
 		elif destination is not None:
-			ValueError('Expected a string or dictionary value for "output" in '
-				'"evaluate". Received: {}'.format(destination))
+			ValueError('Expected a string or dictionary value for '
+				'"destination" in "evaluate". Received: {}'.format(destination))
 
 		hooks = self.data['evaluate'].get('hooks', [])
 		if not isinstance(hooks, (list, tuple)):
