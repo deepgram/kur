@@ -333,9 +333,19 @@ class Specification:
 						'to proceed anyway, set "must_exist" to "no" under the '
 						'training "weights" section.')
 				else:
-					logger.info('Ignoring missing initial weights: %s. If this '
-						'is undesireable, set "must_exist" to "yes" in the '
-						'approriate "weights" section.', initial_weights)
+					if log is not None and \
+						(log.get_number_of_epochs() or 0) > 0:
+						logger.warning('The initial weights are missing: %s. '
+							'However, the logs suggest that this model has '
+							'been trained previously. It is possible that the '
+							'log file is corrupt/out-of-date, or that the '
+							'weight files are not supposed to be missing.',
+							initial_weights)
+					else:
+						logger.info('Ignoring missing initial weights: %s. If '
+							'this is undesireable, set "must_exist" to "yes" '
+							'in the approriate "weights" section.',
+							initial_weights)
 			return trainer.train(
 				provider=provider,
 				validation=validation,
@@ -469,6 +479,10 @@ class Specification:
 					'must have a "name" entry which names the loss function to '
 					'use for that output.')
 
+			if target in result:
+				logger.warning('A loss function for the "%s" output was '
+					'already defined. We will replace it by this new one we '
+					'just found.', target)
 			result[target] = Loss.get_loss_by_name(name)(**entry)
 
 		return result

@@ -185,7 +185,6 @@ class Trainer:
 
 		self.compile()
 
-		# TODO: Determine best train/validation losses from logs.
 		if log is None:
 			logger.info('No log specified, so no historical loss information '
 				'is available.')
