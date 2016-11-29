@@ -278,7 +278,10 @@ class Container:
 		""" Pre-parsing hook.
 		"""
 		# TODO: Parse "vars" -- should be done by container base class
-		pass
+		if isinstance(self.data, str):
+			self.data = engine.evaluate(self.data)
+			if isinstance(self.data, str):
+				self.data = {self.data : None}
 
 	############################################################################
 	def _parse_post(self, engine):
