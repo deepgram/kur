@@ -16,5 +16,6 @@ limitations under the License.
 
 from .loss import Loss
 from .categorical_crossentropy import CategoricalCrossentropy
+from .mean_squared_error import MeanSquaredError
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
