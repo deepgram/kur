@@ -1,2 +1,0 @@
-# Kur - Descriptive Deep Learning
-

@@ -23,7 +23,7 @@ from setuptools import setup, find_packages
 def readme():
 	""" Return the README text.
 	"""
-	with open('README.md') as fh:
+	with open('README.rst') as fh:
 		return fh.read()
 
 ################################################################################

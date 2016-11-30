@@ -92,11 +92,11 @@ CPUs and GPUs), and instead expose higher-level tensor operations to the
 developer. Even then, the developer is forced to choose between building up
 higher-level abstractions of deep learning primitives, or devolving to the
 rigid or hacked models of earlier years.  Projects like `Keras
-<https://keras.io/>`_ emerged organically, driven by a need to more quickly and
-intuitively develop deep learning models. Their primary genius is in providing
-an API that maps to the way people actually think about the components of a
-deep learning network (e.g., as a "LSTM layer" rather than as a series of
-tensor operations).
+<https://keras.io/>`_ and `Lasagna <https://github.com/Lasagne/Lasagne>`_
+emerged organically, driven by a need to more quickly and intuitively develop
+deep learning models. Their primary genius is in providing an API that maps to
+the way people actually think about the components of a deep learning network
+(e.g., as a "LSTM layer" rather than as a series of tensor operations).
 
 Kur is the natural progression of these tools and abstrations. It allows you,
 the researcher, to get straight to the heart of deep learning: develop that
