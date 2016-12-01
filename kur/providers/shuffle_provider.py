@@ -19,7 +19,7 @@ import numpy
 from . import Provider
 from ..sources import Shuffleable
 
-################################################################################
+###############################################################################
 class ShuffleProvider(Provider): \
 	# pylint: disable=too-few-public-methods,abstract-method
 	""" Data provider that can shuffle data in-sync with support data sources.
@@ -44,10 +44,10 @@ class ShuffleProvider(Provider): \
 			   recreated (between epochs), it can be assumed that the data---
 			   prior to another shuffle---is in the same, original ordering.
 
-		  These distinctions are transparent to the provider, which merely needs
-		  to provide new shuffle indices. But it is possible for the provider to
-		  help orchestrate these (e.g.. by providing reverse permutations
-		  after each epoch).
+		  These distinctions are transparent to the provider, which merely
+		  needs to provide new shuffle indices. But it is possible for the
+		  provider to help orchestrate these (e.g.. by providing reverse
+		  permutations after each epoch).
 
 		  Now, all Sources must be Shuffleable in order to use shuffling. This
 		  means that even mixed finite/infinite Sources must support the
@@ -57,23 +57,23 @@ class ShuffleProvider(Provider): \
 		  may be performance benefits (cache-coherency) from making certain
 		  assumptions about how the shuffle "ought" to be applied.
 
-		  Despite this, it would be imprudent to decide that Shuffleable sources
-		  must operate under any particular set of assumptions about how they
-		  store or organize data. Therefore, we opt for (1) and assume that
-		  shuffles are persistent, and leave it to the individual sources to
-		  decide how to combine multiple shuffles.
+		  Despite this, it would be imprudent to decide that Shuffleable
+		  sources must operate under any particular set of assumptions about
+		  how they store or organize data. Therefore, we opt for (1) and assume
+		  that shuffles are persistent, and leave it to the individual sources
+		  to decide how to combine multiple shuffles.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, randomize=True, **kwargs):
 		""" Create a new data provider that can shuffle Shuffleable sources.
 
 			# Arguments
 
 			sources: dict or list. If this is a list, then it is a list of
-				Sources. If this is a dictionary, its values are Sources and its
-				keys are string names that are used by the training process to
-				determine which nodes in the network should receive which
+				Sources. If this is a dictionary, its values are Sources and
+				its keys are string names that are used by the training process
+				to determine which nodes in the network should receive which
 				information.
 		"""
 		super().__init__(*args, **kwargs)
@@ -81,17 +81,17 @@ class ShuffleProvider(Provider): \
 		if randomize:
 			x = [isinstance(source, Shuffleable) for source in self.sources]
 			if not all(x):
-				raise ValueError('All data sources must be Shuffleable for the '
-					'provider to able to shuffle them.')
+				raise ValueError('All data sources must be Shuffleable for '
+					'the provider to able to shuffle them.')
 
 			if randomize is True:
 				if self.entries is None:
 					raise ValueError('Must know how long our shuffleable '
-						'sources are in order to shuffle them, but all sources '
-						'seem to be infinite. If this is the case, then set '
-						'`randomize` to an integer in the Provider\'s '
-						'constructor, or disable shuffling entirely by setting '
-						'`randomize` to False.')
+						'sources are in order to shuffle them, but all '
+						'sources seem to be infinite. If this is the case, '
+						'then set `randomize` to an integer in the '
+						'Provider\'s constructor, or disable shuffling '
+						'entirely by setting `randomize` to False.')
 				self._shuffle_len = self.entries
 			elif isinstance(randomize, int):
 				self._shuffle_len = randomize
@@ -103,7 +103,7 @@ class ShuffleProvider(Provider): \
 		else:
 			self.randomize = False
 
-	############################################################################
+	###########################################################################
 	def pre_iter(self):
 		""" Pre-iteration hook.
 
@@ -116,4 +116,4 @@ class ShuffleProvider(Provider): \
 			for source in self.sources:
 				source.shuffle(indices)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

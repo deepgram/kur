@@ -18,4 +18,4 @@ from .evaluation_hook import EvaluationHook
 from .output_hook import OutputHook
 from .mnist_hook import MnistHook
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

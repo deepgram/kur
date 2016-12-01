@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-################################################################################
-class Shuffleable:						# pylint: disable=too-few-public-methods
+###############################################################################
+class Shuffleable:					# pylint: disable=too-few-public-methods
 	""" An interface for objects which support shuffling
 	"""
 
-	############################################################################
+	###########################################################################
 	def shuffle(self, indices):
 		""" Applies a permutation to the data.
 
@@ -34,4 +34,4 @@ class Shuffleable:						# pylint: disable=too-few-public-methods
 		"""
 		raise NotImplementedError
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -14,16 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-################################################################################
+###############################################################################
 class TestModel:
 	""" Tests for the Model
 	"""
 
-	############################################################################
+	###########################################################################
 	def test_simple(self, simple_model, an_engine):
 		""" Tests if we can build even the simplest model.
 		"""
 		simple_model.parse(an_engine)
 		simple_model.build()
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

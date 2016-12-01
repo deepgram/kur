@@ -16,7 +16,7 @@ limitations under the License.
 
 from collections import OrderedDict
 
-################################################################################
+###############################################################################
 def deep_merge(*args, strategy=None):
 	""" Merges data structures together.
 
@@ -31,8 +31,8 @@ def deep_merge(*args, strategy=None):
 
 		- merge: dictionaries are merged recursively. This means that if a key
 		  is not present in both dictionaries, then the key and its value are
-		  included in the merged result. If the key is in both dictionaries, its
-		  value is recursively merged if both values are themselves
+		  included in the merged result. If the key is in both dictionaries,
+		  its value is recursively merged if both values are themselves
 		  dictionaries, but only the last value is kept if the types are
 		  different.
 		- blend: dictionaries are merged recursively (as with "merge").
@@ -59,7 +59,7 @@ def deep_merge(*args, strategy=None):
 			result = func(result, x)
 		return result
 
-################################################################################
+###############################################################################
 def _blend(x, y):								# pylint: disable=invalid-name
 	""" Implements the "blend" strategy for `deep_merge`.
 	"""
@@ -80,7 +80,7 @@ def _blend(x, y):								# pylint: disable=invalid-name
 
 	return y
 
-################################################################################
+###############################################################################
 def _concat(x, y):								# pylint: disable=invalid-name
 	""" Implements the "concat" strategy for `deep_merge`.
 	"""
@@ -96,7 +96,7 @@ def _concat(x, y):								# pylint: disable=invalid-name
 
 	return y
 
-################################################################################
+###############################################################################
 def _merge(x, y, recursion_func=None):			# pylint: disable=invalid-name
 	""" Implements the "merge" strategy for `deep_merge`.
 	"""
@@ -119,4 +119,4 @@ def _merge(x, y, recursion_func=None):			# pylint: disable=invalid-name
 
 	return result
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

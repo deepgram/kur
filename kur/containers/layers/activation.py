@@ -16,7 +16,7 @@ limitations under the License.
 
 from . import Layer, ParsingError
 
-################################################################################
+###############################################################################
 class Activation(Layer):				# pylint: disable=too-few-public-methods
 	""" An activation layer.
 
@@ -25,14 +25,14 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 		activation layer.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new activation layer.
 		"""
 		super().__init__(*args, **kwargs)
 		self.type = None
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parse the layer.
 		"""
@@ -40,7 +40,7 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 		super()._parse(engine)
 		self.type = self.args
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Create the backend-specific placeholder.
 		"""
@@ -56,4 +56,4 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

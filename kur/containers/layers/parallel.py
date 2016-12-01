@@ -16,7 +16,7 @@ limitations under the License.
 
 from . import Layer, ParsingError
 
-################################################################################
+###############################################################################
 class Parallel(Layer):					# pylint: disable=too-few-public-methods
 	""" A container for applying tensor operations to each element in a list.
 		This is effectively a map operation, like Theano's `scan` or Keras's
@@ -35,13 +35,13 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 		```
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Create a new parallel container.
 		"""
 		super().__init__(*args, **kwargs)
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parse the child containers
 		"""
@@ -58,7 +58,7 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 		for child in target:
 			self.new_child_from_data(child).parse(engine)
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Instantiate the container.
 		"""
@@ -78,4 +78,4 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 						'Unknown or unsupported backend: {}'.format(backend)
 					)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

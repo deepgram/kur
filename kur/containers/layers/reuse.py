@@ -17,7 +17,7 @@ limitations under the License.
 from . import Layer
 from . import ParsingError
 
-################################################################################
+###############################################################################
 class Reuse(Layer):						# pylint: disable=too-few-public-methods
 	""" Reuse weights/operations from another container, rather than creating
 		new tensor operations. This allows for weight-sharing between
@@ -31,7 +31,7 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 		```
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Create a new reuse container.
 		"""
@@ -39,7 +39,7 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 		self.target = None
 		self.reentrant = False
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parse the debug statement and print it.
 		"""
@@ -49,7 +49,7 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 			raise ParsingError('Missing key "target" in Reuse layer.')
 		self.target = engine.evaluate(self.args['target'])
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Return a reference to another layer.
 		"""
@@ -69,4 +69,4 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 
 		yield from target.build(backend)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

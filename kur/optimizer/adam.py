@@ -16,12 +16,12 @@ limitations under the License.
 
 from . import Optimizer
 
-################################################################################
+###############################################################################
 class Adam(Optimizer):
 	""" Adam optimizer
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, learning_rate=None, *args, **kwargs):
 		""" Create a new Adam optimizer.
 
@@ -33,7 +33,7 @@ class Adam(Optimizer):
 
 		self.learning_rate = learning_rate or 0.001
 
-	############################################################################
+	###########################################################################
 	def get_optimizer(self, backend):
 		""" Returns a backend-specific instantiation of the optimizer.
 		"""
@@ -44,4 +44,4 @@ class Adam(Optimizer):
 			raise ValueError('Unsupported backend "{}" for optimizer "{}"'
 				.format(backend.get_name(), self.get_name()))
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

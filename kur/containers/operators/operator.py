@@ -16,17 +16,17 @@ limitations under the License.
 
 from .. import Container
 
-################################################################################
+###############################################################################
 class Operator(Container):					# pylint: disable=abstract-method
 	""" Base class for operators, which are containers that do not produce
 		backend-specific layers, but rather defer to their children to do so.
 	"""
 
-	############################################################################
+	###########################################################################
 	def terminal(self):
 		""" The identifying feature of an Operator is that it is non-terminal,
 			so we implement the base-class method here.
 		"""
 		return False
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -18,21 +18,21 @@ import numpy
 from . import Supplier
 from ..sources import VanillaSource
 
-################################################################################
+###############################################################################
 class NumpyDictSupplier(Supplier):
 	""" A supplier which parses out data from a Numpy file (*.npy) containing a
 		dictionary whose values are the source names, and whose values are the
 		Numpy arrays that should be returned.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the supplier.
 		"""
 		return 'numpy_dict'
 
-	############################################################################
+	###########################################################################
 	def __init__(self, source, *args, **kwargs):
 		""" Creates a new Numpy dictionary supplier.
 
@@ -45,7 +45,7 @@ class NumpyDictSupplier(Supplier):
 		self.source = source
 		self.data = None
 
-	############################################################################
+	###########################################################################
 	def _load(self):
 		""" Loads the data (only if it hasn't already been loaded).
 		"""
@@ -55,7 +55,7 @@ class NumpyDictSupplier(Supplier):
 		data = data[()]
 		self.data = {k : VanillaSource(v) for k, v in data.items()}
 
-	############################################################################
+	###########################################################################
 	def get_sources(self, sources=None):
 		""" Returns all sources from this provider.
 		"""
@@ -75,4 +75,4 @@ class NumpyDictSupplier(Supplier):
 
 		return {k : self.data[k] for k in sources}
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

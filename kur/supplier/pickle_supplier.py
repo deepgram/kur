@@ -23,21 +23,21 @@ from ..sources import VanillaSource
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class PickleSupplier(Supplier):
 	""" A supplier which parses out data from a Python pickle and exposes it as
 		a numpy array. The pickled object is assumed to be a dictionary, with
 		keys that map to numpy arrays.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the supplier.
 		"""
 		return 'pickle'
 
-	############################################################################
+	###########################################################################
 	def __init__(self, source, *args, **kwargs):
 		""" Creates a new Pickle supplier.
 
@@ -50,7 +50,7 @@ class PickleSupplier(Supplier):
 		self.source = source
 		self.data = None
 
-	############################################################################
+	###########################################################################
 	def _load(self):
 		""" Loads the data (only if it hasn't already been loaded).
 		"""
@@ -64,9 +64,9 @@ class PickleSupplier(Supplier):
 			data = pickle.loads(content)
 		except UnicodeDecodeError:
 			data = pickle.loads(content, encoding='latin1')
-			logger.warning('We needed to explicitly set a "latin1" encoding to '
-				'properly load the pickled data. This is probably because the '
-				'pickled data was created in Python 2. You really should '
+			logger.warning('We needed to explicitly set a "latin1" encoding '
+				'to properly load the pickled data. This is probably because '
+				'the pickled data was created in Python 2. You really should '
 				'switch over to Python 3 in order to ensure future '
 				'compatibility.')
 
@@ -106,7 +106,7 @@ class PickleSupplier(Supplier):
 
 		self.data = result
 
-	############################################################################
+	###########################################################################
 	def get_sources(self, sources=None):
 		""" Returns all sources from this provider.
 		"""
@@ -126,4 +126,4 @@ class PickleSupplier(Supplier):
 
 		return {k : self.data[k] for k in sources}
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-################################################################################
+###############################################################################
 def get_subclasses(cls, recursive=True):
 	""" Enumerates all subclasses of a given class.
 
@@ -34,4 +34,4 @@ def get_subclasses(cls, recursive=True):
 			sub.extend(get_subclasses(cls, recursive=True))
 	return sub
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

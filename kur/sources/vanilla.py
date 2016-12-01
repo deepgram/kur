@@ -16,12 +16,12 @@ limitations under the License.
 
 from . import Source, Shuffleable
 
-################################################################################
+###############################################################################
 class VanillaSource(Source, Shuffleable):
 	""" A data source which is simple wrapper around an in-memory array.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, data, chunk_size=None, *args, **kwargs):
 		""" Create a new vanilla data provider.
 
@@ -44,19 +44,19 @@ class VanillaSource(Source, Shuffleable):
 		self.data = data
 		self.chunk_size = chunk_size
 
-	############################################################################
+	###########################################################################
 	def __len__(self):
 		""" Returns the number of samples this source provides.
 		"""
 		return self.data.shape[0]
 
-	############################################################################
+	###########################################################################
 	def shape(self):
 		""" Returns the shape of the individual data samples.
 		"""
 		return self.data.shape[1:]
 
-	############################################################################
+	###########################################################################
 	def shuffle(self, indices):
 		""" Applies a permutation to the data.
 		"""
@@ -65,7 +65,7 @@ class VanillaSource(Source, Shuffleable):
 				'the permutation is longer than the length of the data set.')
 		self.data[:len(indices)] = self.data[indices]
 
-	############################################################################
+	###########################################################################
 	def __iter__(self):
 		""" Returns the next chunk of data.
 		"""
@@ -81,4 +81,4 @@ class VanillaSource(Source, Shuffleable):
 			yield self.data[start:end]
 			start = end
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

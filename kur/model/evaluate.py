@@ -21,12 +21,12 @@ from ..utils import get_any_value
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class Evaluator:
 	""" Class for using trained models to predict new outputs.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, model):
 		""" Creates a new evaluator.
 
@@ -37,7 +37,7 @@ class Evaluator:
 		self.model = model
 		self._compiled = None
 
-	############################################################################
+	###########################################################################
 	def compile(self, recompile=False):
 		""" Compiles a model.
 
@@ -60,27 +60,27 @@ class Evaluator:
 		if not self.model.is_built():
 			logger.warning('This model has never been built before. We are '
 				'going to try to build it now. But the model should always be '
-				'built with Model.build() before trying to compile it, just to '
-				'ensure that everything has been parsed as you expect.')
+				'built with Model.build() before trying to compile it, just '
+				'to ensure that everything has been parsed as you expect.')
 			self.model.build()
 
 		self._compiled = self.model.backend.compile(
 			model=self.model
 		)
 
-	############################################################################
+	###########################################################################
 	def evaluate(self, provider, callback=None):
 		""" Evaluates the model on some data.
 
 			# Arguments
 
-			provider: Provider instance. The data provider which serves the data
-				to be evaluated.
+			provider: Provider instance. The data provider which serves the
+				data to be evaluated.
 			callback: function or None. If not None, the callback is called
 				after each evaluation batch and is passed two parameters:
 				`predicted` and `truth`, where `predicted` is the model output
-				and `truth` is the ground truth data (if provided by `provider`;
-				otherwise, `truth` is set to `None`).
+				and `truth` is the ground truth data (if provided by
+				`provider`; otherwise, `truth` is set to `None`).
 
 			# Return value
 
@@ -173,4 +173,4 @@ class Evaluator:
 
 		return result, truth
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

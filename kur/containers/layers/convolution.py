@@ -16,7 +16,7 @@ limitations under the License.
 
 from . import Layer, ParsingError
 
-################################################################################
+###############################################################################
 class Convolution(Layer):				# pylint: disable=too-few-public-methods
 	""" A vanilla convolution layer.
 
@@ -46,7 +46,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		```
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new expand layer.
 		"""
@@ -56,7 +56,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		self.strides = None
 		self.activation = None
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parses out the convolution layer.
 		"""
@@ -116,7 +116,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		else:
 			self.activation = None
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Instantiates the layer with the given backend.
 		"""
@@ -164,4 +164,4 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

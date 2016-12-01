@@ -18,12 +18,12 @@ import ast
 import jinja2
 from .engine import Engine
 
-################################################################################
+###############################################################################
 class JinjaEngine(Engine):
 	""" An evaluation engine which uses Jinja2 for templating.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new Jinja2 templating engine.
 		"""
@@ -42,7 +42,7 @@ class JinjaEngine(Engine):
 		# Built-in Jinja2 filters are listed here:
 		#   http://jinja.pocoo.org/docs/dev/templates/#builtin-filters
 
-	############################################################################
+	###########################################################################
 	def _evaluate(self, expression):
 		""" Evaluates an expression in the current scope.
 
@@ -70,4 +70,4 @@ class JinjaEngine(Engine):
 
 		return result
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

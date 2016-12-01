@@ -28,12 +28,12 @@ def loss():
 def optimizer():
 	return Adam()
 
-################################################################################
+###############################################################################
 class TestTrain:
 	""" Tests for the Trainer
 	"""
 
-	############################################################################
+	###########################################################################
 	def test_trainer_with_optimizer(self, simple_model, loss, optimizer):
 		""" Tests if we can compile a Trainer instance with an optimizer.
 		"""
@@ -46,7 +46,7 @@ class TestTrain:
 		)
 		trainer.compile()
 
-	############################################################################
+	###########################################################################
 	def test_trainer_without_optimizer(self, simple_model, loss, optimizer):
 		""" Tests if we can compile a Trainer instance without an optimizer.
 		"""
@@ -59,7 +59,7 @@ class TestTrain:
 		)
 		trainer.compile()
 
-	############################################################################
+	###########################################################################
 	def test_training(self, simple_model, loss, optimizer, simple_data):
 		""" Tests that a single training epoch can succeed.
 		"""
@@ -72,7 +72,7 @@ class TestTrain:
 		)
 		trainer.train(provider=simple_data, epochs=1)
 
-	############################################################################
+	###########################################################################
 	def test_testing(self, simple_model, loss, simple_data):
 		""" Tests that a testing run can succeed.
 		"""
@@ -84,4 +84,4 @@ class TestTrain:
 		)
 		trainer.test(provider=simple_data)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

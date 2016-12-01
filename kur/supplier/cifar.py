@@ -14,29 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import numpy
 import tarfile
 import os
 import re
 import pickle
+
+import numpy
+
 from ..utils import download_file
 from . import Supplier
 from ..sources import VanillaSource
 
-################################################################################
+###############################################################################
 class CifarSupplier(Supplier):
 	""" A supplier which supplies MNIST image/label pairs. These are downloaded
 		from the internet, verified, and parsed as IDX files.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the supplier.
 		"""
 		return 'cifar'
 
-	############################################################################
+	###########################################################################
 	def __init__(self, url=None, sha256=None, local=None, parts=None,
 		*args, **kwargs):
 		""" Creates a new CIFAR supplier.
@@ -58,7 +60,7 @@ class CifarSupplier(Supplier):
 			'labels' : VanillaSource(CifarSupplier._onehot(labels))
 		}
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _load_parts(path, parts):
 
@@ -112,7 +114,7 @@ class CifarSupplier(Supplier):
 			numpy.concatenate([result[i]['labels'] for i in parts])
 		)
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _onehot(source):
 		onehot = numpy.zeros((source.shape[0], 10))
@@ -120,7 +122,7 @@ class CifarSupplier(Supplier):
 			onehot[i][row] = 1
 		return onehot
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _normalize(source):
 		# Numpy won't automatically promote the uint8 fields to float32.
@@ -131,7 +133,7 @@ class CifarSupplier(Supplier):
 		data = numpy.transpose(data, axes=(0, 2, 3, 1))
 		return data
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _get_filename(target):
 		""" Returns the filename associated with a particular target.
@@ -142,8 +144,8 @@ class CifarSupplier(Supplier):
 				files, it can be a string (path to file) or a dictionary with
 				key 'local' that contains the file path. For network files,
 				it is a dictionary with 'url' (source URL); it may also
-				optionally contain 'sha256' (SHA256 checksum) and 'local' (local
-				storage directory for the file).
+				optionally contain 'sha256' (SHA256 checksum) and 'local'
+				(local storage directory for the file).
 
 			# Return value
 
@@ -170,7 +172,7 @@ class CifarSupplier(Supplier):
 			raise ValueError('Unexpected data type for CIFAR target: {}'
 				.format(target))
 
-	############################################################################
+	###########################################################################
 	def get_sources(self, sources=None):
 		""" Returns all sources from this provider.
 		"""
@@ -189,4 +191,4 @@ class CifarSupplier(Supplier):
 
 		return {k : self.data[k] for k in sources}
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

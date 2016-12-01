@@ -16,19 +16,19 @@ limitations under the License.
 
 from . import Loss
 
-################################################################################
+###############################################################################
 class CategoricalCrossentropy(Loss):
 	""" Categorical crossentropy loss, used for 1-of-N classification.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the loss function.
 		"""
 		return 'categorical_crossentropy'
 
-	############################################################################
+	###########################################################################
 	def get_loss(self, backend):
 
 		if backend.get_name() == 'keras':
@@ -37,4 +37,4 @@ class CategoricalCrossentropy(Loss):
 			raise ValueError('Unsupported backend "{}" for loss function "{}"'
 				.format(backend.get_name(), self.get_name()))
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

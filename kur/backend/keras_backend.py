@@ -28,7 +28,7 @@ from ..utils import can_import, EnvironmentalVariable, redirect_stderr
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class KerasBackend(Backend):
 	""" A Keras backend.
 
@@ -39,7 +39,7 @@ class KerasBackend(Backend):
 		- h5py
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def is_supported(cls):
 		""" Returns True if this backend can be used.
@@ -48,18 +48,18 @@ class KerasBackend(Backend):
 			can_import('theano') or can_import('tensorflow')
 		)
 
-	############################################################################
+	###########################################################################
 	def __init__(self, backend=None, *args, **kwargs):
 		""" Creates a new Keras backend.
 
 			As per the base class documentation, we should do all necessary
-			Keras-related initialization here, including checking obvious things
-			like "Is Keras installed?" or "Is a backend installed?"
+			Keras-related initialization here, including checking obvious
+			things like "Is Keras installed?" or "Is a backend installed?"
 
 			# Arguments
 
 			backend: str or None (default: None). The Keras backend to use
-				(either "theano" or "tensorflow"). None uses the system default.
+			(either "theano" or "tensorflow"). None uses the system default.
 		"""
 
 		super().__init__(*args, **kwargs)
@@ -68,14 +68,13 @@ class KerasBackend(Backend):
 			if 'keras' in sys.modules:
 				import keras.backend as K		# pylint: disable=import-error
 				if K.backend() != backend:
-					logger.warning('Keras was already imported by the time the '
-						'Kur backend was instantiated. Kur was asked to use '
-						'Keras %s backend, but Keras is already using %s. We '
-						'cannot change the Keras backend at this point, so we '
-						'will try to work with the currently loaded backend. '
-						'In the future, try to let Kur manage importing Keras.',
-						backend, K.backend()
-					)
+					logger.warning('Keras was already imported by the time '
+						'the Kur backend was instantiated. Kur was asked to '
+						'use Keras %s backend, but Keras is already using %s. '
+						'We cannot change the Keras backend at this point, so '
+						'we will try to work with the currently loaded '
+						'backend. In the future, try to let Kur manage '
+						'importing Keras.', backend, K.backend())
 
 		# Make sure Keras is loaded.
 		# Now, Keras always prints out a "Using {Theano|TensorFlow} backend."
@@ -89,7 +88,7 @@ class KerasBackend(Backend):
 		# And now we can set the dimension ordering.
 		keras.backend.set_image_dim_ordering('tf')
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the backend class.
@@ -98,7 +97,7 @@ class KerasBackend(Backend):
 		"""
 		return 'keras'
 
-	############################################################################
+	###########################################################################
 	def connect(self, inputs, target):
 		""" Use the Keras functional API to connect to layers
 
@@ -111,7 +110,7 @@ class KerasBackend(Backend):
 			inputs = [inputs]
 		return target(inputs)
 
-	############################################################################
+	###########################################################################
 	def save(self, model, filename):
 		""" Saves the model weights to the given filename.
 		"""
@@ -123,7 +122,7 @@ class KerasBackend(Backend):
 		)
 		result.save_weights(filename)
 
-	############################################################################
+	###########################################################################
 	def restore(self, model, filename):
 		""" Load the model weights from the given filename.
 		"""
@@ -135,7 +134,7 @@ class KerasBackend(Backend):
 		)
 		result.load_weights(filename, by_name=True)
 
-	############################################################################
+	###########################################################################
 	def compile(self, model, loss=None, optimizer=None):
 		""" Returns the Keras model instance.
 		"""
@@ -175,7 +174,7 @@ class KerasBackend(Backend):
 
 			return {'model' : result, 'alias' : alias, 'rev_alias' : rev}
 
-	############################################################################
+	###########################################################################
 	def _apply_loss(self, model, loss=None):	# pylint: disable=no-self-use
 		""" Applies the loss functions to the model.
 
@@ -246,11 +245,12 @@ class KerasBackend(Backend):
 		# Once the model extension retracts, the alias keys still exist as the
 		# Model inputs/outputs, and they will match data source names.
 		# But the Keras model has inputs/outputs named after `alias[name]`.
-		alias = {name : func.modify(model, name) for name, func in loss.items()}
+		alias = {name : func.modify(model, name)
+			for name, func in loss.items()}
 
 		return loss, alias
 
-	############################################################################
+	###########################################################################
 	def train(self, model, data, compiled):
 		""" Fits the given model on a batch of data.
 		"""
@@ -268,7 +268,7 @@ class KerasBackend(Backend):
 			model.outputs
 		)
 
-	############################################################################
+	###########################################################################
 	def test(self, model, data, compiled):
 		""" Calculates the model loss on a batch of data.
 		"""
@@ -286,7 +286,7 @@ class KerasBackend(Backend):
 			model.outputs
 		)
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _convert_metrics(metrics, metrics_names, rev_alias, outputs):
 		""" Formats the Keras metrics properly for use by Kur.
@@ -310,7 +310,7 @@ class KerasBackend(Backend):
 
 		return loss
 
-	############################################################################
+	###########################################################################
 	def evaluate(self, model, data, compiled):
 		""" Evaluates the model on a batch of data.
 		"""
@@ -325,4 +325,4 @@ class KerasBackend(Backend):
 
 		return {name : result for name, result in zip(model.outputs, results)}
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

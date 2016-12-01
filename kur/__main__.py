@@ -23,7 +23,7 @@ from .engine import JinjaEngine
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 def parse_specification(filename, engine):
 	""" Parses a specification file.
 
@@ -39,7 +39,7 @@ def parse_specification(filename, engine):
 	spec.parse()
 	return spec
 
-################################################################################
+###############################################################################
 def train(args):
 	""" Trains a model.
 	"""
@@ -47,7 +47,7 @@ def train(args):
 	func = spec.get_training_function()
 	func()
 
-################################################################################
+###############################################################################
 def test(args):
 	""" Tests a model.
 	"""
@@ -55,7 +55,7 @@ def test(args):
 	func = spec.get_testing_function()
 	func()
 
-################################################################################
+###############################################################################
 def evaluate(args):
 	""" Evaluates a model.
 	"""
@@ -63,7 +63,7 @@ def evaluate(args):
 	func = spec.get_evaluation_function()
 	func()
 
-################################################################################
+###############################################################################
 def build(args):
 	""" Builds a model.
 	"""
@@ -85,7 +85,7 @@ def build(args):
 
 	target.compile()
 
-################################################################################
+###############################################################################
 def parse_args():
 	""" Constructs an argument parser and returns the parsed arguments.
 	"""
@@ -126,7 +126,7 @@ def parse_args():
 
 	return parser.parse_args()
 
-################################################################################
+###############################################################################
 def main():
 	""" Entry point for the Kur command-line script.
 	"""
@@ -153,8 +153,8 @@ def main():
 
 	sys.exit(args.func(args) or 0)
 
-################################################################################
+###############################################################################
 if __name__ == '__main__':
 	main()
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -16,7 +16,7 @@ limitations under the License.
 
 from . import Layer, ParsingError
 
-################################################################################
+###############################################################################
 class Expand(Layer):					# pylint: disable=too-few-public-methods
 	""" An expand layer adds a dimension of size 1.
 
@@ -30,14 +30,14 @@ class Expand(Layer):					# pylint: disable=too-few-public-methods
 		`DIM` must be an integer. It can be negative to count from the end.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new expand layer.
 		"""
 		super().__init__(*args, **kwargs)
 		self.dimension = None
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parses out the expand layer.
 		"""
@@ -58,7 +58,7 @@ class Expand(Layer):					# pylint: disable=too-few-public-methods
 		except ValueError:
 			raise ParsingError('"dimension" must evaluate to an integer.')
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Instantiates the layer with the given backend.
 		"""
@@ -88,4 +88,4 @@ class Expand(Layer):					# pylint: disable=too-few-public-methods
 		else:
 			raise ValueError('Unknown or unsupported backend: {}'.format(backend))
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

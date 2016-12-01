@@ -20,8 +20,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-################################################################################
-class ScopeStack:						# pylint: disable=too-few-public-methods
+###############################################################################
+class ScopeStack:					# pylint: disable=too-few-public-methods
 	""" Context management for Engine scopes.
 
 		# Example
@@ -42,7 +42,7 @@ class ScopeStack:						# pylint: disable=too-few-public-methods
 		```
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, engine, scope):
 		""" Creates a new scope stack.
 
@@ -57,7 +57,7 @@ class ScopeStack:						# pylint: disable=too-few-public-methods
 			scope = [scope]
 		self.scope = scope
 
-	############################################################################
+	###########################################################################
 	def __enter__(self):
 		""" Enter context management and add scopes to the engine.
 		"""
@@ -65,19 +65,19 @@ class ScopeStack:						# pylint: disable=too-few-public-methods
 			self.engine.scope(**scope)
 		return self.engine
 
-	############################################################################
+	###########################################################################
 	def __exit__(self, exc_type, exc_value, traceback):
 		""" Leave context management and pop the scopes.
 		"""
 		for _ in self.scope:
 			self.engine.scope_pop()
 
-################################################################################
+###############################################################################
 class Engine:
 	""" Base class for all template engines.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self):
 		""" Creates a new engine
 
@@ -93,13 +93,14 @@ class Engine:
 		}
 		self._scope = ChainMap(self.state)
 
-	############################################################################
+	###########################################################################
 	def scope(self, **kwargs):
 		""" Create an additional scope.
 
 			# Arguments
 
-			kwargs: dict. The key/value scope to augment the current scope with.
+			kwargs: dict. The key/value scope to augment the current scope
+				with.
 
 			# Return value
 
@@ -125,25 +126,25 @@ class Engine:
 		self._scope = self._scope.new_child(kwargs)
 		return self
 
-	############################################################################
+	###########################################################################
 	def scope_pop(self):
 		""" Removes the most recent scope.
 		"""
 		self._scope = self._scope.parents
 
-	############################################################################
+	###########################################################################
 	def __enter__(self):
 		""" Enter context management.
 		"""
 		return self
 
-	############################################################################
+	###########################################################################
 	def __exit__(self, exc_type, exc_value, traceback):
 		""" Exit context management, popping the most recent scope.
 		"""
 		self.scope_pop()
 
-	############################################################################
+	###########################################################################
 	def register(self, container):
 		""" Adds information about a Container to the templating engine.
 
@@ -163,7 +164,7 @@ class Engine:
 		# Layers themselves
 		self.state['layers'].append(container.name)
 
-	############################################################################
+	###########################################################################
 	def evaluate(self, expression, recursive=False):
 		""" Evaluates an expression in the current scope.
 
@@ -206,7 +207,7 @@ class Engine:
 				), UserWarning)
 		return expression
 
-	############################################################################
+	###########################################################################
 	def _evaluate(self, expression):
 		""" Evaluates a string expression in the current scope.
 
@@ -220,4 +221,4 @@ class Engine:
 		"""
 		raise NotImplementedError
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

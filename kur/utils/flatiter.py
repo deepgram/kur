@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-################################################################################
+###############################################################################
 def flatten(x):
 	""" Returns an iterator over flattened entries of a list-like data
 		structure.
@@ -29,7 +29,7 @@ def flatten(x):
 		except TypeError:
 			yield item
 
-################################################################################
+###############################################################################
 def concatenate(args):
 	""" Returns an iterator which steps through top-level elements in the
 		iterable.
@@ -37,4 +37,4 @@ def concatenate(args):
 	for sublist in args:
 		yield from iter(sublist)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

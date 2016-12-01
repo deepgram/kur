@@ -18,7 +18,7 @@ import warnings
 from . import ParsingError
 from ..utils import get_subclasses
 
-################################################################################
+###############################################################################
 class Container:
 	""" The base class for all parseable entries in the model representation.
 
@@ -36,7 +36,7 @@ class Container:
 	# Used for generating unique names.
 	counter = {}
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_container_name(cls):
 		""" Returns the name of the container class.
@@ -51,7 +51,7 @@ class Container:
 		"""
 		return cls.__name__.lower()
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def unique_name(cls):
 		""" Generates a unique name for this instance.
@@ -63,7 +63,7 @@ class Container:
 		Container.counter[cls] = val + 1
 		return '__{}_{}'.format(cls.get_container_name(), val)
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def create_container_from_data(data, **kwargs):
 		""" Factory method for creating containers.
@@ -71,7 +71,7 @@ class Container:
 		cls = Container.find_container_for_data(data)
 		return cls(data, **kwargs)
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def find_container_for_data(data):
 		""" Finds a class object corresponding to a data blob.
@@ -81,7 +81,7 @@ class Container:
 				return cls
 		raise ValueError('No such container for data: {}'.format(data))
 
-	############################################################################
+	###########################################################################
 	def __init__(self, data):
 		""" Creates a new container.
 		"""
@@ -99,7 +99,7 @@ class Container:
 		self._built = None
 		self._parsed = False
 
-	############################################################################
+	###########################################################################
 	def __str__(self):
 		""" Return a string representation.
 
@@ -110,7 +110,7 @@ class Container:
 			name=self.name
 		)
 
-	############################################################################
+	###########################################################################
 	def __repr__(self):
 		""" Return a string representation.
 
@@ -121,13 +121,13 @@ class Container:
 			name=self.name
 		)
 
-	############################################################################
+	###########################################################################
 	def is_parsed(self):
 		""" Returns True if this container has been parsed already.
 		"""
 		return self._parsed
 
-	############################################################################
+	###########################################################################
 	def add_child(self, container):
 		""" Attaches an existing container as a child to this container.
 		"""
@@ -137,7 +137,7 @@ class Container:
 		container.parent = self
 		self.children.append(container)
 
-	############################################################################
+	###########################################################################
 	def remove_child(self, container, recursive=True):
 		""" Removes a child container by name.
 
@@ -159,7 +159,8 @@ class Container:
 			If the child container cannot be found, a ValueError exception is
 			raised.
 		"""
-		name = container.name if isinstance(container, Container) else container
+		name = container.name if isinstance(container, Container) \
+			else container
 
 		child = self.get_child_by_name(name, recursive=recursive)
 		if child is None:
@@ -171,7 +172,7 @@ class Container:
 		child.parent = None
 		target.children.remove(child)
 
-	############################################################################
+	###########################################################################
 	def new_child_from_data(self, data):
 		""" Creates a new container from data and attaches it as a child.
 		"""
@@ -179,14 +180,14 @@ class Container:
 		self.add_child(child)
 		return child
 
-	############################################################################
+	###########################################################################
 	def get_children(self, recursive=False, include_self=False):
 		""" Returns this container's children.
 
 			# Arguments
 
-			recursive: bool (default: False). If True, recursively searches each
-				container's children for additional children.
+			recursive: bool (default: False). If True, recursively searches
+				each container's children for additional children.
 			include_self: bool (default: False). If True, yields this container
 				as well.
 
@@ -201,7 +202,7 @@ class Container:
 			if recursive:
 				yield from child.get_children(recursive=recursive)
 
-	############################################################################
+	###########################################################################
 	def get_child_by_name(self, name, recursive=True):
 		""" Searches for a child container with the given name.
 
@@ -225,7 +226,7 @@ class Container:
 					return result
 		return None
 
-	############################################################################
+	###########################################################################
 	def get_root(self):
 		""" Returns the root node of the parent/child tree.
 		"""
@@ -234,7 +235,7 @@ class Container:
 		else:
 			return self
 
-	############################################################################
+	###########################################################################
 	def get_relative_by_name(self, name):
 		""" Searches the entire parent/child hierarchy for a container with the
 			given name.
@@ -250,12 +251,12 @@ class Container:
 		"""
 		return self.get_root().get_child_by_name(name, recursive=True)
 
-	############################################################################
+	###########################################################################
 	def parse(self, engine):
 		""" Convenience function for parsing the container.
 
-			This should not be overriden in derived classes. Override `_parse()`
-			instead.
+			This should not be overriden in derived classes. Override
+			`_parse()` instead.
 		"""
 		if self._parsed:
 			return
@@ -267,12 +268,12 @@ class Container:
 
 		self._parsed = True
 
-	############################################################################
+	###########################################################################
 	def build(self, backend, rebuild=False):
 		""" Convenience function for building the underlying operations.
 
-			This should not be overriden in derived classes. Override `_build()`
-			instead.
+			This should not be overriden in derived classes. Override
+			`_build()` instead.
 		"""
 		if not self._parsed:
 			raise ParsingError('Container must be parsed before being built.')
@@ -280,7 +281,7 @@ class Container:
 			self._built = list(self._build(backend))
 		yield from self._built
 
-	############################################################################
+	###########################################################################
 	def _parse_pre(self, engine):
 		""" Pre-parsing hook.
 
@@ -292,7 +293,7 @@ class Container:
 			if isinstance(self.data, str):
 				self.data = {self.data : None}
 
-	############################################################################
+	###########################################################################
 	def _parse_post(self, engine):
 		""" Post-parsing hook.
 
@@ -302,7 +303,7 @@ class Container:
 		"""
 		engine.register(self)
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parse the container.
 
@@ -350,8 +351,8 @@ class Container:
 				elif sink.lower() in ('no', 'false', 'off'):
 					sink = False
 				else:
-					raise ParsingError('Cannot evaluate boolean "sink" string: '
-						'{}'.format(sink))
+					raise ParsingError('Cannot evaluate boolean "sink" '
+						'string: {}'.format(sink))
 			elif not isinstance(sink, bool):
 				raise ParsingError('Cannot evaluate boolean "sink": {}'.format(
 					sink))
@@ -360,7 +361,7 @@ class Container:
 		else:
 			self.sink = False
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Constructs the backend-specific data objects.
 
@@ -375,7 +376,7 @@ class Container:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def validate(self, key, required=True, dtype=None, list_like=False,
 		raise_error=True):
 		""" Checks if a key exists and optionally has the right type.
@@ -386,17 +387,17 @@ class Container:
 			required: bool (default: True). Whether or not the absence of the
 				key should be a fatal error.
 			dtype: type or tuple of types (default: None). If not None and the
-				key exists, then the value is checked to see if its type matches
-				`dtype` or, if `dtype` is a tuple, the value is checked to see
-				if its type matches one of the types in `dtype`.
-			list_like: bool or type or list of types (default: False). Only used
-				when `dtype` is not None. If True, then the value is assumed to
-				be iterable, and type-checking takes place over each element of
-				the iterable rather than to the iterable type itself. If
-				`list_like` is a type or list of types, then the iterable is
-				also checked to ensure that it is one of the supported types,
-				and then `dtype` type-checking still occurs over each element of
-				the iterable.
+				key exists, then the value is checked to see if its type
+				matches `dtype` or, if `dtype` is a tuple, the value is checked
+				to see if its type matches one of the types in `dtype`.
+			list_like: bool or type or list of types (default: False). Only
+				used when `dtype` is not None. If True, then the value is
+				assumed to be iterable, and type-checking takes place over each
+				element of the iterable rather than to the iterable type
+				itself. If `list_like` is a type or list of types, then the
+				iterable is also checked to ensure that it is one of the
+				supported types, and then `dtype` type-checking still occurs
+				over each element of the iterable.
 			raise_error: bool (default: True). If True, validation failures
 				raise a ParsingError exception; otherwise, a boolean result is
 				returned.
@@ -409,8 +410,8 @@ class Container:
 			# Exceptions
 
 			If the key is required but missing, or if the key is present by has
-			an incorrect type, then a ParsingError is thrown if `raise_error` is
-			True.
+			an incorrect type, then a ParsingError is thrown if `raise_error`
+			is True.
 		"""
 		name = self.__class__.__name__
 
@@ -449,7 +450,7 @@ class Container:
 
 		return True
 
-	############################################################################
+	###########################################################################
 	def terminal(self):
 		""" Whether or not this container is responsible for producing backend-
 			specific operations.
@@ -467,4 +468,4 @@ class Container:
 		"""
 		raise NotImplementedError
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

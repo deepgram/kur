@@ -20,7 +20,7 @@ import struct
 import warnings
 import numpy
 
-################################################################################
+###############################################################################
 def _read(fh, num_bytes):
 	""" Reads a number of bytes, throwing an exception if that many bytes isn't
 		available.
@@ -30,7 +30,7 @@ def _read(fh, num_bytes):
 		raise IOError('Unexpected end-of-file.')
 	return result
 
-################################################################################
+###############################################################################
 def save(filename, data, append=False):
 	""" Saves data to an IDX file.
 	"""
@@ -90,7 +90,7 @@ def save(filename, data, append=False):
 	with open(filename, 'ab') as fh:
 		fh.write(data.tostring())
 
-############################################################################
+###############################################################################
 def load(filename):
 	""" Loads an IDX file.
 
@@ -152,4 +152,4 @@ def load(filename):
 	result = result.reshape(shape)
 	return result
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -16,12 +16,12 @@ limitations under the License.
 
 import os
 
-################################################################################
-class EnvironmentalVariable:			# pylint: disable=too-few-public-methods
+###############################################################################
+class EnvironmentalVariable:		# pylint: disable=too-few-public-methods
 	""" Context management for modifying environmental variables.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, **kwargs):
 		""" Creates a new EnvironmentalVariable manager.
 
@@ -33,7 +33,7 @@ class EnvironmentalVariable:			# pylint: disable=too-few-public-methods
 		self.vars = kwargs
 		self.old_vars = {}
 
-	############################################################################
+	###########################################################################
 	def __enter__(self):
 		""" Enters the context, setting the temporary environmental variables.
 		"""
@@ -46,7 +46,7 @@ class EnvironmentalVariable:			# pylint: disable=too-few-public-methods
 			else:
 				os.environ[k] = v
 
-	############################################################################
+	###########################################################################
 	def __exit__(self, exc_type, exc_value, traceback):
 		""" Exists the context, restoring the original environmental variables.
 		"""
@@ -57,4 +57,4 @@ class EnvironmentalVariable:			# pylint: disable=too-few-public-methods
 			else:
 				os.environ[k] = v
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -24,7 +24,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 def get_hash(path):
 	""" Returns the SHA256 hash of a file.
 
@@ -43,7 +43,7 @@ def get_hash(path):
 	sha.update(data)
 	return sha.hexdigest()
 
-################################################################################
+###############################################################################
 def download_file(url, sha256=None, target_dir=None):
 	""" Downloads a URL to the system temporary directory.
 
@@ -110,4 +110,4 @@ def download_file(url, sha256=None, target_dir=None):
 
 	return target
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

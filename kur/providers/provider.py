@@ -19,8 +19,8 @@ from ..utils import get_subclasses
 
 logger = logging.getLogger(__name__)
 
-################################################################################
-class Provider:							# pylint: disable=too-few-public-methods
+###############################################################################
+class Provider:						# pylint: disable=too-few-public-methods
 	""" Base class for all data providers.
 
 		Data providers take a set of data sources and synchronize their inputs,
@@ -37,9 +37,9 @@ class Provider:							# pylint: disable=too-few-public-methods
 		- Whenever any Source iterator finishes, the entire Provider stops
 		  iterating.
 		- Whenever a Provider stops iterating, that is the end of the epoch.
-		- Whenever a Provider starts iterating (at the beginning of each epoch),
-		  it creates new iterators for each Source. Source iterators are not
-		  persisted across Provider iterations.
+		- Whenever a Provider starts iterating (at the beginning of each
+		  epoch), it creates new iterators for each Source. Source iterators
+		  are not persisted across Provider iterations.
 		- Sources are permitted to be different lengths.
 		- Because the Provider stops iterating (and terminates the epoch) as
 		  soon as the first (shortest) Source completes, and because Sources
@@ -58,7 +58,7 @@ class Provider:							# pylint: disable=too-few-public-methods
 		  infinite Provider to complete data providing for the epoch.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the provider.
@@ -69,7 +69,7 @@ class Provider:							# pylint: disable=too-few-public-methods
 		"""
 		return cls.__name__.lower()
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_all_providers():
 		""" Returns an iterator to the names of all providers.
@@ -77,7 +77,7 @@ class Provider:							# pylint: disable=too-few-public-methods
 		for cls in get_subclasses(Provider):
 			yield cls
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_provider_by_name(name):
 		""" Finds a provider class with the given name.
@@ -88,16 +88,16 @@ class Provider:							# pylint: disable=too-few-public-methods
 				return cls
 		raise ValueError('No such provider with name "{}"'.format(name))
 
-	############################################################################
+	###########################################################################
 	def __init__(self, sources):
 		""" Create a new data provider.
 
 			# Arguments
 
 			sources: dict or list. If this is a list, then it is a list of
-				Sources. If this is a dictionary, its values are Sources and its
-				keys are string names that are used by the training process to
-				determine which nodes in the network should receive which
+				Sources. If this is a dictionary, its values are Sources and
+				its keys are string names that are used by the training process
+				to determine which nodes in the network should receive which
 				information.
 		"""
 		if isinstance(sources, list):
@@ -129,28 +129,28 @@ class Provider:							# pylint: disable=too-few-public-methods
 							for k, v in zip(self.keys, lens)
 						)
 					)
-				logger.info('Mixed source lengths. Make sure you know what you '
-					'are doing. %s', msg)
+				logger.info('Mixed source lengths. Make sure you know what '
+					'you are doing. %s', msg)
 		else:
 			# There are no finite sources.
 			self.entries = None
 		self.lens = lens
 
-	############################################################################
+	###########################################################################
 	def pre_iter(self):
 		""" This is a hook that is called whenever the provider begins
 			generating data for the next epoch.
 		"""
 		pass
 
-	############################################################################
+	###########################################################################
 	def __iter__(self):
 		""" Return an iterator which can generate batches of data.
 
-			The iterator should return a tensor of shape `(X, ) + self.shape()`,
-			where `X` is number of entries in the batch returned by this
-			provider (it is implementation-specific, but will be used by the
-			training/testing/evauation process as a batch).
+			The iterator should return a tensor of shape `(X, ) +
+			self.shape()`, where `X` is number of entries in the batch returned
+			by this provider (it is implementation-specific, but will be used
+			by the training/testing/evauation process as a batch).
 
 			# Notes:
 
@@ -159,7 +159,7 @@ class Provider:							# pylint: disable=too-few-public-methods
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def wrap(self, data):
 		""" Wraps data up in the same way it was presented to the Provider.
 
@@ -178,7 +178,7 @@ class Provider:							# pylint: disable=too-few-public-methods
 		else:
 			return data
 
-	############################################################################
+	###########################################################################
 	def __len__(self):
 		""" Returns the total number of entries that this provider returns per
 			epoch.
@@ -195,4 +195,4 @@ class Provider:							# pylint: disable=too-few-public-methods
 		"""
 		return self.entries
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

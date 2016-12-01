@@ -20,8 +20,8 @@ from . import ShuffleProvider
 
 logger = logging.getLogger(__name__)
 
-################################################################################
-class BatchProvider(ShuffleProvider):	# pylint: disable=too-few-public-methods
+###############################################################################
+class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 	""" A provider which tries to return the same number of samples at every
 		batch.
 
@@ -32,14 +32,14 @@ class BatchProvider(ShuffleProvider):	# pylint: disable=too-few-public-methods
 
 	DEFAULT_BATCH_SIZE = 32
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the provider.
 		"""
 		return 'batch_provider'
 
-	############################################################################
+	###########################################################################
 	def __init__(self, batch_size=None, num_batches=None, *args, **kwargs):
 		""" Creates a new batch provider.
 
@@ -62,14 +62,14 @@ class BatchProvider(ShuffleProvider):	# pylint: disable=too-few-public-methods
 					self.num_batches * self.batch_size
 				)
 
-	############################################################################
+	###########################################################################
 	def __iter__(self):
 		""" Retrieves the next batch of data.
 
 			# Return value
 
-			A tensor of shape `(X, ) + self.shape()`, where `X` is the number of
-			entries provided by this data source.
+			A tensor of shape `(X, ) + self.shape()`, where `X` is the number
+			of entries provided by this data source.
 		"""
 
 		# Should always be the first call in __iter__
@@ -91,9 +91,9 @@ class BatchProvider(ShuffleProvider):	# pylint: disable=too-few-public-methods
 				# Get enough data out of each one.
 				while len(queues[i]) < self.batch_size:
 
-					# Get the next batch. If there isn't any data left, flag it.
-					# After all, we may have collected at least some data during
-					# the `while` loop, and we should return that data.
+					# Get the next batch. If there isn't any data left, flag
+					# it.  After all, we may have collected at least some data
+					# during the `while` loop, and we should return that data.
 					x = next(it, sentinel)
 					if x is sentinel:
 						proceed = False
@@ -121,4 +121,4 @@ class BatchProvider(ShuffleProvider):	# pylint: disable=too-few-public-methods
 				raise ValueError('Unable to accumulate equal-length batches '
 					'for each data source.')
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

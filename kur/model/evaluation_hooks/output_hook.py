@@ -20,19 +20,19 @@ from . import EvaluationHook
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class OutputHook(EvaluationHook):
 	""" Evaluation hook for saving to disk.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the evaluation hook.
 		"""
 		return 'output'
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _save_as_pickle(target, data, truth=None):
 		""" Saves a file as a Python 3 pickle.
@@ -44,7 +44,7 @@ class OutputHook(EvaluationHook):
 		with open(target, 'wb') as fh:
 			pickle.dump(result, fh)
 
-	############################################################################
+	###########################################################################
 	def __init__(self, path=None, format=None, **kwargs): \
 		# pylint: disable=redefined-builtin
 		""" Creates a new output hook.
@@ -68,7 +68,7 @@ class OutputHook(EvaluationHook):
 			raise ValueError('No such handler for file format: {}'.format(
 				format))
 
-	############################################################################
+	###########################################################################
 	def apply(self, data, truth=None):
 		""" Applies the hook to the data.
 		"""
@@ -79,4 +79,4 @@ class OutputHook(EvaluationHook):
 		)
 		return data
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

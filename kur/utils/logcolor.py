@@ -33,7 +33,7 @@ COLORS = {
 	'CRITICAL': RED
 }
 
-################################################################################
+###############################################################################
 def basicConfig(**kwargs):						# pylint: disable=invalid-name
 	""" A convenience function which mimics the behavior of
 		`logging.basicConfig()`, but creates a color formatter.
@@ -43,8 +43,8 @@ def basicConfig(**kwargs):						# pylint: disable=invalid-name
 		return
 
 	if sum(k in kwargs for k in ('filename', 'handlers', 'stream')) > 1:
-		raise ValueError('Only one of "filename", "stream", and "handlers" can '
-			'be specified.')
+		raise ValueError('Only one of "filename", "stream", and "handlers" '
+			'can be specified.')
 
 	# Create the formatter
 	formatterArgs = {							# pylint: disable=invalid-name
@@ -74,7 +74,7 @@ def basicConfig(**kwargs):						# pylint: disable=invalid-name
 	if 'level' in kwargs:
 		logger.setLevel(kwargs['level'])
 
-################################################################################
+###############################################################################
 class ColorFormatter(logging.Formatter):
 	""" A formatter for Python's logging framework which can produce colored
 		logging statements.
@@ -109,7 +109,8 @@ class ColorFormatter(logging.Formatter):
 		stream.setFormatter(ColorFormatter(
 			# $COLOR triggers the start of a colored sequence
 			# $REST clears the coloring
-			fmt='$COLOR[{levelname} {asctime} {name}:{lineno}]$RESET {message}',
+			fmt='$COLOR[{levelname} {asctime} '
+				'{name}:{lineno}]$RESET {message}',
 			style='{'
 		))
 		logger.addHandler(stream)
@@ -128,7 +129,7 @@ class ColorFormatter(logging.Formatter):
 		```
 	"""
 
-	############################################################################
+	###########################################################################
 	def format(self, record):
 		""" Formats the log record using colors.
 		"""
@@ -143,4 +144,4 @@ class ColorFormatter(logging.Formatter):
 		# Return the result, and terminate it in a reset just to be safe.
 		return message + RESET_SEQ
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

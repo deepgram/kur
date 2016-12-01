@@ -17,7 +17,7 @@ limitations under the License.
 from . import Operator
 from . import ParsingError
 
-################################################################################
+###############################################################################
 class ForLoop(Operator):				# pylint: disable=too-few-public-methods
 	""" A classic "for" loop for creating more complex or arbitrary length
 		models.
@@ -33,7 +33,7 @@ class ForLoop(Operator):				# pylint: disable=too-few-public-methods
 		```
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_container_name(cls):
 		""" Returns the name of the container class.
@@ -44,7 +44,7 @@ class ForLoop(Operator):				# pylint: disable=too-few-public-methods
 		"""
 		return 'for'
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Create a new for loop.
 		"""
@@ -52,7 +52,7 @@ class ForLoop(Operator):				# pylint: disable=too-few-public-methods
 		self.limit = None
 		self.index = None
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parse and construct the child containers.
 		"""
@@ -85,11 +85,11 @@ class ForLoop(Operator):				# pylint: disable=too-few-public-methods
 				for entry in target:
 					self.new_child_from_data(entry).parse(engine)
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Construct each child.
 		"""
 		for child in self.children:
 			yield from child.build(backend)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

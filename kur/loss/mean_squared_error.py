@@ -16,20 +16,20 @@ limitations under the License.
 
 from . import Loss
 
-################################################################################
+###############################################################################
 class MeanSquaredError(Loss):
 	""" Mean squared error: a simple loss function to minimize distance between
 		the model output and the true value.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the loss function.
 		"""
 		return 'mean_squared_error'
 
-	############################################################################
+	###########################################################################
 	def get_loss(self, backend):
 
 		if backend.get_name() == 'keras':
@@ -38,4 +38,4 @@ class MeanSquaredError(Loss):
 			raise ValueError('Unsupported backend "{}" for loss function "{}"'
 				.format(backend.get_name(), self.get_name()))
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

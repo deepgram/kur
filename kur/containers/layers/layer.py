@@ -16,18 +16,18 @@ limitations under the License.
 
 from .. import Container
 
-################################################################################
+###############################################################################
 class Layer(Container):						# pylint: disable=abstract-method
 	""" Base class for layers, which are containers that produce
 		backend-specific layers, or which wrap backend-specific layers with
 		additional backend-specific operations.
 	"""
 
-	############################################################################
+	###########################################################################
 	def terminal(self):
 		""" The identifying feature of a Layer is that it is terminal, meaning
 			that it actually produces layers.
 		"""
 		return True
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

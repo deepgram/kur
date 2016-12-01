@@ -17,27 +17,27 @@ limitations under the License.
 import yaml
 from . import Reader
 
-################################################################################
+###############################################################################
 class YamlReader(Reader):
 	""" A YAML reader.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the reader.
 		"""
 		return 'yaml'
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def supported_filetypes(cls):
 		""" Returns a list of supported file extensions.
 		"""
 		return ('yml', 'yaml')
 
-	############################################################################
-	def read(self, data):	# pylint: disable=no-self-use
+	###########################################################################
+	def read(self, data):						# pylint: disable=no-self-use
 		""" Reads the data and returns a native Python dictionary.
 
 			# Arguments
@@ -55,4 +55,4 @@ class YamlReader(Reader):
 		"""
 		return yaml.load(data)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -21,7 +21,7 @@ from ..utils import get_subclasses, Timer, CriticalSection
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class Logger:
 	""" Base class for loggers.
 
@@ -29,7 +29,7 @@ class Logger:
 		(such as loss).
 	"""
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def from_specification(spec):
 		""" Creates a new evaluation hook from a specification.
@@ -59,7 +59,7 @@ class Logger:
 
 		return cls(**params)
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the logger.
@@ -70,7 +70,7 @@ class Logger:
 		"""
 		return cls.__name__.lower()
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_all_loggers():
 		""" Returns an iterator to the names of all logger.
@@ -78,7 +78,7 @@ class Logger:
 		for cls in get_subclasses(Logger):
 			yield cls
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_logger_by_name(name):
 		""" Finds a logger class with the given name.
@@ -89,7 +89,7 @@ class Logger:
 				return cls
 		raise ValueError('No such logger with name "{}"'.format(name))
 
-	############################################################################
+	###########################################################################
 	def __init__(self, keep_batch=False, rate=None, **kwargs):
 		""" Creates a new logger.
 
@@ -128,13 +128,13 @@ class Logger:
 
 		self._clear()
 
-	############################################################################
+	###########################################################################
 	def _clear(self):
 		""" Clears the stored data.
 		"""
 		self.data = {k : {} for k in ('batch', 'training', 'validation')}
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _get_dtype(entry):
 		""" Finds an appropriate numpy datatype for the given data value.
@@ -150,7 +150,7 @@ class Logger:
 		# Floats, empty lists, and "other" types all get mapped to this default.
 		return numpy.dtype('float32')
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _get_shape(entry):
 		""" Determines the shape of a data value.
@@ -163,7 +163,7 @@ class Logger:
 
 		return ()
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _prepare_like(entry, num_entries):
 		""" Allocates a numpy array to hold a certain number of data values.
@@ -173,7 +173,7 @@ class Logger:
 			dtype=Logger._get_dtype(entry)
 		)
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _arrange(data):
 		""" Neatly arranges data in a Numpy array.
@@ -200,7 +200,7 @@ class Logger:
 				result[k][i] = v
 		return result
 
-	############################################################################
+	###########################################################################
 	def flush(self):
 		""" Hook for asking the logger to process log information in its queue.
 		"""
@@ -215,7 +215,7 @@ class Logger:
 			self._clear()
 			self.timer.restart()
 
-	############################################################################
+	###########################################################################
 	def _push(self, data_type, tag, data):
 		""" Helper function for pushing data into the storage queue.
 		"""
@@ -226,7 +226,7 @@ class Logger:
 				data['total'] = sum(data.values())
 		self.data[data_type][tag].append(data)
 
-	############################################################################
+	###########################################################################
 	def log_batch(self, data, tag=None):
 		""" Log training information after a batch.
 		"""
@@ -239,21 +239,21 @@ class Logger:
 				(self.rate is not None and self.timer.get() > self.rate):
 			self.flush()
 
-	############################################################################
+	###########################################################################
 	def log_training(self, data, tag=None):
 		""" Log training statistics after an epoch.
 		"""
 		self._push('training', tag, data)
 		self.flush()
 
-	############################################################################
+	###########################################################################
 	def log_validation(self, data, tag=None):
 		""" Log training statistics after a validation run.
 		"""
 		self._push('validation', tag, data)
 		self.flush()
 
-	############################################################################
+	###########################################################################
 	def get_best_training_loss(self):
 		""" Returns the best historical training loss.
 
@@ -264,7 +264,7 @@ class Logger:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def get_best_validation_loss(self):
 		""" Returns the best historical validation loss.
 
@@ -275,7 +275,7 @@ class Logger:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def get_number_of_epochs(self):
 		""" Returns the number of epochs this model has historically completed.
 
@@ -286,7 +286,7 @@ class Logger:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def process(self, data, data_type, tag=None):
 		""" Processes training statistics.
 
@@ -324,4 +324,4 @@ class Logger:
 from .binary_logger import BinaryLogger	# pylint: disable=wrong-import-position
 Logger.DEFAULT_LOGGER = BinaryLogger
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

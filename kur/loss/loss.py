@@ -16,12 +16,12 @@ limitations under the License.
 
 from ..utils import get_subclasses
 
-################################################################################
+###############################################################################
 class Loss:
 	""" Base class for all loss functions (also called objective functions).
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the loss function.
@@ -32,7 +32,7 @@ class Loss:
 		"""
 		return cls.__name__.lower()
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_all_losses():
 		""" Returns an iterator to the names of all loss functions.
@@ -40,7 +40,7 @@ class Loss:
 		for cls in get_subclasses(Loss):
 			yield cls
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_loss_by_name(name):
 		""" Finds a loss function class with the given name.
@@ -51,7 +51,7 @@ class Loss:
 				return cls
 		raise ValueError('No such loss function with name "{}"'.format(name))
 
-	############################################################################
+	###########################################################################
 	def __init__(self, weight=None):
 		""" Creates a new loss function.
 
@@ -63,28 +63,29 @@ class Loss:
 		"""
 		self.weight = 1.0 if weight is None else weight
 
-	############################################################################
+	###########################################################################
 	def get_weight(self):
 		""" Returns the loss function weight.
 		"""
 		return self.weight
 
-	############################################################################
+	###########################################################################
 	def get_loss(self, backend):
 		""" Returns the loss function that can be used by the implementation-
 			specific model.
 		"""
 		raise NotImplementedError
 
-	############################################################################
-	def modify(self, model, name): # pylint: disable=unused-argument,no-self-use
+	###########################################################################
+	def modify(self, model, name): \
+		# pylint: disable=unused-argument,no-self-use
 		""" Modify/extend the model to fit this loss function.
 
 			Some loss functions will want to modify the model in some way in
 			order to properly instrument the model. For example, CTC loss is a
 			little different in the sense that it wants additional inputs at
-			training and evaluation time. Many loss functions, however, will not
-			need this functionality.
+			training and evaluation time. Many loss functions, however, will
+			not need this functionality.
 
 			# Arguments
 
@@ -100,4 +101,4 @@ class Loss:
 		"""
 		return name
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

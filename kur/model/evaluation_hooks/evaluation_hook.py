@@ -16,7 +16,7 @@ limitations under the License.
 
 from kur.utils import get_subclasses
 
-################################################################################
+###############################################################################
 class EvaluationHook:					# pylint: disable=too-few-public-methods
 	""" Base class for all evaluation hooks.
 
@@ -24,7 +24,7 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 		modifying or reviewing the evaluation results.
 	"""
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def from_specification(spec):
 		""" Creates a new evaluation hook from a specification.
@@ -77,7 +77,7 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 
 		return target(**params)
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the evaluation hook.
@@ -88,7 +88,7 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 		"""
 		return cls.__name__.lower()
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_all_hooks():
 		""" Returns an iterator to the names of all evaluation hooks.
@@ -96,7 +96,7 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 		for cls in get_subclasses(EvaluationHook):
 			yield cls
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_hook_by_name(name):
 		""" Finds a evaluation hook class with the given name.
@@ -107,7 +107,7 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 				return cls
 		raise ValueError('No such evaluation hook with name "{}"'.format(name))
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new evaluation hook.
 		"""
@@ -117,7 +117,7 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 					', '.join(args + list(kwargs.keys()))
 			))
 
-	############################################################################
+	###########################################################################
 	def apply(self, data, truth=None):
 		""" Applies the hook to the data.
 
@@ -135,4 +135,4 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 		"""
 		raise NotImplementedError
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -16,18 +16,18 @@ limitations under the License.
 
 from . import Layer
 
-################################################################################
+###############################################################################
 class Flatten(Layer):					# pylint: disable=too-few-public-methods
 	""" A layer which flattens the input tensor.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new flattening layer.
 		"""
 		super().__init__(*args, **kwargs)
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Create the backend-specific placeholder.
 		"""
@@ -42,4 +42,4 @@ class Flatten(Layer):					# pylint: disable=too-few-public-methods
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

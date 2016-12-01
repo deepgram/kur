@@ -19,7 +19,7 @@ from . import Operator
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class Debug(Operator):					# pylint: disable=too-few-public-methods
 	""" Simple debug message printer.
 
@@ -36,24 +36,24 @@ class Debug(Operator):					# pylint: disable=too-few-public-methods
 		```
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Create a new debug container.
 		"""
 		super().__init__(*args, **kwargs)
 		self.message = None
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parse the debug statement and print it.
 		"""
 		super()._parse(engine)
 		logger.debug('Container %s says: %s', self.name, self.args)
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):	# pylint: disable=unused-argument,no-self-use
 		""" Debug statements don't produce layers.
 		"""
 		return iter(())
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

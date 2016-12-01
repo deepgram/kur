@@ -16,14 +16,14 @@ limitations under the License.
 
 from . import Layer, ParsingError
 
-################################################################################
+###############################################################################
 class Dense(Layer):						# pylint: disable=too-few-public-methods
 	""" A fully-connected layer.
 	"""
 
 	DEFAULT_AUTO_FLATTEN = False
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new dense layer.
 		"""
@@ -31,7 +31,7 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 		self.size = None
 		self.auto_flatten = None
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parse the layer.
 		"""
@@ -65,7 +65,7 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 			raise ParsingError('"auto_flatten" key in Dense layer must be '
 				'boolean. Received: {}'.format(self.auto_flatten))
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Create the backend-specific placeholder.
 		"""
@@ -88,4 +88,4 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

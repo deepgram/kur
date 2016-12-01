@@ -17,7 +17,7 @@ limitations under the License.
 import contextlib
 import sys
 
-################################################################################
+###############################################################################
 def redirect_stderr(x):
 	""" Redirects stderr to another file-like object.
 
@@ -39,4 +39,4 @@ def redirect_stderr(x):
 
 	return result(x)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

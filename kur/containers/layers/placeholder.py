@@ -20,7 +20,7 @@ from . import Layer, ParsingError
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 	""" A shape placeholder which serves as a size hint, typically used as the
 		first layer for each input to the model.
@@ -28,21 +28,21 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 		Placeholders are also convenient places to name an input stream.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_container_name(cls):
 		""" Returns the name of the container class.
 		"""
 		return 'input'
 
-	############################################################################
+	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new placeholder.
 		"""
 		super().__init__(*args, **kwargs)
 		self.shape = None
 
-	############################################################################
+	###########################################################################
 	def _parse_pre(self, engine):
 		""" Pre-parsing hook.
 		"""
@@ -66,7 +66,7 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 				self.data
 			))
 
-	############################################################################
+	###########################################################################
 	def set_shape(self, shape):
 		""" Sets a shape.
 		"""
@@ -84,7 +84,7 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 				)
 		self.shape = shape
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parse the placeholder.
 		"""
@@ -96,7 +96,7 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 		else:
 			self.set_shape(engine.evaluate(self.args['shape'], recursive=True))
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Create the backend-specific placeholder.
 		"""
@@ -115,4 +115,4 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 		else:
 			raise ValueError('Unknown or unsupported backend: {}'.format(backend))
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

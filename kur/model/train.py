@@ -21,12 +21,12 @@ from ..utils import get_any_value, CriticalSection
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class Trainer:
 	""" Class for training models.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, model, loss, optimizer=None):
 		""" Creates a new trainer.
 
@@ -42,7 +42,7 @@ class Trainer:
 
 		self._compiled = None
 
-	############################################################################
+	###########################################################################
 	def compile(self, recompile=False):
 		""" Compiles a model.
 
@@ -65,8 +65,8 @@ class Trainer:
 		if not self.model.is_built():
 			logger.warning('This model has never been built before. We are '
 				'going to try to build it now. But the model should always be '
-				'built with Model.build() before trying to compile it, just to '
-				'ensure that everything has been parsed as you expect.')
+				'built with Model.build() before trying to compile it, just '
+				'to ensure that everything has been parsed as you expect.')
 			self.model.build()
 
 		logger.debug('Recompiling the model.')
@@ -76,7 +76,7 @@ class Trainer:
 			optimizer=self.optimizer
 		)
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def source_shapes(provider):
 		""" Prints debug information about the sources in this provider.
@@ -91,14 +91,14 @@ class Trainer:
 				logger.debug('Data source "%s": entries=%s, shape=%s',
 					name, len(source), source.shape())
 
-	############################################################################
+	###########################################################################
 	def test(self, provider, validating=False):
 		""" Tests/validates the model on some data.
 
 			# Arguments
 
-			provider: Provider instance. The data provider which serves the data
-				to be evaluated on.
+			provider: Provider instance. The data provider which serves the
+				data to be evaluated on.
 			validating: bool (default: False). If False, the console output
 				refers to this process as "testing"; otherwise, it is referred
 				to as "validating."
@@ -166,7 +166,7 @@ class Trainer:
 
 		return test_loss
 
-	############################################################################
+	###########################################################################
 	def train(self, *args, last_weights=None, log=None, **kwargs):
 		""" Trains the model on some data.
 
@@ -189,18 +189,18 @@ class Trainer:
 			if log is not None:
 				log.flush()
 
-	############################################################################
+	###########################################################################
 	def wrapped_train(self, provider, *, validation=None, epochs=None,
 		log=None, best_train=None, best_valid=None):
 		""" Trains the model on some data.
 
 			# Arguments
 
-			provider: Provider instance. The data provider which serves the data
-				to be trained on.
+			provider: Provider instance. The data provider which serves the
+				data to be trained on.
 			validation: Provider instance or None (default: None). The data
 				provider which serves validation data.
-			epochs: int or None (default: None). The number of epochs to traing
+			epochs: int or None (default: None). The number of epochs to train
 				for, or None to train forever.
 			log: Log instance or None (default: None). The logger to save
 				training statistics with.
@@ -353,4 +353,4 @@ class Trainer:
 				if log is not None:
 					log.log_validation(validation_loss, 'loss')
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

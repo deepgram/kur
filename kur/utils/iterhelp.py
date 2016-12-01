@@ -16,7 +16,7 @@ limitations under the License.
 
 from collections import OrderedDict
 
-################################################################################
+###############################################################################
 def get_any_value(x):
 	""" Returns a value of a dict, list, or tuple.
 
@@ -37,7 +37,7 @@ def get_any_value(x):
 		return x[0]
 	raise ValueError('Unexpected data type: {}'.format(type(x)))
 
-################################################################################
+###############################################################################
 def get_any_key(x):
 	""" Returns a key from a dictionary.
 
@@ -56,7 +56,7 @@ def get_any_key(x):
 	else:
 		return None
 
-################################################################################
+###############################################################################
 def merge_dict(*args):
 	""" Merges any number of dictionaries into a single dictionary.
 
@@ -76,4 +76,4 @@ def merge_dict(*args):
 		result.update(x)
 	return result
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -16,12 +16,12 @@ limitations under the License.
 
 from ..utils import get_subclasses
 
-################################################################################
+###############################################################################
 class Optimizer:
 	""" Base class for all optimizers
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the optimizer.
@@ -32,7 +32,7 @@ class Optimizer:
 		"""
 		return cls.__name__.lower()
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_all_optimizers():
 		""" Returns an iterator to the names of all optimizers.
@@ -40,7 +40,7 @@ class Optimizer:
 		for cls in get_subclasses(Optimizer):
 			yield cls
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_optimizer_by_name(name):
 		""" Finds a optimizer class with the given name.
@@ -51,17 +51,17 @@ class Optimizer:
 				return cls
 		raise ValueError('No such optimizer with name "{}"'.format(name))
 
-	############################################################################
+	###########################################################################
 	def __init__(self):
 		""" Creates a new optimizer.
 		"""
 		pass
 
-	############################################################################
+	###########################################################################
 	def get_optimizer(self, backend):
 		""" Returns the optimizer that can be used by the implementation-
 			specific model.
 		"""
 		raise NotImplementedError
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

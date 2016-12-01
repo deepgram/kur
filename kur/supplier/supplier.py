@@ -16,7 +16,7 @@ limitations under the License.
 
 from ..utils import get_subclasses, get_any_value
 
-################################################################################
+###############################################################################
 class Supplier:
 	""" Base class for all suppliers.
 
@@ -25,7 +25,7 @@ class Supplier:
 		parsing out the individual Sources.
 	"""
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def from_specification(spec):
 		""" Creates a new Supplier from a specification.
@@ -40,8 +40,8 @@ class Supplier:
 		) & set(spec.keys())
 
 		if not candidates:
-			raise ValueError('Missing the key naming the Supplier type from an '
-				'element of the "input" list. Valid keys are: {}'.format(
+			raise ValueError('Missing the key naming the Supplier type from '
+				'an element of the "input" list. Valid keys are: {}'.format(
 				', '.join(Supplier.get_all_suppliers())
 			))
 		if len(candidates) > 1:
@@ -72,7 +72,7 @@ class Supplier:
 
 		return result
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the supplier.
@@ -83,7 +83,7 @@ class Supplier:
 		"""
 		return cls.__name__.lower()
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_all_suppliers():
 		""" Returns an iterator to the names of all suppliers.
@@ -91,7 +91,7 @@ class Supplier:
 		for cls in get_subclasses(Supplier):
 			yield cls
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_supplier_by_name(name):
 		""" Finds a supplier class with the given name.
@@ -102,19 +102,19 @@ class Supplier:
 				return cls
 		raise ValueError('No such supplier with name "{}"'.format(name))
 
-	############################################################################
+	###########################################################################
 	def __init__(self, name=None):
 		""" Creates a new supplier.
 		"""
 		self.name = name
 
-	############################################################################
+	###########################################################################
 	def is_delegate(self):						# pylint: disable=no-self-use
 		""" Returns True if this supplier supplies suppliers.
 		"""
 		return False
 
-	############################################################################
+	###########################################################################
 	def get_delegates(self):					# pylint: disable=no-self-use
 		""" Returns a dictionary or list of suppliers that this supplier
 			supplies.
@@ -132,18 +132,18 @@ class Supplier:
 		"""
 		return {}
 
-	############################################################################
+	###########################################################################
 	def get_sources(self, sources=None):
 		""" Returns a dictionary or list of data sources, as provided by this
 			supplier.
 
 			# Arguments
 
-			sources: int or str, or a list of int or str. The sources to return.
-				Passing a bare integer or string is equivalent to passing a list
-				containing that single item. Only sources with those indices
-				(or keys) are returned. If sources is None, then all sources are
-				returned.
+			sources: int or str, or a list of int or str. The sources to
+				return. Passing a bare integer or string is equivalent to
+				passing a list containing that single item. Only sources with
+				those indices (or keys) are returned. If sources is None, then
+				all sources are returned.
 
 			# Return value
 
@@ -151,7 +151,7 @@ class Supplier:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def get_source(self, source):
 		""" Returns a single data source.
 
@@ -166,8 +166,8 @@ class Supplier:
 
 			A Source instance.
 		"""
-		# By default, we'll just use our more general `get_sources()` call to do
-		# all the work.
+		# By default, we'll just use our more general `get_sources()` call to
+		# do all the work.
 		return get_any_value(self.get_sources(sources=(source, )))
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

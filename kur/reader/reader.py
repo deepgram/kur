@@ -17,16 +17,16 @@ limitations under the License.
 import os
 from kur.utils import get_subclasses
 
-################################################################################
+###############################################################################
 class Reader:
 	""" Base class for all readers.
 
 		Readers are responsible for reading files and constructing parsable
-		Python objects out of the encoded data. For an example, you might have a
-		JSON reader, a YAML reader, etc.
+		Python objects out of the encoded data. For an example, you might have
+		a JSON reader, a YAML reader, etc.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the reader.
@@ -37,7 +37,7 @@ class Reader:
 		"""
 		return cls.__name__.lower()
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_all_readers():
 		""" Returns all Reader subclasses.
@@ -45,7 +45,7 @@ class Reader:
 		for cls in get_subclasses(Reader):
 			yield cls
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_reader_by_name(name):
 		""" Finds a reader class with the given name.
@@ -56,7 +56,7 @@ class Reader:
 				return cls
 		raise ValueError('No such reader with name "{}"'.format(name))
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def supported_filetypes(cls):
 		""" Returns a list of supported file extensions.
@@ -72,7 +72,7 @@ class Reader:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_reader_for_file(filename):
 		""" Returns the first Reader that claims to be able to read the given
@@ -97,10 +97,9 @@ class Reader:
 				return cls
 
 		raise ValueError(
-			'No such reader could be found for file: {}'.format(filename)
-		)
+			'No such reader could be found for file: {}'.format(filename))
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def read_file(filename):
 		""" Convenience function for reading data from a file.
@@ -109,7 +108,7 @@ class Reader:
 		with open(filename) as fh:
 			return reader.read(fh.read())
 
-	############################################################################
+	###########################################################################
 	def read(self, data):
 		""" Reads the data and returns a native Python dictionary.
 
@@ -123,4 +122,4 @@ class Reader:
 		"""
 		raise NotImplementedError
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

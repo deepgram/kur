@@ -20,20 +20,20 @@ from . import EvaluationHook
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class MnistHook(EvaluationHook):
 	""" Post-evaluation hook for MNIST data, which prints summary statistics
 		specific to the MNIST data set.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the evaluation hook.
 		"""
 		return 'mnist'
 
-	############################################################################
+	###########################################################################
 	def apply(self, data, truth=None):
 		""" Applies the hook to the data.
 		"""
@@ -100,4 +100,4 @@ class MnistHook(EvaluationHook):
 
 		return data
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -33,7 +33,7 @@ from ..loggers import Logger
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class Specification:
 	""" Class for loading and parsing specification files.
 	"""
@@ -41,7 +41,7 @@ class Specification:
 	DEFAULT_OPTIMIZER = Adam
 	DEFAULT_PROVIDER = BatchProvider
 
-	############################################################################
+	###########################################################################
 	def __init__(self, source, engine):
 		""" Creates a new specification.
 
@@ -73,7 +73,7 @@ class Specification:
 		self.backend = None
 		self.engine = engine
 
-	############################################################################
+	###########################################################################
 	def parse(self):
 		""" Parses the specification.
 		"""
@@ -131,10 +131,10 @@ class Specification:
 				if key in section:
 					break
 			else:
-				warnings.warn('Unexpected section in specification: "{}". This '
-					'section will be ignored.', SyntaxWarning)
+				warnings.warn('Unexpected section in specification: "{}". '
+					'This section will be ignored.', SyntaxWarning)
 
-	############################################################################
+	###########################################################################
 	def apply_provider_knowledge(self, provider):
 		""" Enables inference of tensor shapes by modifying the parsed
 			containers given provider information.
@@ -179,7 +179,7 @@ class Specification:
 					logger.debug('Input "%s" already has a shape.',
 						target.name)
 
-	############################################################################
+	###########################################################################
 	def get_model(self, provider=None):
 		""" Returns the parsed Model instance.
 		"""
@@ -196,7 +196,7 @@ class Specification:
 			self.model.build()
 		return self.model
 
-	############################################################################
+	###########################################################################
 	def get_backend(self):
 		""" Creates a new backend from the specification.
 
@@ -219,7 +219,7 @@ class Specification:
 			)
 		return self.backend
 
-	############################################################################
+	###########################################################################
 	def get_provider(self, section):
 		""" Creates the provider corresponding to a part of the specification.
 
@@ -252,7 +252,7 @@ class Specification:
 			provider = Specification.DEFAULT_PROVIDER
 
 		# TODO: merge_dict is good for different columns, but we may need to
-		#       concatenate columns with the same names. Need ConcatenateSource.
+		#   concatenate columns with the same names. Need ConcatenateSource.
 		return provider(
 			sources=merge_dict(
 				*[supplier.get_sources() for supplier in suppliers]
@@ -260,7 +260,7 @@ class Specification:
 			**provider_spec		# Everything remaining are parameters.
 		)
 
-	############################################################################
+	###########################################################################
 	def get_training_function(self):
 		""" Returns a function that will train the model.
 		"""
@@ -326,11 +326,11 @@ class Specification:
 				if os.path.isfile(initial_weights):
 					model.restore(initial_weights)
 				elif initial_must_exist:
-					logger.error('Configuration indicates that the weight file '
-						'must exist, but the weight file was not found.')
-					raise ValueError('Missing initial weight file. If you want '
-						'to proceed anyway, set "must_exist" to "no" under the '
-						'training "weights" section.')
+					logger.error('Configuration indicates that the weight '
+						'file must exist, but the weight file was not found.')
+					raise ValueError('Missing initial weight file. If you '
+						'want to proceed anyway, set "must_exist" to "no" '
+						'under the training "weights" section.')
 				else:
 					if log is not None and \
 						(log.get_number_of_epochs() or 0) > 0:
@@ -357,7 +357,7 @@ class Specification:
 
 		return func
 
-	############################################################################
+	###########################################################################
 	def get_testing_function(self):
 		""" Returns a function that will test the model.
 		"""
@@ -412,7 +412,7 @@ class Specification:
 
 		return func
 
-	############################################################################
+	###########################################################################
 	def get_trainer(self, with_optimizer=True):
 		""" Creates a new Trainer from the specification.
 
@@ -426,7 +426,7 @@ class Specification:
 			optimizer=self.get_optimizer() if with_optimizer else None
 		)
 
-	############################################################################
+	###########################################################################
 	def get_optimizer(self):
 		""" Creates a new Optimizer from the specification.
 
@@ -446,7 +446,7 @@ class Specification:
 
 		return optimizer(**spec)
 
-	############################################################################
+	###########################################################################
 	def get_loss(self):
 		""" Creates a new Loss from the specification.
 
@@ -461,7 +461,8 @@ class Specification:
 
 		spec = self.data['loss']
 		if not isinstance(spec, (list, tuple)):
-			raise ValueError('"loss" section expects a list of loss functions.')
+			raise ValueError('"loss" section expects a list of loss '
+				'functions.')
 
 		result = {}
 		for entry in spec:
@@ -475,8 +476,8 @@ class Specification:
 			name = entry.pop('name', None)
 			if name is None:
 				raise ValueError('Each loss function in the "loss" list '
-					'must have a "name" entry which names the loss function to '
-					'use for that output.')
+					'must have a "name" entry which names the loss function '
+					'to use for that output.')
 
 			if target in result:
 				logger.warning('A loss function for the "%s" output was '
@@ -486,13 +487,13 @@ class Specification:
 
 		return result
 
-	############################################################################
+	###########################################################################
 	def get_evaluation_function(self):
 		""" Returns a function that will evaluate the model.
 		"""
 		if 'evaluate' not in self.data:
-			raise ValueError('Cannot construct evaluation function. There is a '
-				'missing "evaluate" section.')
+			raise ValueError('Cannot construct evaluation function. There is '
+				'a missing "evaluate" section.')
 
 		provider = self.get_provider('evaluate')
 
@@ -518,11 +519,13 @@ class Specification:
 			destination = OutputHook(**destination)
 		elif destination is not None:
 			ValueError('Expected a string or dictionary value for '
-				'"destination" in "evaluate". Received: {}'.format(destination))
+				'"destination" in "evaluate". Received: {}'.format(
+					destination))
 
 		hooks = self.data['evaluate'].get('hooks', [])
 		if not isinstance(hooks, (list, tuple)):
-			raise ValueError('"hooks" should be a list of hook specifications.')
+			raise ValueError('"hooks" should be a list of hook '
+				'specifications.')
 		hooks = [EvaluationHook.from_specification(spec) for spec in hooks]
 
 		expand = lambda x: os.path.expanduser(os.path.expandvars(x))
@@ -560,7 +563,7 @@ class Specification:
 
 		return func
 
-	############################################################################
+	###########################################################################
 	def get_evaluator(self):
 		""" Creates a new Evaluator from the specification.
 
@@ -572,13 +575,14 @@ class Specification:
 			model=self.get_model()
 		)
 
-	############################################################################
+	###########################################################################
 	def _parse_model(self, engine, section, stack, *, required=True):
 		""" Parses the top-level "model" entry.
 
 			# Arguments
 
-			engine: Engine instance. The templating engine to use in evaluation.
+			engine: Engine instance. The templating engine to use in
+				evaluation.
 			section: str or list of str. The key indicating which top-level
 				entry to parse. If a list, the first matching key is used; this
 				allows for multiple aliases to the same section.
@@ -622,7 +626,7 @@ class Specification:
 
 		return containers
 
-	############################################################################
+	###########################################################################
 	def parse_source(self, engine, *,
 		source=None, context=None, loaded=None):
 		""" Parses a source, and its includes (recursively), and returns the
@@ -703,14 +707,15 @@ class Specification:
 
 		return data
 
-	############################################################################
+	###########################################################################
 	def _parse_section(self, engine, section, stack, *,
 		required=False, include_key=True):
 		""" Parses a single top-level entry in the specification.
 
 			# Arguments
 
-			engine: Engine instance. The templating engine to use in evaluation.
+			engine: Engine instance. The templating engine to use in
+				evaluation.
 			section: str or list of str. The key indicating which top-level
 				entry to parse. If a list, the first matching key is used; this
 				allows for multiple aliases to the same section.
@@ -762,11 +767,11 @@ class Specification:
 						.format(key))
 				stack.append(evaluated)
 
-		# Now, just in case this was aliased, let's make sure we keep our naming
-		# scheme consistent.
+		# Now, just in case this was aliased, let's make sure we keep our
+		# naming scheme consistent.
 		for key in section:
 			self.data[key] = evaluated
 
 		return evaluated
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -16,7 +16,7 @@ limitations under the License.
 
 from . import Operator
 
-################################################################################
+###############################################################################
 class ContainerGroup(Operator):			# pylint: disable=too-few-public-methods
 	""" A pseudo-container for holding other containers.
 
@@ -26,7 +26,7 @@ class ContainerGroup(Operator):			# pylint: disable=too-few-public-methods
 		containers to "find" other containers.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, containers):
 		""" Creates a new container group.
 
@@ -44,18 +44,18 @@ class ContainerGroup(Operator):			# pylint: disable=too-few-public-methods
 		for child in containers:
 			self.add_child(child)
 
-	############################################################################
+	###########################################################################
 	def _parse(self, engine):
 		""" Parse all children.
 		"""
 		for child in self.children:
 			child.parse(engine)
 
-	############################################################################
+	###########################################################################
 	def _build(self, backend):
 		""" Build all children.
 		"""
 		for child in self.children:
 			yield from child.build(backend)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

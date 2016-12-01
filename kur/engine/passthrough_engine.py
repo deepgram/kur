@@ -16,15 +16,15 @@ limitations under the License.
 
 from .engine import Engine
 
-################################################################################
+###############################################################################
 class PassthroughEngine(Engine):
 	""" An evaluation engine which does no parsing at all.
 	"""
 
-	############################################################################
+	###########################################################################
 	def _evaluate(self, expression):
 		""" Evaluates an expression in the current scope.
 		"""
 		return expression
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

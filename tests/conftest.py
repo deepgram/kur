@@ -26,7 +26,7 @@ from kur.model import Model
 from kur.providers import BatchProvider
 from kur.sources import VanillaSource
 
-################################################################################
+###############################################################################
 @pytest.fixture(
 	params=Backend.get_all_backends(supported_only=False)
 )
@@ -39,7 +39,7 @@ def a_backend(request):
 			.format(cls.get_name()))
 	return cls()
 
-################################################################################
+###############################################################################
 @pytest.fixture(
 	params=get_subclasses(Engine, recursive=True)
 )
@@ -48,7 +48,7 @@ def an_engine(request):
 	"""
 	return request.param()
 
-################################################################################
+###############################################################################
 def model_with_containers(backend, containers):
 	""" Convenience function for creating a model instance from the toy model
 		functions in this module (e.g., `simple_model()`).
@@ -61,7 +61,7 @@ def model_with_containers(backend, containers):
 		]
 	)
 
-################################################################################
+###############################################################################
 @pytest.fixture
 def simple_model(a_backend):
 	""" Returns a model that is extremely simple (one layer).
@@ -74,7 +74,7 @@ def simple_model(a_backend):
 		]
 	)
 
-################################################################################
+###############################################################################
 @pytest.fixture
 def simple_data():
 	""" Returns a small provider that can be used to train the `simple_model()`.
@@ -86,4 +86,4 @@ def simple_data():
 		}
 	)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

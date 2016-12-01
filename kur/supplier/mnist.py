@@ -15,31 +15,33 @@ limitations under the License.
 """
 
 import numpy
+
 from ..utils import download_file, idx
 from . import Supplier
 from ..sources import VanillaSource
 
-################################################################################
+###############################################################################
 class MnistSupplier(Supplier):
 	""" A supplier which supplies MNIST image/label pairs. These are downloaded
 		from the internet, verified, and parsed as IDX files.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the supplier.
 		"""
 		return 'mnist'
 
-	############################################################################
+	###########################################################################
 	def __init__(self, labels, images, *args, **kwargs):
 		""" Creates a new MNIST supplier.
 
 			# Arguments
 
-			labels: str or dict. If str, the path to the IDX file containing the
-				image labels. If a dict, it should follow one of these formats:
+			labels: str or dict. If str, the path to the IDX file containing
+				the image labels. If a dict, it should follow one of these
+				formats:
 
 				1. {"url" : URL, "sha256" : SHA256, "path" : PATH}, where URL
 				   is the source URL (if the image file needs downloading),
@@ -63,7 +65,7 @@ class MnistSupplier(Supplier):
 			)
 		}
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _onehot(source):
 		onehot = numpy.zeros((len(source), 10))
@@ -73,7 +75,7 @@ class MnistSupplier(Supplier):
 
 		return source
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _normalize(source):
 		# Numpy won't automatically promote the uint8 fields to float32.
@@ -87,7 +89,7 @@ class MnistSupplier(Supplier):
 
 		return source
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _get_filename(target):
 		""" Returns the filename associated with a particular target.
@@ -126,7 +128,7 @@ class MnistSupplier(Supplier):
 			raise ValueError('Unexpected data type for MNIST target: {}'
 				.format(target))
 
-	############################################################################
+	###########################################################################
 	def get_sources(self, sources=None):
 		""" Returns all sources from this provider.
 		"""
@@ -145,4 +147,4 @@ class MnistSupplier(Supplier):
 
 		return {k : self.data[k] for k in sources}
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

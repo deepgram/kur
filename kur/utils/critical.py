@@ -19,8 +19,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-################################################################################
-class CriticalSection:					# pylint: disable=too-few-public-methods
+###############################################################################
+class CriticalSection:				# pylint: disable=too-few-public-methods
 	""" Protects critical code from system signals (e.g., keyboard interrupts).
 
 		# Usage
@@ -41,7 +41,7 @@ class CriticalSection:					# pylint: disable=too-few-public-methods
 		```
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, signals=None):
 		if signals is None:
 			signals = signal.SIGINT
@@ -53,7 +53,7 @@ class CriticalSection:					# pylint: disable=too-few-public-methods
 		self.old_handlers = {}
 		self.received = {}
 
-	############################################################################
+	###########################################################################
 	def _handle(self, sig, *args):
 		if sig in self.received:
 			self.received[sig].append(args)
@@ -61,7 +61,7 @@ class CriticalSection:					# pylint: disable=too-few-public-methods
 		else:
 			logger.warning('Unexpected signal received: %s', sig)
 
-	############################################################################
+	###########################################################################
 	def __enter__(self):
 		""" Enters a critical section.
 		"""
@@ -80,7 +80,7 @@ class CriticalSection:					# pylint: disable=too-few-public-methods
 				handler
 			)
 
-	############################################################################
+	###########################################################################
 	def __exit__(self, exc_type, exc_value, traceback):
 		""" Leaves a critical section.
 		"""
@@ -95,4 +95,4 @@ class CriticalSection:					# pylint: disable=too-few-public-methods
 				for args in self.received[sig]:
 					handler(*args)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -29,8 +29,8 @@ ContainerNode = namedtuple('ContainerNode',
 	['inputs', 'container', 'sink', 'outputs']
 )
 
-################################################################################
-class Node:								# pylint: disable=too-few-public-methods
+###############################################################################
+class Node:							# pylint: disable=too-few-public-methods
 	""" Class for representing nodes in the low-level neural network graph.
 
 		Each Node instance represents one primitive tensor operation.
@@ -39,7 +39,7 @@ class Node:								# pylint: disable=too-few-public-methods
 	# Counter for tracking node IDs (used for debugging purposes).
 	counter = 0
 
-	############################################################################
+	###########################################################################
 	def __init__(self, inputs=None, operation=None, value=None, outputs=None):
 		""" Creates a new Node.
 
@@ -61,9 +61,10 @@ class Node:								# pylint: disable=too-few-public-methods
 		self.node_id = Node.counter
 		Node.counter += 1
 
-	############################################################################
+	###########################################################################
 	def __str__(self):
-		""" Return a string representation of this Node, suitable for debugging.
+		""" Return a string representation of this Node, suitable for
+			debugging.
 		"""
 		return 'Node(id={node_id}, inputs={inputs}, operation={operation}, ' \
 			'value={value}, outputs={outputs})'.format(
@@ -76,11 +77,11 @@ class Node:								# pylint: disable=too-few-public-methods
 					if self.outputs else None
 			)
 
-################################################################################
+###############################################################################
 class ExtensionCallback:
 	""" Callback interface for Model's extension callback hooks.
 	"""
-	############################################################################
+	###########################################################################
 	def extended(self, name):
 		""" Callback after an extension is added to a model.
 
@@ -90,7 +91,7 @@ class ExtensionCallback:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def retracted(self, name):
 		""" Callback after an extension is removed from a model.
 
@@ -100,15 +101,16 @@ class ExtensionCallback:
 		"""
 		raise NotImplementedError
 
-################################################################################
-class ExtensionState(ExtensionCallback):# pylint: disable=too-few-public-methods
+###############################################################################
+class ExtensionState(ExtensionCallback):\
+	# pylint: disable=too-few-public-methods
 	""" Context management for saving the state of the model's extensions.
 
 		This is useful for allowing an arbitrary number of temporary changes to
 		the model that should be discarded when the context is exited.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, model):
 		""" Create a new ExtensionState.
 
@@ -120,7 +122,7 @@ class ExtensionState(ExtensionCallback):# pylint: disable=too-few-public-methods
 		self.changed = False
 		self.extensions = OrderedDict()
 
-	############################################################################
+	###########################################################################
 	def __enter__(self):
 		""" Enter context management and keep track of the extensions that
 			change.
@@ -131,7 +133,7 @@ class ExtensionState(ExtensionCallback):# pylint: disable=too-few-public-methods
 		self.model.add_extension_callback(self)
 		return self
 
-	############################################################################
+	###########################################################################
 	def __exit__(self, exc_type, exc_value, traceback):
 		""" Exit context management and restore the extension state.
 		"""
@@ -139,7 +141,8 @@ class ExtensionState(ExtensionCallback):# pylint: disable=too-few-public-methods
 		self.model.remove_extension_callback(self)
 
 		if self.changed:
-			logger.debug('Reverting changes during extension state monitoring.')
+			logger.debug('Reverting changes during extension state '
+				'monitoring.')
 
 			# Remove all current extensions.
 			for name in reversed(self.model.extensions):
@@ -154,20 +157,20 @@ class ExtensionState(ExtensionCallback):# pylint: disable=too-few-public-methods
 		else:
 			logger.debug('Nothing changed during extension state monitoring.')
 
-	############################################################################
+	###########################################################################
 	def extended(self, name):
 		""" Callback after an extension is added to a model.
 		"""
 		self.changed = True
 
-	############################################################################
+	###########################################################################
 	def retracted(self, name):
 		""" Callback after an extension is removed from a model.
 		"""
 		self.changed = True
 
-################################################################################
-class Extension:						# pylint: disable=too-few-public-methods
+###############################################################################
+class Extension:					# pylint: disable=too-few-public-methods
 	""" Context management for model extension.
 
 		This is used to temporarily add an extension to a model. The extension
@@ -175,7 +178,7 @@ class Extension:						# pylint: disable=too-few-public-methods
 		exited.
 	"""
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _token(x):
 		""" Produces random strings of hexadecimal digits.
@@ -204,7 +207,7 @@ class Extension:						# pylint: disable=too-few-public-methods
 				result += state.hexdigest()
 			return result[:x*2]
 
-	############################################################################
+	###########################################################################
 	def __init__(self, model, containers, name=None):
 		""" Creates a new extension.
 
@@ -220,20 +223,20 @@ class Extension:						# pylint: disable=too-few-public-methods
 		self.containers = containers
 		self.name = name or Extension._token(16)
 
-	############################################################################
+	###########################################################################
 	def __enter__(self):
 		""" Enter the context manager and apply the extension.
 		"""
 		self.model.extend(self.name, self.containers)
 		return self
 
-	############################################################################
+	###########################################################################
 	def __exit__(self, exc_type, exc_value, traceback):
 		""" Exit the context manager and remove the extension.
 		"""
 		self.model.retract(self.name)
 
-################################################################################
+###############################################################################
 class Model:
 	""" Class for holding the model corresponding to a given container.
 
@@ -241,7 +244,7 @@ class Model:
 		backend, and it has tracked input and output connections.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, backend, containers):
 		""" Create a new model.
 
@@ -271,7 +274,7 @@ class Model:
 
 		self._parsed = False
 
-	############################################################################
+	###########################################################################
 	def add_extension_callback(self, extension_callback):
 		""" Adds an extension callback.
 
@@ -285,7 +288,7 @@ class Model:
 		"""
 		self.extension_callbacks.append(extension_callback)
 
-	############################################################################
+	###########################################################################
 	def remove_extension_callback(self, extension_callback):
 		""" Removes an extension callback.
 
@@ -296,7 +299,7 @@ class Model:
 		"""
 		self.extension_callbacks.remove(extension_callback)
 
-	############################################################################
+	###########################################################################
 	def save(self, filename):
 		""" Saves the model weights to the given filename.
 
@@ -312,7 +315,7 @@ class Model:
 		logger.debug('Saving model weights to: %s', filename)
 		self.backend.save(self, filename)
 
-	############################################################################
+	###########################################################################
 	def restore(self, filename):
 		""" Load the model weights from the given filename.
 
@@ -328,7 +331,7 @@ class Model:
 		logger.debug('Loading model weights from: %s', filename)
 		self.backend.restore(self, filename)
 
-	############################################################################
+	###########################################################################
 	def apply_provider_knowledge(self, provider):
 		""" Enables inference of tensor shapes by modifying the parsed
 			containers given provider information.
@@ -370,7 +373,7 @@ class Model:
 			else:
 				logger.debug('Input "%s" already has a shape.', target.name)
 
-	############################################################################
+	###########################################################################
 	def parse(self, engine):
 		""" Parses the model.
 		"""
@@ -381,7 +384,7 @@ class Model:
 			self.root.parse(engine)
 			self._parsed = True
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _assemble(container, inputs, previous, outputs, sink, result):
 		""" Enumerates all pieces of the model that must be built.
@@ -393,16 +396,18 @@ class Model:
 
 			container: Container instance. The container to assemble
 				ContainerNodes for.
-			inputs: list or None. If a list, it should be a list of strings that
-				indicate which containers are used as input to `container`.
+			inputs: list or None. If a list, it should be a list of strings
+				that indicate which containers are used as input to
+				`container`.
 			previous: str or None. If not None, then it is the name of the
 				most recent container that was assembled, and which would serve
 				as input to this container in the absence of any other explicit
 				inputs.
 			sink: bool. Whether or not the container is a sink.
 			outputs: list or None. If a list, it should be a list of strings
-				that indicate which names are associated with this `container`'s
-				output. There may be multiple names due to nested containers.
+				that indicate which names are associated with this
+				`container`'s output. There may be multiple names due to nested
+				containers.
 			result: list. The output list to populate with ContainerNodes.
 
 			# Return value
@@ -441,8 +446,8 @@ class Model:
 		else:
 			children = list(container.get_children(recursive=False))
 			for child in children:
-				# Only the very last container should get tagged with the parent
-				# container's output name.
+				# Only the very last container should get tagged with the
+				# parent container's output name.
 				first_child = child == children[0]
 				last_child = child == children[-1]
 				previous = Model._assemble(
@@ -455,7 +460,7 @@ class Model:
 				)
 			return previous
 
-	############################################################################
+	###########################################################################
 	def assemble(self):
 		""" Convenience function for constructing all the container-level graph
 			nodes.
@@ -475,7 +480,7 @@ class Model:
 		)
 		return result
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _attach_within_container(backend, container_nodes):
 		""" Instantiates the subgraphs of the low-level network that are
@@ -493,11 +498,11 @@ class Model:
 
 			A tuple `(network, endpoints)`, where `network` is a list of
 			partially constructed Nodes describing the network, and `endpoints`
-			is a dictionary containing unlinked Nodes. `endpoints` has two keys:
-			'input' and 'output', which indicate whether the nodes contained in
-			the respective keys are associated with the input or output ends of
-			the container. The values in `endpoint` are also dictionaries of
-			Nodes indexed by container name.
+			is a dictionary containing unlinked Nodes. `endpoints` has two
+			keys: 'input' and 'output', which indicate whether the nodes
+			contained in the respective keys are associated with the input or
+			output ends of the container. The values in `endpoint` are also
+			dictionaries of Nodes indexed by container name.
 		"""
 
 		network = []
@@ -532,7 +537,7 @@ class Model:
 
 		return network, endpoints
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _attach_between_containers(container_nodes, endpoints):
 		""" Finishes initializing low-level graph Nodes by enumerating
@@ -547,10 +552,10 @@ class Model:
 
 			# Return value
 
-			A tuple `(inputs, outputs)` where each of `inputs` and `outputs` are
-			`OrderedDict' instances. These ordered dictionaries have keys which
-			are the names of the containers associated with the inputs and
-			outputs of the network, respectively. The values of these
+			A tuple `(inputs, outputs)` where each of `inputs` and `outputs`
+			are `OrderedDict' instances. These ordered dictionaries have keys
+			which are the names of the containers associated with the inputs
+			and outputs of the network, respectively. The values of these
 			dictionaries are the Node instances themselves.
 		"""
 		# Data structures for holding the return values.
@@ -637,13 +642,13 @@ class Model:
 
 		return inputs, outputs
 
-	############################################################################
+	###########################################################################
 	def is_built(self):
 		""" Returns True if this model has been built at some point.
 		"""
 		return self.network is not None
 
-	############################################################################
+	###########################################################################
 	def build(self):
 		""" Builds the model.
 		"""
@@ -652,8 +657,8 @@ class Model:
 
 		if not self._parsed:
 			logger.warning('The model has not been parsed yet. We will try to '
-				'parse it without context, but this may easily fail. Make sure '
-				'Model.parse() is called before Model.build().')
+				'parse it without context, but this may easily fail. Make '
+				'sure Model.parse() is called before Model.build().')
 			self.parse(None)
 
 		# Construct the high-level network nodes.
@@ -688,7 +693,7 @@ class Model:
 		self.endpoints = endpoints
 		self.container_nodes = container_nodes
 
-	############################################################################
+	###########################################################################
 	def has_extension(self, name):
 		""" Returns True if the model has the current extension attached.
 
@@ -698,7 +703,7 @@ class Model:
 		"""
 		return name in self.extensions
 
-	############################################################################
+	###########################################################################
 	def extend(self, name, containers, rebuild=True):
 		""" Extends the model with additional nodes.
 
@@ -715,8 +720,8 @@ class Model:
 				explicitly (as when modifying extensions in a batch).
 		"""
 		if name in self.extensions:
-			raise ValueError('An extension with the same name has already been '
-				'applied: {}'.format(name))
+			raise ValueError('An extension with the same name has already '
+				'been applied: {}'.format(name))
 
 		self.extensions[name] = containers
 		for container in containers:
@@ -728,14 +733,14 @@ class Model:
 		for extension_callback in self.extension_callbacks:
 			extension_callback.extended(name)
 
-	############################################################################
+	###########################################################################
 	def retract(self, name, rebuild=True):
 		""" Removes a previously attached model extension.
 
 			# Arguments
 
-			name: str. The name of the extension to remove. If it doesn't exist,
-				a ValueError is raised.
+			name: str. The name of the extension to remove. If it doesn't
+				exist, a ValueError is raised.
 			rebuild: bool (default: True). Whether or not to rebuild the model
 				after the extension is removed. Generally, this is a very good
 				idea, and should only be False if `build()` will be called
@@ -760,7 +765,7 @@ class Model:
 
 		return containers
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def _connect_network(backend, inputs):
 		""" Applies all tensor operations to instantiate a fully-connected
@@ -790,4 +795,4 @@ class Model:
 			if node.outputs:
 				queue.extend(node.outputs)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

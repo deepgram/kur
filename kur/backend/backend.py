@@ -19,33 +19,33 @@ from ..utils import get_subclasses
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class Backend:
 	""" Base class for all tensor operation backends. Examples of backends are
 		Keras, Theano, TensorFlow, etc.
 	"""
 
-	############################################################################
+	###########################################################################
 	def __init__(self, variant=None):
 		""" Create a new backend.
 
 			Part of this call should be to ensure that all the necessary
-			modules/libraries are available to use this backend. If this backend
-			cannot be used, an exception should be raised. Otherwise, any
-			appropriate configuration should take place here.
+			modules/libraries are available to use this backend. If this
+			backend cannot be used, an exception should be raised. Otherwise,
+			any appropriate configuration should take place here.
 
 			# Arguments
 
 			variant: str, list/tuple of str, or None (default: None). The
-				variants to label this backend with. This allows for more
-				streamlined and flexible modification of backend behavior at the
-				layer level. These are simply tags that software components can
-				query and modify their behavior in response, without requiring
-				an entirely new backend.
+			variants to label this backend with. This allows for more
+			streamlined and flexible modification of backend behavior at the
+			layer level. These are simply tags that software components can
+			query and modify their behavior in response, without requiring an
+			entirely new backend.
 		"""
 		if not self.is_supported():
-			logger.warning('Backend claims to not be supported. We will try to '
-				'use it anyway.')
+			logger.warning('Backend claims to not be supported. We will try '
+				'to use it anyway.')
 
 		if variant is not None:
 			if isinstance(variant, str):
@@ -62,13 +62,13 @@ class Backend:
 			)
 		)
 
-	############################################################################
+	###########################################################################
 	def has_variant(self, variant):
 		""" Checks if a particular variant is enabled.
 		"""
 		return variant in self.variant
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def is_supported(cls):
 		""" Returns True if this backend can be used.
@@ -85,7 +85,7 @@ class Backend:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def from_specification(spec):
 		""" Creates a new backend from the specification.
@@ -174,7 +174,7 @@ class Backend:
 		result = target(**params)
 		return result
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_backend_by_name(name):
 		""" Factory method for creating new backends.
@@ -196,7 +196,7 @@ class Backend:
 				return cls
 		raise ValueError('No such backend: {}'.format(name))
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_all_backends(supported_only=False):
 		""" Factory method for creating backend which is supported on the host
@@ -218,7 +218,7 @@ class Backend:
 			else:
 				yield cls
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def get_any_supported_backend():
 		""" Finds a backend class that claims to be supported on this system.
@@ -227,14 +227,14 @@ class Backend:
 			return cls
 		raise ValueError('No supported backends found.')
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Return a lower-case string naming this backend.
 		"""
 		return cls.__name__.lower()
 
-	############################################################################
+	###########################################################################
 	def save(self, model, filename):
 		""" Saves the model weights to the given filename.
 
@@ -254,7 +254,7 @@ class Backend:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def restore(self, model, filename):
 		""" Load the model weights from the given filename.
 
@@ -274,7 +274,7 @@ class Backend:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def connect(self, inputs, target):
 		""" Applies a tensor operation to a set of input tensors.
 
@@ -295,7 +295,7 @@ class Backend:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def compile(self, model, loss=None, optimizer=None):
 		""" Creates an implementation-specific representation of the
 			instantiated model.
@@ -327,7 +327,7 @@ class Backend:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def train(self, model, data, compiled):
 		""" Fits the given model on a batch of data.
 
@@ -346,7 +346,7 @@ class Backend:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def test(self, model, data, compiled):
 		""" Calculates the model loss on a batch of data.
 
@@ -365,10 +365,10 @@ class Backend:
 		"""
 		raise NotImplementedError
 
-	############################################################################
+	###########################################################################
 	def evaluate(self, model, data, compiled):
 		""" Evaluates the model on a batch ofdata.
 		"""
 		raise NotImplementedError
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

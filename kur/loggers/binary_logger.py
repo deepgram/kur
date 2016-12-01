@@ -21,20 +21,20 @@ from ..utils import idx
 
 logger = logging.getLogger(__name__)
 
-################################################################################
+###############################################################################
 class BinaryLogger(Logger):
 	""" A class for storing log data in a fast binary format that can be
 		quickly appended to or randomly seeked.
 	"""
 
-	############################################################################
+	###########################################################################
 	@classmethod
 	def get_name(cls):
 		""" Returns the name of the logger.
 		"""
 		return 'binary'
 
-	############################################################################
+	###########################################################################
 	def __init__(self, path, **kwargs):
 		""" Creates a new binary logger.
 
@@ -52,7 +52,7 @@ class BinaryLogger(Logger):
 		self.path = path
 		self.prepare()
 
-	############################################################################
+	###########################################################################
 	def prepare(self):
 		""" Prepares the logger by loading historical information.
 		"""
@@ -91,25 +91,25 @@ class BinaryLogger(Logger):
 			self.num_epochs = None
 			self.best_validation_loss = None
 
-	############################################################################
+	###########################################################################
 	def get_best_training_loss(self):
 		""" Returns the best historical training loss.
 		"""
 		return self.best_training_loss
 
-	############################################################################
+	###########################################################################
 	def get_best_validation_loss(self):
 		""" Returns the best historical validation loss.
 		"""
 		return self.best_validation_loss
 
-	############################################################################
+	###########################################################################
 	def get_number_of_epochs(self):
 		""" Returns the number of epochs this model has historically completed.
 		"""
 		return self.num_epochs
 
-	############################################################################
+	###########################################################################
 	def process(self, data, data_type, tag=None):
 		""" Processes training statistics.
 		"""
@@ -122,7 +122,7 @@ class BinaryLogger(Logger):
 			logger.debug('Adding data to binary column: %s', column)
 			idx.save(filename, v, append=True)
 
-	############################################################################
+	###########################################################################
 	@staticmethod
 	def load_column(path, column):
 		""" Loads logged information from disk.
@@ -151,4 +151,4 @@ class BinaryLogger(Logger):
 
 		return idx.load(filename)
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
