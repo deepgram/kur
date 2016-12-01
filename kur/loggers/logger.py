@@ -17,7 +17,7 @@ limitations under the License.
 import logging
 from collections import deque
 import numpy
-from ..utils import get_subclasses, Timer
+from ..utils import get_subclasses, Timer, CriticalSection
 
 logger = logging.getLogger(__name__)
 
@@ -204,15 +204,16 @@ class Logger:
 	def flush(self):
 		""" Hook for asking the logger to process log information in its queue.
 		"""
-		for key, tags in self.data.items():
-			for tag, data in tags.items():
-				if len(data) == 0:
-					continue
-				data = self._arrange(data)
-				self.process(data, key, tag)
+		with CriticalSection():
+			for key, tags in self.data.items():
+				for tag, data in tags.items():
+					if len(data) == 0:
+						continue
+					data = self._arrange(data)
+					self.process(data, key, tag)
 
-		self._clear()
-		self.timer.restart()
+			self._clear()
+			self.timer.restart()
 
 	############################################################################
 	def _push(self, data_type, tag, data):
