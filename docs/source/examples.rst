@@ -466,8 +466,11 @@ available files in the ``LOG_PATH``, like this:
 	validation_loss_labels
 	validation_loss_total
 
-There are more files referring to weights in the CIFAR specification. For
-example, in the ``validate`` section there is:
+For an example of using this log data, see the :doc:`tutorial`.
+
+Another difference from the MNIST examples is that there are more files
+referring to weights in the CIFAR specification. For example, in the
+``validate`` section there is:
 
 .. code-block:: yaml
 
