@@ -30,3 +30,19 @@ that both languages support, we are going to continue working in Python 3.
 
 We will occassionally bend a little to include Python 3.4 support, but we don't
 support earlier versions.
+
+Tensor Shapes
+=============
+
+How are tensor dimensions ordered?
+----------------------------------
+
+For convolutions, we follow the same convention as TensorFlow, where the "color
+channels" comes last:
+
+	- 1D: ``(rows, channels)``
+	- 2D: ``(rows, columns, channels)``
+	- 3D: ``(rows, columns, frames, channels)``
+
+For recurrent layers, we follow the same convention as Keras: ``(timesteps,
+feature_dimensions)``.

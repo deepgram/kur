@@ -87,7 +87,7 @@ class KerasBackend(Backend):
 				import keras	# pylint: disable=import-error,unused-variable
 
 		# And now we can set the dimension ordering.
-		keras.backend.set_image_dim_ordering('th')
+		keras.backend.set_image_dim_ordering('tf')
 
 	############################################################################
 	@classmethod

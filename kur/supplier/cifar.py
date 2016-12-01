@@ -128,6 +128,7 @@ class CifarSupplier(Supplier):
 		data -= data.mean(axis=0)
 		data /= 255
 		data = data.reshape((-1, 3, 32, 32))
+		data = numpy.transpose(data, axes=(0, 2, 3, 1))
 		return data
 
 	############################################################################

@@ -77,6 +77,21 @@ class Trainer:
 		)
 
 	############################################################################
+	@staticmethod
+	def source_shapes(provider):
+		""" Prints debug information about the sources in this provider.
+		"""
+		if logger.isEnabledFor(logging.DEBUG):
+			for i, source in enumerate(provider.sources):
+				if provider.keys is None:
+					name = "anonymous"
+				else:
+					name = provider.keys[i]
+
+				logger.debug('Data source "%s": entries=%s, shape=%s',
+					name, len(source), source.shape())
+
+	############################################################################
 	def test(self, provider, validating=False):
 		""" Tests/validates the model on some data.
 
@@ -189,6 +204,8 @@ class Trainer:
 
 			None
 		"""
+
+		Trainer.source_shapes(provider)
 
 		self.compile()
 

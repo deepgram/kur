@@ -83,7 +83,7 @@ class MnistSupplier(Supplier):
 		source.data /= 255
 		source.data -= source.data.mean()
 
-		source.data = numpy.expand_dims(source.data, axis=1)
+		source.data = numpy.expand_dims(source.data, axis=-1)
 
 		return source
 
