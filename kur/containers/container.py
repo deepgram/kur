@@ -122,6 +122,12 @@ class Container:
 		)
 
 	############################################################################
+	def is_parsed(self):
+		""" Returns True if this container has been parsed already.
+		"""
+		return self._parsed
+
+	############################################################################
 	def add_child(self, container):
 		""" Attaches an existing container as a child to this container.
 		"""

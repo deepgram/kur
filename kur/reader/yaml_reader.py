@@ -24,6 +24,13 @@ class YamlReader(Reader):
 
 	############################################################################
 	@classmethod
+	def get_name(cls):
+		""" Returns the name of the reader.
+		"""
+		return 'yaml'
+
+	############################################################################
+	@classmethod
 	def supported_filetypes(cls):
 		""" Returns a list of supported file extensions.
 		"""

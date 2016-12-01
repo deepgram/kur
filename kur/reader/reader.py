@@ -48,7 +48,7 @@ class Reader:
 	############################################################################
 	@staticmethod
 	def get_reader_by_name(name):
-		""" Finds a evaluation hook class with the given name.
+		""" Finds a reader class with the given name.
 		"""
 		name = name.lower()
 		for cls in Reader.get_all_readers():

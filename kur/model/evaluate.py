@@ -54,6 +54,13 @@ class Evaluator:
 		if self._compiled is not None and not recompile:
 			return
 
+		if not self.model.is_built():
+			logger.warning('This model has never been built before. We are '
+				'going to try to build it now. But the model should always be '
+				'built with Model.build() before trying to compile it, just to '
+				'ensure that everything has been parsed as you expect.')
+			self.model.build()
+
 		self._compiled = self.model.backend.compile(
 			model=self.model
 		)

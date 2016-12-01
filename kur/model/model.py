@@ -20,6 +20,7 @@ from collections import namedtuple, OrderedDict, deque
 from ..containers import Container
 from ..containers.operators import ContainerGroup
 from ..containers.layers import Placeholder
+from ..engine import PassthroughEngine
 
 logger = logging.getLogger(__name__)
 
@@ -268,6 +269,8 @@ class Model:
 		self.endpoints = None
 		self.container_nodes = None
 
+		self._parsed = False
+
 	############################################################################
 	def add_extension_callback(self, extension_callback):
 		self.extension_callbacks.append(extension_callback)
@@ -354,7 +357,12 @@ class Model:
 	def parse(self, engine):
 		""" Parses the model.
 		"""
-		self.root.parse(engine)
+		if not self._parsed:
+			if engine is None:
+				logger.info('Creating a dummy engine for parsing the model.')
+				engine = PassthroughEngine()
+			self.root.parse(engine)
+			self._parsed = True
 
 	############################################################################
 	@staticmethod
@@ -613,11 +621,23 @@ class Model:
 		return inputs, outputs
 
 	############################################################################
+	def is_built(self):
+		""" Returns True if this model has been built at some point.
+		"""
+		return self.network is not None
+
+	############################################################################
 	def build(self):
 		""" Builds the model.
 		"""
 
 		logger.info('Building the model.')
+
+		if not self._parsed:
+			logger.warning('The model has not been parsed yet. We will try to '
+				'parse it without context, but this may easily fail. Make sure '
+				'Model.parse() is called before Model.build().')
+			self.parse(None)
 
 		# Construct the high-level network nodes.
 		container_nodes = self.assemble()

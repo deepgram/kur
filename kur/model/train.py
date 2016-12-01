@@ -27,7 +27,7 @@ class Trainer:
 	"""
 
 	############################################################################
-	def __init__(self, model, loss, optimizer):
+	def __init__(self, model, loss, optimizer=None):
 		""" Creates a new trainer.
 
 			# Arguments
@@ -61,6 +61,13 @@ class Trainer:
 
 		if self._compiled is not None and not recompile:
 			return
+
+		if not self.model.is_built():
+			logger.warning('This model has never been built before. We are '
+				'going to try to build it now. But the model should always be '
+				'built with Model.build() before trying to compile it, just to '
+				'ensure that everything has been parsed as you expect.')
+			self.model.build()
 
 		logger.debug('Recompiling the model.')
 		self._compiled = self.model.backend.compile(
