@@ -14,16 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from .subclass import get_subclasses
-from .flatiter import flatten, concatenate
-from .iterhelp import get_any_value, merge_dict
-from .importhelp import can_import
-from .network import download_file
-from .timer import Timer
-from .critical import CriticalSection
-from . import idx
-from . import mergetools
-from .environtools import EnvironmentalVariable
-from .contexttools import redirect_stderr
+import contextlib
+import sys
+
+################################################################################
+def redirect_stderr(x):
+	""" Redirects stderr to another file-like object.
+
+		This is some compatibility code to support Python 3.4.
+	"""
+	if hasattr(contextlib, 'redirect_stderr'):
+		result = contextlib.redirect_stderr
+	else:
+		@contextlib.contextmanager
+		def result(x):
+			old_stderr = sys.stderr
+			sys.stderr = x
+			yield
+			sys.stder = old_stderr
+
+	return result(x)
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

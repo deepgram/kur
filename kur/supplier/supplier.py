@@ -57,8 +57,8 @@ class Supplier:
 		# All other keys must be parsed out by this point.
 
 		if isinstance(params, dict):
-			result = Supplier.get_supplier_by_name(name)(**params,
-				name=supplier_name)
+			result = Supplier.get_supplier_by_name(name)(
+				name=supplier_name, **params)
 		elif isinstance(params, str):
 			result = Supplier.get_supplier_by_name(name)(params,
 				name=supplier_name)

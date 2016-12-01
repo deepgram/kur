@@ -148,7 +148,7 @@ class Trainer:
 	def train(self, *args, last_weights=None, log=None, **kwargs):
 
 		try:
-			result = self.wrapped_train(*args, **kwargs, log=log)
+			result = self.wrapped_train(*args, log=log, **kwargs)
 		except:
 			logger.exception('Exception raised during training.')
 			raise

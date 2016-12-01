@@ -24,7 +24,7 @@ from . import Backend
 from ..containers import Layer
 from ..loss import Loss
 from ..model import ExtensionState
-from ..utils import can_import, EnvironmentalVariable
+from ..utils import can_import, EnvironmentalVariable, redirect_stderr
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class KerasBackend(Backend):
 		# Now, Keras always prints out a "Using {Theano|TensorFlow} backend."
 		# statement that is frankly unbecoming. So we'll just gobble it up here.
 		x = io.StringIO()
-		with contextlib.redirect_stderr(x):
+		with redirect_stderr(x):
 
 			with EnvironmentalVariable(KERAS_BACKEND=backend):
 				import keras	# pylint: disable=import-error,unused-variable

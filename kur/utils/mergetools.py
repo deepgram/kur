@@ -92,7 +92,7 @@ def _concat(x, y):								# pylint: disable=invalid-name
 	if isinstance(x, (list, tuple)):
 		if not isinstance(y, (list, tuple)):
 			return y
-		return [i for i in (*x, *y)]
+		return [i for L in (x, y) for i in L]
 
 	return y
 
