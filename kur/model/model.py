@@ -177,7 +177,7 @@ class Extension:						# pylint: disable=too-few-public-methods
 
 	############################################################################
 	@staticmethod
-	def _token(n):								# pylint: disable=invalid-name
+	def _token(x):
 		""" Produces random strings of hexadecimal digits.
 
 			If the 'secrets' module is present (Python 3.6+), it is used.
@@ -185,7 +185,7 @@ class Extension:						# pylint: disable=too-few-public-methods
 
 			# Arguments
 
-			n: int. The number of bytes to generate.
+			x: int. The number of bytes to generate.
 
 			# Return value
 
@@ -193,16 +193,16 @@ class Extension:						# pylint: disable=too-few-public-methods
 		"""
 		try:
 			import secrets
-			return secrets.token_hex(n)
+			return secrets.token_hex(x)
 		except ImportError:
 			import hashlib
 			import random
 			state = hashlib.sha256()
 			result = ''
-			while len(result) < n*2:
+			while len(result) < x*2:
 				state.update(bytes(random.randint(0, 255) for i in range(100)))
 				result += state.hexdigest()
-			return result[:n*2]
+			return result[:x*2]
 
 	############################################################################
 	def __init__(self, model, containers, name=None):
@@ -273,10 +273,27 @@ class Model:
 
 	############################################################################
 	def add_extension_callback(self, extension_callback):
+		""" Adds an extension callback.
+
+			Extension callbacks are called just after a new extension is added
+			and immediately before an existing extension is removed.
+
+			# Arguments
+
+			extension_callback: ExtensionCallback instance. The callback to
+				register.
+		"""
 		self.extension_callbacks.append(extension_callback)
 
 	############################################################################
 	def remove_extension_callback(self, extension_callback):
+		""" Removes an extension callback.
+
+			# Arguments
+
+			extension_callback: ExtensionCallback instance. The callback to
+				register.
+		"""
 		self.extension_callbacks.remove(extension_callback)
 
 	############################################################################

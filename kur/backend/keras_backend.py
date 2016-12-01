@@ -66,7 +66,7 @@ class KerasBackend(Backend):
 
 		if backend is not None:
 			if 'keras' in sys.modules:
-				import keras.backend as K
+				import keras.backend as K		# pylint: disable=import-error
 				if K.backend() != backend:
 					logger.warning('Keras was already imported by the time the '
 						'Kur backend was instantiated. Kur was asked to use '
@@ -219,7 +219,7 @@ class KerasBackend(Backend):
 			logger.warning('Loss function was supplied for "%s", but no such '
 				'output exists in the model. Maybe you meant one of these: %s. '
 				'Supplied loss functions: %s. Required loss functions: %s.',
-				name, 
+				name,
 				', '.join(x for x in required_loss - supplied_loss),
 				', '.join(supplied_loss),
 				', '.join(required_loss)

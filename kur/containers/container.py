@@ -93,8 +93,8 @@ class Container:
 		self.args = None
 		self.sink = False
 
-		self._parent = None
-		self._children = []
+		self.parent = None
+		self.children = []
 
 		self._built = None
 		self._parsed = False
@@ -131,11 +131,11 @@ class Container:
 	def add_child(self, container):
 		""" Attaches an existing container as a child to this container.
 		"""
-		if container._parent is not None:	# pylint: disable=protected-access
-			raise ParsingError('Cannot add a child container which already has '
-				'parents.')
-		container._parent = self			# pylint: disable=protected-access
-		self._children.append(container)
+		if container.parent is not None:
+			raise ParsingError('Cannot add a child container which already '
+				'has parents.')
+		container.parent = self
+		self.children.append(container)
 
 	############################################################################
 	def remove_child(self, container, recursive=True):
@@ -164,12 +164,12 @@ class Container:
 		child = self.get_child_by_name(name, recursive=recursive)
 		if child is None:
 			raise ValueError('No such child found: {}'.format(name))
-		target = child._parent				# pylint: disable=protected-access
+		target = child.parent
 		if target is None:
 			raise ValueError('Malformed children. A parent is missing for "{}"'
 				.format(child.name))
-		child._parent = None				# pylint: disable=protected-access
-		target._children.remove(child)		# pylint: disable=protected-access
+		child.parent = None
+		target.children.remove(child)
 
 	############################################################################
 	def new_child_from_data(self, data):
@@ -196,7 +196,7 @@ class Container:
 		"""
 		if include_self:
 			yield self
-		for child in self._children:
+		for child in self.children:
 			yield child
 			if recursive:
 				yield from child.get_children(recursive=recursive)
@@ -216,7 +216,7 @@ class Container:
 			If the named child is found, it is returned. Otherwise, None is
 			returned.
 		"""
-		for child in self._children:
+		for child in self.children:
 			if child.name == name:
 				return child
 			elif recursive:
@@ -229,8 +229,8 @@ class Container:
 	def get_root(self):
 		""" Returns the root node of the parent/child tree.
 		"""
-		if self._parent:
-			return self._parent.get_root()
+		if self.parent:
+			return self.parent.get_root()
 		else:
 			return self
 
@@ -261,6 +261,7 @@ class Container:
 			return
 
 		self._parse_pre(engine)
+		# TODO: Apply any "vars" that got parsed out during `_parse_pre()`.
 		self._parse(engine)
 		self._parse_post(engine)
 
@@ -282,8 +283,10 @@ class Container:
 	############################################################################
 	def _parse_pre(self, engine):
 		""" Pre-parsing hook.
+
+			Specifically, we may need to parse out the "vars" field (if
+			present) so that we can do variable substitution during `_parse()`.
 		"""
-		# TODO: Parse "vars" -- should be done by container base class
 		if isinstance(self.data, str):
 			self.data = engine.evaluate(self.data)
 			if isinstance(self.data, str):
@@ -292,9 +295,11 @@ class Container:
 	############################################################################
 	def _parse_post(self, engine):
 		""" Post-parsing hook.
+
+			The primary purpose of this is to register the container with the
+			templating engine so that it can be referenced by other containers
+			or specification sections.
 		"""
-		# TODO: Register changes -- should be done by container base class
-		# These changes would include new tags, for example.
 		engine.register(self)
 
 	############################################################################

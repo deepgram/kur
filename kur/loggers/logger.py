@@ -320,6 +320,7 @@ class Logger:
 		"""
 		raise NotImplementedError
 
+# Need to put this important here to avoid circular dependencies.
 from .binary_logger import BinaryLogger	# pylint: disable=wrong-import-position
 Logger.DEFAULT_LOGGER = BinaryLogger
 

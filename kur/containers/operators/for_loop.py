@@ -89,7 +89,7 @@ class ForLoop(Operator):				# pylint: disable=too-few-public-methods
 	def _build(self, backend):
 		""" Construct each child.
 		"""
-		for child in self._children:
+		for child in self.children:
 			yield from child.build(backend)
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

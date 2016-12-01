@@ -335,7 +335,6 @@ class Backend:
 
 			model: Model instance. The model to train with.
 			data: dict or list. The data to train a batch on.
-				# TODO: I have no idea what happens with a list.
 			compiled: object. The data package returned by `compile`. Its type
 				and content are backend-specific.
 
@@ -355,7 +354,6 @@ class Backend:
 
 			model: Model instance. The model to evaluate with.
 			data: dict or list. The batch of data to test on.
-				# TODO: I have no idea what happens with a list.
 			compiled: object. The data package returned by `compile`. Its type
 				and content are backend-specific.
 

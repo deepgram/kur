@@ -168,6 +168,11 @@ class Trainer:
 
 	############################################################################
 	def train(self, *args, last_weights=None, log=None, **kwargs):
+		""" Trains the model on some data.
+
+			This is the public entry point for training. It wraps the business
+			logic so that it can handle error conditions.
+		"""
 
 		try:
 			result = self.wrapped_train(*args, log=log, **kwargs)
@@ -185,8 +190,8 @@ class Trainer:
 				log.flush()
 
 	############################################################################
-	def wrapped_train(self, provider, validation=None, epochs=None, log=None,
-		best_train=None, best_valid=None):
+	def wrapped_train(self, provider, *, validation=None, epochs=None,
+		log=None, best_train=None, best_valid=None):
 		""" Trains the model on some data.
 
 			# Arguments

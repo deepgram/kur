@@ -70,7 +70,7 @@ class Timer:
 		self.started = False
 
 	############################################################################
-	def _clock(self):
+	def _clock(self):							# pylint: disable=no-self-use
 		""" Returns an internal counter used for timing.
 		"""
 		return time.perf_counter()

@@ -28,6 +28,10 @@ def redirect_stderr(x):
 	else:
 		@contextlib.contextmanager
 		def result(x):
+			""" Stand-in for Python 3.5's `redirect_stderr`.
+
+				Notes: Non-reentrant, non-threadsafe
+			"""
 			old_stderr = sys.stderr
 			sys.stderr = x
 			yield

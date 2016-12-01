@@ -139,7 +139,6 @@ class Specification:
 		""" Enables inference of tensor shapes by modifying the parsed
 			containers given provider information.
 		"""
-		return
 		logger.debug('Applying provider-inferred shapes to input layers.')
 		if provider.keys is None:
 			logger.debug('No provider keys available. Cannot infer shapes.')

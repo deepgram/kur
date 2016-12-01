@@ -62,7 +62,7 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 	def _build(self, backend):
 		""" Instantiate the container.
 		"""
-		for child in self._children:
+		for child in self.children:
 			for layer in child.build(backend):
 
 				if backend.get_name() == 'keras':
