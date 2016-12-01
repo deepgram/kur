@@ -113,7 +113,6 @@ setup(
 	install_requires=[
 		'pyyaml',
 		'jinja2',
-		'pylint',
 		'numpy',
 		'requests',
 		'tqdm',

@@ -54,11 +54,11 @@ Development Setup
 
 		This is very similar to the functionality provided by ``python setup.py develop``, but the unit testing framework that Kur uses (``pytest``) is slightly more annoying to run, as it won't "see" the main Kur package installed. If you really insist on using ``python setup.py develop`` instead, then instead of running ``py.test``, you need to run ``PYTHONPATH=.:$PYTHONPATH py.test`` or ``python -m pytest tests/`` instead.
 
-#. Install the unit-testing packages.
+#. Install the unit-testing packages and ``pylint``.
 
 	.. code-block:: bash
 
-		$ pip install tox pytest
+		$ pip install tox pytest pylint
 
 Running the Unit Tests
 ======================
@@ -116,3 +116,62 @@ run all the unit tests.
 Style Guide
 ===========
 
+We loosely adhere to the :pep:`8` style guide. The most notable exception is
+that our code is indented with **tabs** instead of **spaces**. Why? Although
+Python suggests using spaces for indentation, spaces can be awkward to use:
+they do not convey semantic information and they make it difficult for people
+to adjust the indentation appearance to fit their preferences (on the other
+hand, editors can usually be customized to display the tab character as any
+number of spaces). Maybe this will change someday with enough public outcry.
+For now, tabs rule.
+
+We have a `Pylint <http://www.pylint.org/>`_ configuration file so that you,
+too, can use the linter to check code quality. To do this, make sure ``pylint``
+is installed (if it is in a virtual environment, make sure the environment is
+activated) and then:
+
+.. code-block:: bash
+
+	$ pylint kur
+
+Please make sure all linting issues are addressed before submitting a pull
+request.
+
+We do not lint our ``tests`` directory, because they break lots of rules due to
+the magic of ``pytest`` (e.g., through fixtures and ``conftest.py`` files).
+
+Bug Reporting
+=============
+
+Bugs should be reported as issues on GitHub. Please provide this information to
+help us get things fixed!
+
+- If you encountered a bug using the Python API:
+
+	- Please actually think about the problem yourself a little, and tell us
+	  what you've tried to do to avoid the problem.
+	- Please describe what you expected the code to do.
+	- Please provide a minimal working example (the smallest program that
+	  reproduces your error) in Python.
+	- Please include debug-level output: ``kur -vv ...``
+
+- If you encountered a bug using the specification file and command-line API:
+
+	- Please provide a minimum working example in YAML.
+	- Please provide the command-line invocation(s) used.
+	- Please tell us what you expected to happen.
+	- Please include debug-level output: ``kur -vv ...``
+
+In both cases, if you bug needs a data source to reproduce, you should:
+
+	- Check if the example data suppliers can be used to recreate your problem.
+	  This is definitely the most convenient way to check your problem, since
+	  we don't need to download and understand your data.
+	- If the examples don't cut it, see if you can include an example Numpy
+	  array that produces the problem, either hard-coded or via some little
+	  Python snippet that creates the array (e.g., with ``numpy.random``).
+	- As a very last resort, you can try submitting **small** datasets (with as
+	  few elements in them as possible to reproduce the problem). But doing
+	  this will very likely deter us from addressing your issue, because it is
+	  more frustrating having to deal with dataset problems than actual Kur
+	  problems.
