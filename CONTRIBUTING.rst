@@ -22,8 +22,8 @@ Development Setup
 
 		$ virtualenv -p /usr/bin/python3.5 venv
 
-	This will create a new folder in the repo root called ``venv`` (it is in the
-	``.gitignore``, so don't worry about it polluting anything).
+	This will create a new folder in the repo root called ``venv`` (it is in
+	the ``.gitignore``, so don't worry about it polluting anything).
 
 	Now every time you are ready to work on Kur, activate the environment:
 
@@ -48,11 +48,20 @@ Development Setup
 
 		$ pip install -e .
 
-	This will install Kur (within the virtual environment only, if one is active), but any changes you make to the Kur source code will be immediately "seen" by programs that use Kur (rather than having to remove/reinstall).
+	This will install Kur (within the virtual environment only, if one is
+	active), but any changes you make to the Kur source code will be
+	immediately "seen" by programs that use Kur (rather than having to
+	remove/reinstall).
 
 	.. note::
 
-		This is very similar to the functionality provided by ``python setup.py develop``, but the unit testing framework that Kur uses (``pytest``) is slightly more annoying to run, as it won't "see" the main Kur package installed. If you really insist on using ``python setup.py develop`` instead, then instead of running ``py.test``, you need to run ``PYTHONPATH=.:$PYTHONPATH py.test`` or ``python -m pytest tests/`` instead.
+		This is very similar to the functionality provided by ``python setup.py
+		develop``, but the unit testing framework that Kur uses (``pytest``) is
+		slightly more annoying to run, as it won't "see" the main Kur package
+		installed. If you really insist on using ``python setup.py develop``
+		instead, then instead of running ``py.test``, you need to run
+		``PYTHONPATH=.:$PYTHONPATH py.test`` or ``python -m pytest tests/``
+		instead.
 
 #. Install the unit-testing packages and ``pylint``.
 
@@ -63,12 +72,16 @@ Development Setup
 Running the Unit Tests
 ======================
 
-Kur uses `pytest <http://pytest.org/>`_ as its unit-testing framework, and `tox <https://tox.readthedocs.io/>`_ for running the unit tests in a number of different, isolated environments (i.e., against different versions of Python, each in their own virutal environment).
+Kur uses `pytest <http://pytest.org/>`_ as its unit-testing framework, and `tox
+<https://tox.readthedocs.io/>`_ for running the unit tests in a number of
+different, isolated environments (i.e., against different versions of Python,
+each in their own virutal environment).
 
 Running the Unit Tests with ``tox``
 -----------------------------------
 
-To run the entire unit-testing suite for all versions of Python, you can simply do this:
+To run the entire unit-testing suite for all versions of Python, you can simply
+do this:
 
 .. code-block:: bash
 
@@ -95,23 +108,31 @@ Running the Unit Tests with ``pytest``
 --------------------------------------
 
 ``tox`` already uses ``pytest`` behind the scenes to run the unit tests. But if
-you want to run the tests manually, you can do so. These are all equivalent, and
-run all the unit tests.
+you want to run the tests manually, you can do so. They will only test against
+the current Python environment.
 
 .. code-block:: bash
 
-	$ py.test
-	$ pytest
-	$ py.test tests/
-	$ pytest tests/
 	$ python -m pytest tests/
-	$ pytest tests/path/to/test.py
+	$ python setup.py test
 
 .. note::
 
 	Unlike running the unit tests through ``tox``, if you want to call
 	``pytest`` directly like this, you will need Kur installed (or your virtual
 	environment activated).
+
+.. note::
+
+	Like we mentioned earlier, ``pytest`` is a little naïve about its Python
+	path. If you installed Kur into a virtual environment, you'll need to tell
+	``pytest`` where it is (even if the environment is already activated). If
+	your virtual environment is called ``venv`` in the repository root, you can
+	do (be sure to change your Python version as appropriate):
+
+		.. code-block:: bash
+
+			$ PYTHONPATH=venv/lib/python3.5/site-packages:$PYTHONPATH pytest
 
 Style Guide
 ===========
