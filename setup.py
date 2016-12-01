@@ -128,6 +128,8 @@ setup(
 
 	# Testing
 	test_suite='tests',
+	tests_require=['pytest'],
+	setup_requires=['pytest-runner'],
 
 	entry_points={
 		'console_scripts' : ['kur=kur.__main__:main']
