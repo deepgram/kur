@@ -22,6 +22,7 @@ Contents:
    getting_started
    specification
    containers
+   faq
    misc
 
 Introduction
