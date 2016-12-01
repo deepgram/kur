@@ -5,11 +5,10 @@ Upcoming Features
 Documentation and Support Features
 ==================================
 
-- "Getting Started" overview of the specification and how the model is built.
 - "Python API" overview of all components of the system
-- Additional examples: multi-layer perceptron, speech recognition
+- Additional examples: speech recognition
 - Improve CIFAR-10 example with a custom evaluation hook.
-- Integrate with Travis CI and Gitter
+- Integrate with Gitter
 
 Model Features
 ==============
@@ -65,5 +64,3 @@ Internal Features
 =================
 
 - Review providers: should they always return dictionaries?
-- Wrap log saving in a CriticalSection
-- Switch to the TensorFlow dimension ordering
