@@ -89,10 +89,10 @@ with the most likely digit it represents.
 	initial ``$`` are lines which are printed to the screen (you don't type
 	them).
 
-First, you need to :ref:`get_the_code`! If you install via ``pip``, you'll need
-to checkout the ``examples`` directory from the repository; if you install via
-``git``, then you alreay have the ``examples`` directory locally. So let's move
-into the example directory:
+First, you need to `Get the Code <get_the_code>`_! If you install via ``pip``,
+you'll need to checkout the ``examples`` directory from the repository; if you
+install via ``git``, then you alreay have the ``examples`` directory locally.
+So let's move into the example directory:
 
 .. code-block:: bash
 
@@ -102,7 +102,6 @@ Now let's train the MNIST model. This will download the data directly from the
 web, and then start training for 10 epochs.
 
 .. code-block:: bash
-   :emphasize-lines: 1
 
 	$ kur train mnist.yml
 	Downloading: 100%|█████████████████████████████████| 9.91M/9.91M [03:44<00:00, 44.2Kbytes/s]
