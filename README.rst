@@ -5,12 +5,16 @@
 
 .. |LICENSE| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
    :target: https://github.com/deepgram/kur/blob/master/LICENSE
+.. |PYTHON| image:: https://img.shields.io/badge/python-3.4%2C3.5-lightgrey.svg
+   :target: https://kur.deepgram.com/installing.html
+.. |BUILD| image:: https://travis-ci.org/deepgram/kur.svg?branch=master
+   :target: https://travis-ci.org/deepgram/kur
 
 ******************************
 Kur: Descriptive Deep Learning
 ******************************
 
-|LICENSE|
+|BUILD| |LICENSE| |PYTHON|
 
 Introduction
 ============
@@ -46,9 +50,12 @@ architectures or workflows. Excited? Keep reading!
 Get the Code
 ============
 
-At the moment, Kur includes Keras (on Theano) as a default backend. Installing
-Kur will also install those dependencies. This makes it easy to start running
-the examples.
+Kur is really easy to install! Kur runs on **Python 3.4+** only, so if you are
+still running Python 2, you'll need to `install Python 3
+<https://kur.deepgram.com/installing.html>`_.
+
+Once you have Python 3, you can pick one of these two options for installing
+Kur.
 
 From PyPI
 ---------
@@ -66,12 +73,22 @@ Just check it out and run the setup script:
 
 	$ git clone https://github.com/deepgram/kur
 	$ cd kur
-	$ python setup.py install
+	$ pip install .
+
+Troubleshooting
+---------------
+
+If you run into any problems installing or using Kur, please check out our
+`troubleshooting <https://kur.deepgram.com/troubleshooting.html>`_ page for
+lots of useful help. And if you want more detailed installation instructions,
+with help on setting up your environment, before sure to see our `installation
+<https://kur.deepgram.com/installing.html>`_ page.
 
 Try It Out!
 ===========
 
-Remember, there are more examples on the `homepage <https://kur.deepgram.com>`_!
+Remember, there are more examples on the `homepage
+<https://kur.deepgram.com>`_!
 
 MNIST: Handwriting recognition
 ------------------------------

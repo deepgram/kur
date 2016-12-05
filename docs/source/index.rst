@@ -17,11 +17,13 @@ Contents:
 .. toctree::
    :maxdepth: 1
 
+   installing
    examples
    tutorial
    getting_started
    specification
    containers
+   troubleshooting
    faq
    misc
 
@@ -117,6 +119,12 @@ Get the Code
 At the moment, Kur includes Keras (on Theano) as a default backend. Installing
 Kur will also install those dependencies. This makes it easy to start running
 the examples.
+
+.. note::
+
+	Kur requires Python 3. If you don't want to replace your system Python
+	installation, make a `virtual environment <https://virtualenv.pypa.io/>`_
+	instead.
 
 From PyPI
 ---------
