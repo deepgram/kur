@@ -126,7 +126,7 @@ setup(
 
 	# Testing
 	test_suite='tests',
-	tests_require=['pytest'],
+	tests_require=['pytest', 'tensorflow'],
 	setup_requires=['pytest-runner'],
 
 	entry_points={

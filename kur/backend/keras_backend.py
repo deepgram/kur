@@ -66,6 +66,8 @@ class KerasBackend(Backend):
 		super().__init__(*args, **kwargs)
 
 		if backend is not None:
+			logger.info('The %s backend for Keras has been requested.')
+
 			if 'keras' in sys.modules:
 				import keras.backend as K		# pylint: disable=import-error
 				if K.backend() != backend:
@@ -77,6 +79,30 @@ class KerasBackend(Backend):
 						'backend. In the future, try to let Kur manage '
 						'importing Keras.', backend, K.backend())
 
+			for dep in {'theano' : ['theano'], 'tensorflow' : ['tensorflow']}[backend]:
+				if not can_import(dep):
+					logger.warning('The Keras backend was asked to use the %s '
+						'backend, but %s does not appear to be installed. You '
+						'will likely get an error about this soon.',
+						backend, dep)
+
+		else:
+			logger.info('No particular backend for Keras has been requested.')
+			if can_import('theano') and can_import('tensorflow'):
+				logger.debug('Using the system-default Keras backend.')
+			elif can_import('theano'):
+				backend = 'theano'
+				logger.debug('Only the Theano backend for Keras is installed, '
+					'so we will try to use it.')
+			elif can_import('tensorflow'):
+				backend = 'tensorflow'
+				logger.debug('Only the TensorFlow backend for Keras is '
+					'installed, so we will try to use it.')
+			else:
+				logger.warning('No supported Keras backend seems to be '
+					'installed. You will probably get an error about this '
+					'shortly.')
+
 		# Make sure Keras is loaded.
 		# Now, Keras always prints out a "Using {Theano|TensorFlow} backend."
 		# statement that is frankly unbecoming. So we'll just gobble it up here.
@@ -85,6 +111,9 @@ class KerasBackend(Backend):
 
 			with EnvironmentalVariable(KERAS_BACKEND=backend):
 				import keras	# pylint: disable=import-error,unused-variable
+				import keras.backend as K		# pylint: disable=import-error
+				logger.debug('Keras is loaded. The backend is: %s',
+					K.backend())
 
 		# And now we can set the dimension ordering.
 		keras.backend.set_image_dim_ordering('tf')

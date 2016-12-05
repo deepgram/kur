@@ -25,10 +25,45 @@ from kur.containers import Container
 from kur.model import Model
 from kur.providers import BatchProvider
 from kur.sources import VanillaSource
+from kur.utils import can_import
+
+################################################################################
+def keras_mock(cls, backend, deps):
+	""" Fakes a backend-looking object that can be used in place of a Keras
+		backend. It is used to force certain variations of the Keras backend to
+		get tested.
+	"""
+	result = lambda: cls(backend=backend)
+	setattr(result, 'is_supported',
+		lambda: cls.is_supported() and all(can_import(dep) for dep in deps))
+	setattr(result, 'get_name',
+		lambda: 'mock_{}_{}'.format(cls.get_name(), backend))
+	return result
+
+###############################################################################
+def enumerate_backends():
+	""" Enumerates all the backends.
+
+		Instead of calling `Backend.get_all_backends()` directly, this layer of
+		indirection allows us to "fake" particular backend variants.
+	"""
+	result = []
+
+	all_backends = Backend.get_all_backends(supported_only=False)
+	for backend in all_backends:
+		if backend is Backend.get_backend_by_name('keras'):
+			result.extend([
+				keras_mock(backend, 'theano', ('theano', )),
+				keras_mock(backend, 'theano', ('tensorflow', ))
+			])
+		else:
+			result.append(backend)
+
+	return result
 
 ###############################################################################
 @pytest.fixture(
-	params=Backend.get_all_backends(supported_only=False)
+	params=enumerate_backends()
 )
 def a_backend(request):
 	""" Fixture for obtaining a backend.
