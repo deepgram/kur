@@ -61,7 +61,7 @@ class Container:
 		else:
 			val = 0
 		Container.counter[cls] = val + 1
-		return '__{}_{}'.format(cls.get_container_name(), val)
+		return '..{}.{}'.format(cls.get_container_name(), val)
 
 	###########################################################################
 	@staticmethod
