@@ -14,10 +14,42 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+###############################################################################
+from __future__ import print_function
+import sys
+
+###############################################################################
+def error_message(msg):
+	""" Prints an error message and exits.
+	"""
+	line_width = 60
+	format_spec = '{{: ^{width}}}'.format(width=line_width)
+	lines = [
+		'', '',
+		'='*line_width, '',
+		'ERROR', '',
+		msg, ''
+		'See our troubleshooting page to get started:', '',
+		'https://kur.deepgram.com/troubleshooting.html#installation', '',
+		'='*line_width, '',
+		"Uh, oh. There was an error. Look up there ^^^^ and you'll be",
+		'training awesome models in no time!'
+	]
+	for line in lines:
+		print(format_spec.format(line), file=sys.stderr)
+	sys.exit(1)
+
+###############################################################################
+if sys.version_info < (3, 4):
+	error_message('Kur requires Python 3.4 or later.')
+
+###############################################################################
+# pylint: disable=wrong-import-position
 import os
 import subprocess
 import warnings
 from setuptools import setup, find_packages
+# pylint: enable=wrong-import-position
 
 ################################################################################
 def readme():
@@ -65,22 +97,25 @@ setup(
 
 	# Dependencies
 	install_requires=[
-		'pyyaml',
-		'jinja2',
-		'numpy',
-		'requests',
-		'tqdm',
+		'pyyaml>=3.12',
+		'jinja2>=2.8',
+		'numpy>=1.11.2',
+		'requests>=2.12.3',
+		'tqdm>=4.10.0',
 
 		# Keras - the default backend (with Theano)
-		'keras',
-		'theano'
+		'keras>=1.1.2',
+		'theano>=0.8.2'
 	],
 	dependency_links=[
 	],
 
 	# Testing
 	test_suite='tests',
-	tests_require=['pytest', 'tensorflow'],
+	tests_require=[
+		'pytest',
+		'tensorflow'
+	],
 	setup_requires=['pytest-runner'],
 
 	entry_points={
