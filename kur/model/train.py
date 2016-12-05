@@ -348,7 +348,8 @@ class Trainer:
 								saved_recent
 							)
 							with CriticalSection():
-								shutil.copy(saved_recent, best_valid)
+								shutil.rmtree(best_valid)
+								shutil.copytree(saved_recent, best_valid)
 
 				if log is not None:
 					log.log_validation(validation_loss, 'loss')

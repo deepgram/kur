@@ -17,6 +17,7 @@ limitations under the License.
 import contextlib
 import io
 import re
+import os
 import sys
 import logging
 import numpy
@@ -24,7 +25,7 @@ from . import Backend
 from ..containers import Layer
 from ..loss import Loss
 from ..model import ExtensionState
-from ..utils import can_import, EnvironmentalVariable, redirect_stderr
+from ..utils import can_import, EnvironmentalVariable, redirect_stderr, idx
 
 logger = logging.getLogger(__name__)
 
@@ -116,23 +117,154 @@ class KerasBackend(Backend):
 		"""
 		import keras.models as M				# pylint: disable=import-error
 
-		result = M.Model(
+		keras_model = M.Model(
 			input=[node.value for node in model.inputs.values()],
 			output=[node.value for node in model.outputs.values()]
 		)
-		result.save_weights(filename)
+
+		path = os.path.expanduser(os.path.expandvars(filename))
+		if os.path.exists(path):
+			if not os.path.isdir(path):
+				raise ValueError('Target weight exists, but it is not a '
+					'directory. Kur expected a directory that it can work '
+					'with. Please move or delete the existing path: {}'
+					.format(path))
+		else:
+			os.makedirs(path, exist_ok=True)
+
+		layers = keras_model.flattened_layers \
+			if hasattr(keras_model, 'flattened_layers') else keras_model.layers
+		for layer in layers:
+			layer_name = layer.name
+
+			symbolic_weights = layer.weights
+			weight_names, weight_values = \
+				self._get_weight_names_and_values_from_symbolic(
+					symbolic_weights
+				)
+
+			for name, val in zip(weight_names, weight_values):
+				target = os.path.join(
+					path,
+					'{}+{}.kur'.format(layer_name, name)
+				)
+				idx.save(target, val)
+
+	###########################################################################
+	def _get_weight_names_and_values_from_symbolic(self, symbolic_weights):
+		import keras.backend as K				# pylint: disable=import-error
+		weight_values = K.batch_get_value(symbolic_weights)
+		weight_names = [
+			(
+				str(w.name) if hasattr(w, 'name') and w.name \
+					else 'param_{}'.format(i)
+			)
+			for i, (w, val) in enumerate(
+				zip(symbolic_weights, weight_values)
+			)
+		]
+		return weight_names, weight_values
 
 	###########################################################################
 	def restore(self, model, filename):
 		""" Load the model weights from the given filename.
 		"""
 		import keras.models as M				# pylint: disable=import-error
+		import keras.backend as K				# pylint: disable=import-error
 
-		result = M.Model(
+		keras_model = M.Model(
 			input=[node.value for node in model.inputs.values()],
 			output=[node.value for node in model.outputs.values()]
 		)
-		result.load_weights(filename, by_name=True)
+
+		path = os.path.expanduser(os.path.expandvars(filename))
+		if os.path.exists(path):
+			if not os.path.isdir(path):
+				raise ValueError('Target weight exists, but it is not a '
+					'directory. Kur expected a directory that it can work '
+					'with. Please move or delete the existing path: {}'
+					.format(path))
+		else:
+			raise ValueError('Target weight directory does not exist: {}'
+				.format(path))
+
+		layers = keras_model.flattened_layers \
+			if hasattr(keras_model, 'flattened_layers') else keras_model.layers
+
+		# Get a map from "layer name" to "layer instance" in the current model.
+		index = {}
+		for layer in layers:
+			if layer.name:
+				index.setdefault(layer.name, []).append(layer)
+
+		# Enumerate all of the saved tensors, organized like this:
+		# tensors = {
+		#	'layer_1_name' : {
+		#		'weight_1_name'  : '/path/to/file',
+		#		...,
+		#	},
+		#	...
+		# }
+		tensors = self.enumerate_saved_tensors(path)
+
+		# We want to put (symbolic_weights, weight_values) tuples in this.
+		weight_value_tuples = []
+
+		# Loop over the available weights.
+		for layer_name, weights in tensors.items():
+
+			# Load the weights.
+			# This maps weight names to numpy arrays.
+			weights = {k : idx.load(v) for k, v in weights.items()}
+
+			# Now assign all of the weights to their corresponding symbolic
+			# weights. Loop over all layers which use this name.
+			for layer in index.get(layer_name, []):
+
+				# Get the symbolic weights.
+				symbolic_weights = layer.weights
+				if len(weights) != len(symbolic_weights):
+					raise ValueError('Layer "%s" expected %d weights, but we '
+						'found %d on disk.', layer_name, len(symbolic_weights),
+						len(weights))
+
+				# Get the associated names (so we know what order to assign the
+				# weights in.
+				weight_names, _ = \
+					self._get_weight_names_and_values_from_symbolic(
+						symbolic_weights
+					)
+				for i, name in enumerate(weight_names):
+					weight_value_tuples.append((symbolic_weights[i], weights[name]))
+
+		# Assign all the weights in one batch (for efficiency).
+		K.batch_set_value(weight_value_tuples)
+
+	###########################################################################
+	def enumerate_saved_tensors(self, path):
+		""" Enumerates saved tensors (weights).
+		"""
+		result = {}
+
+		regex = re.compile(r'^(?P<layer>.*?)\+(?P<weight>.*?)\.kur$')
+		for dirpath, dirnames, filenames in os.walk(path): # pylint: disable=unused-variable
+			for filename in filenames:
+				match = regex.match(filename)
+				if match is None:
+					continue
+				filename = os.path.join(dirpath, filename)
+				layer, weight = match.groups()
+				if layer not in result:
+					result[layer] = {}
+				if weight in result[layer]:
+					logger.warning('Tensor weights have already been loaded '
+						'for layer="%s", tensor="%s" from file: %s. We will '
+						'skip this new file we just found: %s.', layer, weight,
+						result[layer][weight], filename)
+					continue
+				result[layer][weight] = filename
+
+		return result
 
 	###########################################################################
 	def compile(self, model, loss=None, optimizer=None):

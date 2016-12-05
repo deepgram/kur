@@ -117,10 +117,9 @@ setup(
 		'requests',
 		'tqdm',
 
-		# Keras - the default backend
+		# Keras - the default backend (with Theano)
 		'keras',
-		'theano',
-		'h5py'
+		'theano'
 	],
 	dependency_links=[
 	],

@@ -323,7 +323,7 @@ class Specification:
 			""" Trains a model from a pre-packaged specification file.
 			"""
 			if initial_weights is not None:
-				if os.path.isfile(initial_weights):
+				if os.path.exists(initial_weights):
 					model.restore(initial_weights)
 				elif initial_must_exist:
 					logger.error('Configuration indicates that the weight '
@@ -393,7 +393,7 @@ class Specification:
 			""" Tests a model from a pre-packaged specification file.
 			"""
 			if initial_weights is not None:
-				if os.path.isfile(initial_weights):
+				if os.path.exists(initial_weights):
 					model.restore(initial_weights)
 				else:
 					logger.error('No weight file found: %s. We will just '
@@ -539,7 +539,7 @@ class Specification:
 			""" Evaluates a model from a pre-packaged specification file.
 			"""
 			if initial_weights is not None:
-				if os.path.isfile(initial_weights):
+				if os.path.exists(initial_weights):
 					model.restore(initial_weights)
 				else:
 					logger.error('No weight file found: %s. We will just '
