@@ -9,12 +9,14 @@
    :target: https://kur.deepgram.com/installing.html
 .. |BUILD| image:: https://travis-ci.org/deepgram/kur.svg?branch=master
    :target: https://travis-ci.org/deepgram/kur
+.. |GITTER| image:: https://badges.gitter.im/deepgram-kur/Lobby.svg
+   :target: https://gitter.im/deepgram-kur/Lobby
 
 ******************************
 Kur: Descriptive Deep Learning
 ******************************
 
-|BUILD| |LICENSE| |PYTHON|
+|BUILD| |LICENSE| |PYTHON| |GITTER|
 
 Introduction
 ============

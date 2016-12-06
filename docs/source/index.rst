@@ -5,12 +5,18 @@
 
 .. |LICENSE| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
    :target: https://github.com/deepgram/kur/blob/master/LICENSE
+.. |PYTHON| image:: https://img.shields.io/badge/python-3.4%2C3.5-lightgrey.svg
+   :target: https://kur.deepgram.com/installing.html
+.. |BUILD| image:: https://travis-ci.org/deepgram/kur.svg?branch=master
+   :target: https://travis-ci.org/deepgram/kur
+.. |GITTER| image:: https://badges.gitter.im/deepgram-kur/Lobby.svg
+   :target: https://gitter.im/deepgram-kur/Lobby
 
 ******************************
 Kur: Descriptive Deep Learning
 ******************************
 
-|LICENSE|
+|BUILD| |LICENSE| |PYTHON| |GITTER|
 
 Contents:
 
