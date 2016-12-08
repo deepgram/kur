@@ -17,6 +17,7 @@ limitations under the License.
 import sys
 import argparse
 import logging
+from . import __version__, __homepage__
 from .utils import logcolor
 from .parsing import Specification
 from .engine import JinjaEngine
@@ -86,6 +87,14 @@ def build(args):
 	target.compile()
 
 ###############################################################################
+def version(args):							# pylint: disable=unused-argument
+	""" Prints the Kur version and exits.
+	"""
+	print('Kur, by Deepgram -- deep learning made easy')
+	print('Version: {}'.format(__version__))
+	print('Homepage: {}'.format(__homepage__))
+
+###############################################################################
 def parse_args():
 	""" Constructs an argument parser and returns the parsed arguments.
 	"""
@@ -96,9 +105,10 @@ def parse_args():
 	parser.add_argument('-v', '--verbose', default=0, action='count',
 		help='Increase verbosity. Can be specified twice for debug-level '
 			'output.')
+	parser.add_argument('--version', action='store_true',
+		help='Display version and exit.')
 
 	subparsers = parser.add_subparsers(dest='cmd', help='Sub-command help.')
-	subparsers.required = True
 
 	subparser = subparsers.add_parser('train', help='Trains a model.')
 	subparser.add_argument('specification', nargs='?',
@@ -131,6 +141,14 @@ def main():
 	""" Entry point for the Kur command-line script.
 	"""
 	args = parse_args()
+
+	if args.version:
+		args.func = version
+	elif not hasattr(args, 'func'):
+		print('Nothing to do!', file=sys.stderr)
+		print('For usage information, try: kur --help', file=sys.stderr)
+		print('Or visit our homepage: {}'.format(__homepage__))
+		sys.exit(1)
 
 	loglevel = {
 		0 : logging.WARNING,

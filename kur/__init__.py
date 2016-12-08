@@ -29,4 +29,6 @@ from . import parsing
 from . import loggers
 from .version import __version__
 
+__homepage__ = 'https://kur.deepgram.com'
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
