@@ -253,6 +253,38 @@ model (as opposed to multiple tensor operations in multiple places).
 
 - ``TARGET``: the name of the layer to re-apply.
 
+Recurrent
+---------
+
+**Description**. A recurrent layer for learning sequences of data.
+
+**Purpose**. Recurrent layers are used to learn sequences.
+
+**Usage**::
+
+	recurrent:
+	  size: SIZE
+	  type: {lstm | gru}
+	  sequence: SEQUENCE
+	  bidirectional: BIDIRECTIONAL
+	  merge: {multiply | add | average | concat}
+
+- ``SIZE``: the number of recurrent nodes in the layer. This is the number of
+  features that are kept *per timestep*. If ``SEQUENCE`` is true, then there
+  are as many outputs as inputs (because the number of timesteps doesn't
+  change), and at each timestep, the feature vector has length ``SIZE``. If
+  ``SEQUENCE`` is false, then the output of the RNN is length ``SIZE`` (because
+  only the last timestep is kept).
+- ``TYPE``: the type of the recurrent cells (defaults to ``gru``).
+- ``SEQUENCE``: boolean. If true, returns the entire sequences of RNN outputs.
+  If false, only the last element of the sequence is returned. Defaults to
+  True.
+- ``BIDIRECTIONAL``: boolean. If true, a bidirectional RNN is constructed (one
+  which learns both the forward and backward sequences of data).
+- ``MERGE``: if ``BIDIRECTIONAL`` is true, then this determines how the outputs
+  of the forward and backward RNNs is merged. If bidirectional is not set, then
+  "merge" cannot be used. The default value is ``average``.
+
 Operators
 =========
 

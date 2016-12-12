@@ -95,8 +95,8 @@ There are many different kinds of containers, which we describe on the
 	primitives that you use to construct your model. Convolutions,
 	fully-connected layers, recurrent layers, and so forth are all "layers" to
 	Kur. Operators are "meta-layers." They modify the way other layers are
-	interpretted, but do themselves produce underlying tensor operations. For
-	example, a "for" loop is an operator because it can generate many other
+	interpretted, but do not produce underlying tensor operations themselves.
+	For example, a "for" loop is an operator because it can generate many other
 	layers, but by itself, a "for" loop is not a deep learning operation. If
 	you've looked through the :ref:`the_examples` page, then you know that
 	``convolution``, ``activation``, ``dense``, and ``input`` are all layers.

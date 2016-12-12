@@ -25,5 +25,6 @@ from .flatten import Flatten
 from .dense import Dense
 from .activation import Activation
 from .pooling import Pooling
+from .recurrent import Recurrent
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
