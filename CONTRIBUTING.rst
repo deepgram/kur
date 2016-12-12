@@ -9,8 +9,8 @@ Development Setup
 
 	.. code-block:: bash
 
-		$ git clone https://github.com/deepgram/kur
-		$ cd kur
+		git clone https://github.com/deepgram/kur
+		cd kur
 
 #. (Optional, but recommended) Set up a virtualenv.
 
@@ -20,7 +20,7 @@ Development Setup
 
 	.. code-block:: bash
 
-		$ virtualenv -p /usr/bin/python3.5 venv
+		virtualenv -p /usr/bin/python3.5 venv
 
 	This will create a new folder in the repo root called ``venv`` (it is in
 	the ``.gitignore``, so don't worry about it polluting anything).
@@ -29,7 +29,7 @@ Development Setup
 
 	.. code-block:: bash
 	
-		$ source venv/bin/activate
+		source venv/bin/activate
 
 	This puts you in an isolated Python environment, with its own packages. If
 	you install packages while the virtual environment is activatd, they will
@@ -40,13 +40,13 @@ Development Setup
 
 	.. code-block:: bash
 
-		$ deactivate
+		deactivate
 
 #. Install an editable version of Kur.
 
 	.. code-block:: bash
 
-		$ pip install -e .
+		pip install -e .
 
 	This will install Kur (within the virtual environment only, if one is
 	active), but any changes you make to the Kur source code will be
@@ -67,7 +67,7 @@ Development Setup
 
 	.. code-block:: bash
 
-		$ pip install tox pytest pylint
+		pip install tox pytest pylint
 
 Running the Unit Tests
 ======================
@@ -85,7 +85,7 @@ do this:
 
 .. code-block:: bash
 
-	$ tox
+	tox
 
 .. note::
 
@@ -96,11 +96,11 @@ do this:
 	environment, too).
 
 To run the unit-test suite through ``tox`` for a particular Python version (for
-example, Python 3.6):
+example, Python 3.5):
 
 .. code-block:: bash
 
-	$ tox -e py46
+	tox -e py35
 
 You can enumerate all defined ``tox`` environments using ``tox -l``.
 
@@ -109,12 +109,12 @@ Running the Unit Tests with ``pytest``
 
 ``tox`` already uses ``pytest`` behind the scenes to run the unit tests. But if
 you want to run the tests manually, you can do so. They will only test against
-the current Python environment.
+the current Python environment. These commands do the same thing:
 
 .. code-block:: bash
 
-	$ python -m pytest tests/
-	$ python setup.py test
+	python -m pytest tests/
+	python setup.py test
 
 .. note::
 
@@ -132,7 +132,7 @@ the current Python environment.
 
 		.. code-block:: bash
 
-			$ PYTHONPATH=venv/lib/python3.5/site-packages:$PYTHONPATH pytest
+			PYTHONPATH=venv/lib/python3.5/site-packages:$PYTHONPATH pytest
 
 Style Guide
 ===========
@@ -153,7 +153,7 @@ activated) and then:
 
 .. code-block:: bash
 
-	$ pylint kur
+	pylint kur
 
 Please make sure all linting issues are addressed before submitting a pull
 request.

@@ -19,6 +19,8 @@ versioning means that all of versions follow a ``X.Y.Z`` format, where:
 	- Z: micro/patch version. Changes whenever there are bug fixes that do not
 	  add features.
 
+.. _why_python2:
+
 Do you support Python 2?
 ------------------------
 
@@ -54,5 +56,5 @@ Why does Kur take so long to run?
 ---------------------------------
 
 It doesn't. It's actually the compiler running in the background, something
-that all deep learning libraries must do to increase performance. See `this
-answer <looks_stuck>`_ for more information.
+that all deep learning libraries must do to increase performance. See
+:ref:`this answer <looks_stuck>` for more information.

@@ -2,9 +2,9 @@
 Tutorial
 ********
 
-Alright, you've seen some cool :doc:`examples` and now you are asking, "Okay, so
-how do I actually make Kur do all these awesome things with my data?" Let's take
-a look!
+Alright, you've seen some cool :ref:`the_examples` and now you are asking,
+"Okay, so how do I actually make Kur do all these awesome things with my data?"
+Let's take a look!
 
 We are going to work through a complete, top-to-bottom model for classifying
 2-dimensional points as being above or below a sine curve. I'm going to use
@@ -55,10 +55,10 @@ Alright. Let's make some data!
 
 .. code-block:: bash
 
-	$ python make_points.py 10000 train.pkl
-	$ python make_points.py 1000 validate.pkl
-	$ python make_points.py 1000 test.pkl
-	$ python make_points.py 1000 evaluate.pkl
+	python make_points.py 10000 train.pkl
+	python make_points.py 1000 validate.pkl
+	python make_points.py 1000 test.pkl
+	python make_points.py 1000 evaluate.pkl
 
 Let's make sure everything looks good:
 
@@ -297,7 +297,6 @@ Finally, let's evaluate the model on our evaluation set:
 .. code-block:: bash
 
 	$ kur evaluate tutorial.yml
-
 	Evaluating: 100%|████████████████████████████████| 1000/1000 [00:00<00:00, 2346.23samples/s]
 
 We just generated ``output.pkl``. Now let's take a look at it.

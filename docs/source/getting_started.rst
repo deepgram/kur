@@ -7,7 +7,7 @@ models in a specification file, and actually running Kur.
 
 .. note::
 
-	If you haven't already, make sure you work through the :doc:`examples`
+	If you haven't already, make sure you work through the :ref:`the_examples`
 	first. Otherwise, this might feel a little overwhelming, and Kur shouldn't
 	make you feel like that.
 
@@ -143,8 +143,8 @@ We're going to cover the simplest details of these sections.
   a give the final layer a name, too (it's your output). The names need to
   correspond to the data that gets loaded during training, evaluation, etc.
   For a full list of "containers" (that's what Kur calls each entry in the model
-  section), see :doc:`containers`. The :doc:`examples` are also a good place to
-  start.
+  section), see :doc:`containers`. The :ref:`the_examples` are also a good
+  place to start.
 - ``train``: Everything you want to tell Kur about the desired training
   process.
   
@@ -197,7 +197,7 @@ Kur is pretty easy to run. It looks like this:
 
 .. code-block:: bash
 
-	$ kur [-v] {train | test | evaluate | build} SPECIFICATION.yml
+	kur [-v] {train | test | evaluate | build} SPECIFICATION.yml
 
 You give it your specification file, and you tell it what to do with the file.
 By this point, train, test, and evaluate should make sense. The other command,

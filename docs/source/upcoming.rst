@@ -8,7 +8,6 @@ Documentation and Support Features
 - "Python API" overview of all components of the system
 - Additional examples: speech recognition
 - Improve CIFAR-10 example with a custom evaluation hook.
-- Integrate with Gitter
 
 Model Features
 ==============
@@ -23,12 +22,12 @@ Model Features
 Containers Features
 -------------------
 
-- New containers: pooling, RNNs (LSTMs and GRUs)
+- New containers: RNNs (LSTMs and GRUs)
 
 Templating Features
 -------------------
 
-- Easily include model pieces from other sources, including KurHub.
+- Easily include model pieces from external sources (e.g., KurHub).
 
 Loss/Optimizer Features
 -----------------------
@@ -52,8 +51,6 @@ Log Features
 Usage Features
 ==============
 
-- Make sure underlying model has completed compiling before allowing training to
-  start.
 - Add "accuracy" statistic to the output during training/evaluation.
 - Allow command-line arguments to override the specification file.
 - Better detecting and handling unused keywords (which may have been typos).

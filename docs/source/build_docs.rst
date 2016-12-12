@@ -9,7 +9,7 @@ Kur's documentation is written in restructured text and built with
 
 .. code:: bash
 
-	$ pip install sphinx
+	pip install sphinx
 
 Install the Theme
 -----------------
@@ -20,7 +20,7 @@ To do this:
 
 .. code:: bash
 
-	$ pip install sphinx_rtd_theme
+	pip install sphinx_rtd_theme
 
 Actually Building Everything
 ----------------------------
@@ -30,7 +30,7 @@ and then you can build the documentation with:
 
 .. code:: bash
 
-	$ make html
+	make html
 
 This will put the root HTML page at ``docs/build/html/index.html`` relative to
 the root of the repository.
