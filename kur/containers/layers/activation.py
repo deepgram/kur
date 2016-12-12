@@ -48,7 +48,8 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 
 			import keras.layers as L			# pylint: disable=import-error
 			yield L.Activation(
-				self.type,
+				'linear' if self.type == 'none' or self.type is None \
+					else self.type,
 				name=self.name
 			)
 
