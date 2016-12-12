@@ -120,8 +120,8 @@ your platform.
 
 	  .. code-block:: bash
 
-		echo 'export WORKON_HOME=$HOME/.virtualenvs' > ~/.profile
-		echo 'source $(which virtualenvwrapper.sh)' > ~/.profile
+		echo 'export WORKON_HOME=$HOME/.virtualenvs' >> ~/.profile
+		echo 'source $(which virtualenvwrapper.sh)' >> ~/.profile
 		source ~/.profile
 
 	- Linux: this depends on your shell. For ``bash`` (which is very common for
@@ -129,8 +129,8 @@ your platform.
 
 	  .. code-block:: bash
 
-		echo 'export WORKON_HOME=$HOME/.virtualenvs' > ~/.bashrc
-		echo 'source $(which virtualenvwrapper.sh)' > ~/.bashrc
+		echo 'export WORKON_HOME=$HOME/.virtualenvs' >> ~/.bashrc
+		echo 'source $(which virtualenvwrapper.sh)' >> ~/.bashrc
 		source ~/.bashrc
 
 .. note::
