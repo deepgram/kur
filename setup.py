@@ -56,7 +56,11 @@ def readme():
 	""" Return the README text.
 	"""
 	with open('README.rst') as fh:
-		return fh.read()
+		result = fh.read()
+	mark = result.find('.. package_readme_ends_here')
+	if mark >= 0:
+		result = result[:mark]
+	return result
 
 ################################################################################
 def get_version():
@@ -81,7 +85,7 @@ setup(
 	],
 
 	# Author information
-    url='https://github.com/deepgram/kur',
+	url='https://github.com/deepgram/kur',
 	author='Adam Sypniewski',
 	author_email='adam@deepgram.com',
 	license='Apache Software License '
