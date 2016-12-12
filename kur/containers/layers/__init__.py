@@ -24,5 +24,6 @@ from .reuse import Reuse
 from .flatten import Flatten
 from .dense import Dense
 from .activation import Activation
+from .pooling import Pooling
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -11,6 +11,9 @@ Activation
 Convolution
 -----------
 
+Pooling
+-------
+
 Dense
 -----
 
