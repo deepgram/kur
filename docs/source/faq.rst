@@ -46,3 +46,13 @@ channels" comes last:
 
 For recurrent layers, we follow the same convention as Keras: ``(timesteps,
 feature_dimensions)``.
+
+Usage
+=====
+
+Why does Kur take so long to run?
+---------------------------------
+
+It doesn't. It's actually the compiler running in the background, something
+that all deep learning libraries must do to increase performance. See `this
+answer <looks_stuck>`_ for more information.

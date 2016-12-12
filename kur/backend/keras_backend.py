@@ -19,6 +19,8 @@ import io
 import re
 import os
 import sys
+import tempfile
+import shutil
 import logging
 import numpy
 from . import Backend
@@ -151,6 +153,12 @@ class KerasBackend(Backend):
 			output=[node.value for node in model.outputs.values()]
 		)
 
+		self._save_keras(keras_model, filename)
+
+	###########################################################################
+	def _save_keras(self, keras_model, filename):
+		""" Saves a native Keras model.
+		"""
 		path = os.path.expanduser(os.path.expandvars(filename))
 		if os.path.exists(path):
 			if not os.path.isdir(path):
@@ -199,12 +207,19 @@ class KerasBackend(Backend):
 		""" Load the model weights from the given filename.
 		"""
 		import keras.models as M				# pylint: disable=import-error
-		import keras.backend as K				# pylint: disable=import-error
 
 		keras_model = M.Model(
 			input=[node.value for node in model.inputs.values()],
 			output=[node.value for node in model.outputs.values()]
 		)
+
+		self._restore_keras(keras_model, filename)
+
+	###########################################################################
+	def _restore_keras(self, keras_model, filename):
+		""" Loads a native Keras model.
+		"""
+		import keras.backend as K				# pylint: disable=import-error
 
 		path = os.path.expanduser(os.path.expandvars(filename))
 		if os.path.exists(path):
@@ -296,7 +311,7 @@ class KerasBackend(Backend):
 		return result
 
 	###########################################################################
-	def compile(self, model, loss=None, optimizer=None):
+	def compile(self, model, loss=None, optimizer=None, blocking=True):
 		""" Returns the Keras model instance.
 		"""
 
@@ -333,7 +348,62 @@ class KerasBackend(Backend):
 						for name, func in loss.items()}
 				)
 
+			if blocking:
+				self.wait_for_compile(
+					mode=(
+						'train' if optimizer is not None else \
+						'test' if loss is not None else\
+						'evaluate'
+					),
+					keras_model=result
+				)
+
 			return {'model' : result, 'alias' : alias, 'rev_alias' : rev}
+
+	###########################################################################
+	def wait_for_compile(self, mode, keras_model):
+		""" Waits for the model to finish compiling.
+		"""
+		logger.info('Waiting for model to finish compiling...')
+
+		weight_path = None
+		tempdir = tempfile.mkdtemp()
+		try:
+			weight_path = os.path.join(tempdir, 'weights')
+			self._save_keras(keras_model, weight_path)
+
+			inputs = {}
+			for i in range(len(keras_model.inputs)):
+				inputs[keras_model.input_names[i]] = numpy.zeros(
+					shape=(1,) + keras_model.internal_input_shapes[i][1:]
+				)
+
+			if mode != 'evaluate':
+				outputs = {}
+				for i in range(len(keras_model.outputs)):
+					outputs[keras_model.output_names[i]] = numpy.zeros(
+						shape=(1,) + keras_model.internal_output_shapes[i][1:]
+					)
+
+				if mode == 'train':
+					keras_model.train_on_batch(inputs, outputs)
+				else:
+					keras_model.test_on_batch(inputs, outputs)
+
+			else:
+				keras_model.predict_on_batch(inputs)
+
+		finally:
+			if weight_path and os.path.isdir(weight_path):
+				try:
+					self._restore_keras(keras_model, weight_path)
+				except:
+					logger.error('We were waiting for the model to finish '
+						'compiling, but failed to restore the model weights. '
+						'The weights may be in a bad state.')
+					raise
+
+			shutil.rmtree(tempdir)
 
 	###########################################################################
 	def _apply_loss(self, model, loss=None):	# pylint: disable=no-self-use

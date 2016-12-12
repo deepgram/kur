@@ -296,7 +296,7 @@ class Backend:
 		raise NotImplementedError
 
 	###########################################################################
-	def compile(self, model, loss=None, optimizer=None):
+	def compile(self, model, loss=None, optimizer=None, blocking=True):
 		""" Creates an implementation-specific representation of the
 			instantiated model.
 
@@ -313,6 +313,12 @@ class Backend:
 				instances to apply to that output.
 			optimizer: Optimizer instance or None. The loss function to use for
 				training. If None, no optimizer is used.
+			blocking: bool (default: True). If True, requests that the
+				implementation not return until all code compiling is complete.
+				If False, the implementation may spawn background threads or
+				processes, and these may still be running when
+				train/test/evaluate are called (leading to blocking behavior at
+				that point).
 
 			# Return value
 
