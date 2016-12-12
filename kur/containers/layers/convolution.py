@@ -48,7 +48,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 
 	###########################################################################
 	def __init__(self, *args, **kwargs):
-		""" Creates a new expand layer.
+		""" Creates a new convolution layer.
 		"""
 		super().__init__(*args, **kwargs)
 		self.kernels = None
