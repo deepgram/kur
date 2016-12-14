@@ -132,9 +132,24 @@ installing Kur.
 From PyPI
 ---------
 
+If you know what you are doing, then this is easy:
+
 .. code-block:: bash
 
 	pip install kur
+
+**Quick Start**: Or, if you already have Python 3 and ``virtualenvwrapper``
+:ref:`installed <virtualenv_setup>`, then here's a few quick-start lines to get
+you training your first model:
+
+.. code-block:: bash
+
+	mkvirtualenv $(which python3) kur           # Set up a virtual environment
+	pip install kur                             # Install Kur
+	kur --version                               # Check that everything works
+	git clone https://github.com/deepgram/kur   # Get the examples
+	cd kur/examples                             # Change directories
+	kur train mnist.yml                         # Start training!
 
 From GitHub
 -----------
@@ -146,6 +161,20 @@ Just check it out and run the setup script:
 	git clone https://github.com/deepgram/kur
 	cd kur
 	pip install .
+
+**Quick Start**: Or, if you already have Python 3 and ``virtualenvwrapper``
+:ref:`installed <virtualenv_setup>`, then here's a few quick-start lines to get
+you training your first model:
+
+.. code-block:: bash
+
+	mkvirtualenv $(which python3) kur           # Set up a virtual environment
+	git clone https://github.com/deepgram/kur   # Check out the latest code
+	cd kur                                      # Change directories
+	pip install .                               # Install Kur
+	kur --version                               # Check that everything works
+	cd examples                                 # Change directories
+	kur train mnist.yml                         # Start training!
 
 Usage
 -----
