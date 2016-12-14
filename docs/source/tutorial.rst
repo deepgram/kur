@@ -104,6 +104,18 @@ Good! Everything looks nice. Let's plot it to make it beautiful (requires
 	points, and the output is whether it is above the sine curve (red points)
 	or below the sine curve (blue points).
 
+.. note::
+
+	If you've never used ``matplotlib`` before, it's easy to install. Just do
+	this (preferably from your Kur virtual environment):
+
+	.. code-block:: bash
+
+		pip install matplotlib
+	
+	If you have problems with ``matplotlib`` working out-of-the-box, check out
+	our :ref:`troubleshooting page <fix_matplotlib>` for possible solutions.
+
 Describe the Model
 ==================
 

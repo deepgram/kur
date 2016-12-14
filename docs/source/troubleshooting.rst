@@ -60,3 +60,25 @@ Kur takes a very long before it starts training.
 ------------------------------------------------
 
 See :ref:`this answer <looks_stuck>`.
+
+Plotting
+========
+
+.. _fix_matplotlib:
+
+I get an error from `matplotlib` saying "Python is not installed as a framework."
+---------------------------------------------------------------------------------
+
+Did you use ``pip`` to install ``matplotlib`` (you should!). The trick is to
+tell ``matplotlib`` which "backend" it should use for its plotting. Do this:
+
+.. code-block:: bash
+
+	echo "backend: TkAgg" > ~/.matplotlib/matplotlibrc
+
+There, that should do it.
+
+Plots from ``matplotlib`` don't appear, or I get errors about backends.
+-----------------------------------------------------------------------
+
+See :ref:`this answer <fix_matplotlib>`.
