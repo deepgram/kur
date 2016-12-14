@@ -24,7 +24,7 @@ When installing Kur, you may encounter this error::
     Uh, oh. There was an error. Look up there ^^^^ and you'll be
                 training awesome models in no time!
 
-This is because your version is Python is too old:
+This is because your version of Python is too old:
 
 .. code-block:: bash
 

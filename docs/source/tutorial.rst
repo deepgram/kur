@@ -26,6 +26,7 @@ Let's generate 2-dimensional points, where *x* is in [-pi, pi] and *y* is in
 of points to generate, and the file to save them to. Here's the script:
 
 .. code-block:: python
+
 	:caption: make_points.py
 
 	import sys
@@ -141,9 +142,9 @@ Now let's look at the "operational" sections: train, validate, test, evaluate.
 The data is all in the same Python pickle format, and for the most part, we can
 keep all of the default options. Let's train for ten epochs and, just in case
 we want to train multiple times, let's make sure we reload our best-performing
-weights (we respect to the validation weights, of course). We will also specify
-a log path so we can plot our training loss over time. Our ``train`` section
-has got to look like this:
+weights (with respect to the validation weights, of course). We will also
+specify a log path so we can plot our training loss over time. Our ``train``
+section has got to look like this:
 
 .. code-block:: yaml
 

@@ -34,13 +34,13 @@ Welcome to Kur! You've found the future of deep learning!
 - Describe your model with easily undestandable concepts, rather than trudge
   through programming.
 - Quickly explore better versions of your model with the power of the `Jinja2
-  <jinja.pocoo.org>`_ templating engine.
+  <http://jinja.pocoo.org>`_ templating engine.
 - **COMING SOON**: Share your models with the community, making it incredibly
   easy to collaborate on sophisticated models.
 
-Go ahead and give it a whirl: `Get the Code <get_the_code>`_ and then jump into
-the `Examples <the_examples>`_! Then build your own model in our `tutorial
-<https://kur.deepgram.com/tutorial.html>`. 
+Go ahead and give it a whirl: :ref:`get_the_code` and then jump into
+the :ref:`the_examples`! Then build your own model in our
+:doc:`tutorial`.
 
 Like us? Share!
 
@@ -58,8 +58,8 @@ entire machine learning community, from novices to veterans. It uses
 specification files that are simple to read and author, meaning that you can
 get started building sophisticated models *without ever needing to code*. Even
 so, Kur exposes a friendly and extensible API to support advanced deep learning
-architectures or workflows. Excited? Jump straight into the `Examples
-<the_examples>`_.
+architectures or workflows. Excited? Jump straight into the
+:ref:`the_examples`.
 
 How is Kur Different?
 ---------------------
@@ -125,9 +125,9 @@ installing Kur.
 
 .. note::
 
-	Kur requires **Python 3.4** or greater. Take a look at our
-	:doc:`installing` for step-by-step instructions for installing Kur and
-	setting up a `virtual environment <https://virtualenv.pypa.io/>`_.
+	Kur requires **Python 3.4** or greater. Take a look at :doc:`installing`
+	for step-by-step instructions for installing Kur and setting up a `virtual
+	environment <https://virtualenv.pypa.io/>`_.
 
 From PyPI
 ---------
@@ -157,7 +157,7 @@ If everything has gone well, you shoud be able to use Kur:
 	kur --version
 
 You'll typically be using Kur in commands like ``kur train model.yml`` or ``kur
-test model.yml``. You'll see these in the `Examples <the_examples>`_, which is
+test model.yml``. You'll see these in the :ref:`the_examples`, which is
 where you should head to next!
 
 Troubleshooting
@@ -197,10 +197,17 @@ with the most likely digit it represents.
 	initial ``$`` are lines which are printed to the screen (you don't type
 	them).
 
-First, you need to `Get the Code <get_the_code>`_! If you install via ``pip``,
-you'll need to checkout the ``examples`` directory from the repository; if you
-install via ``git``, then you alreay have the ``examples`` directory locally.
-So let's move into the example directory:
+First, you need to :ref:`get_the_code`! If you installed via
+``pip``, you'll need to checkout the ``examples`` directory from the
+repository, like this:
+
+.. code-block:: bash
+
+	git clone https://github.com/deepgram/kur
+	cd kur/examples
+
+If you installed via ``git``, then you alreay have the ``examples`` directory
+locally, so just move into the example directory:
 
 .. code-block:: bash
 
@@ -273,20 +280,22 @@ Wow! Across the board, we already have 90% accuracy for recognizing
 handwritten digits, and we only used 0.8% of the training set! That's how
 awesome Kur is.
 
+Excited yet? Read on!
+
 .. note::
 
 	Clever readers will notice that each training epoch only used 480 training
 	samples. But MNIST provides 60,000 training samples total, so what gives?
 	Simple: lots of us our running this code on consumer hardware; in fact, I'm
 	running this example on my tiny ultrabook on an Intel Core m7 CPU. As
-	you'll see in `Under the Hood`_, I truncate the training process to only
-	train on 10 batches of 32 samples each, just to make the training loop
-	finish in a reasonable amount of time. It's not cheating: you still get 90%
-	accuracy! But if you have awesome hardware, or just want to see how good
-	your accuracy can get, then by all means read on and we'll show you how to
-	modify that.
+	you'll see in :ref:`Under the Hood <sect_under_the_hood>`, I truncate the
+	training process to only train on 10 batches of 32 samples each, just to
+	make the training loop finish in a reasonable amount of time. It's not
+	cheating: you still get 90% accuracy! But if you have awesome hardware, or
+	just want to see how good your accuracy can get, then by all means read on
+	and we'll show you how to modify that.
 
-Excited yet? Read on!
+.. _sect_under_the_hood:
 
 Under the Hood
 --------------
@@ -317,9 +326,10 @@ specification file:
 
 	include: mnist-defaults.yml
 
-This is just plain, old `YAML <yaml.org>`_, a markup language meant to be easy
-for humans to interpret (for a good overview of YAML language features, look at
-the `Ansible overview <https://docs.ansible.com/ansible/YAMLSyntax.html>`_).
+This is just plain, old `YAML <http://yaml.org>`_, a markup language meant to
+be easy for humans to interpret (for a good overview of YAML language features,
+look at the `Ansible overview
+<https://docs.ansible.com/ansible/YAMLSyntax.html>`_).
 
 There's a section to put the data. That's this:
 
@@ -425,7 +435,8 @@ mnist.yml`` and ``kur evaluate mnist.yml`` commands from before.
 .. note::
 
 	A more complex model will likely need more data. So be sure to look at the
-	tip in `More Advanced Things`_ to train on more of the data set.
+	tip in :ref:`more_advanced_things` to train on more
+	of the data set.
 
 If you want to know more, the YAML specification that Kur uses is described in
 greater detail in the :doc:`getting_started` page.
@@ -485,8 +496,8 @@ two fully-connected layers.  Try training this model: ``kur train mnist.yml``.
 Then evaluate it to see how it does: ``kur eval mnist.yml``. We got better than
 95% *by training on only 0.8% of the training set*.
 
-What happens if we give it more data? Like we `mentioned above
-<more_advanced_things>`_, we can adjust the amount of data we give Kur by
+What happens if we give it more data? Like we :ref:`mentioned above
+<more_advanced_things>`, we can adjust the amount of data we give Kur by
 twiddling the ``num_batches`` entry in the ``train`` section of
 ``mnist-defaults.yml``. Let's try using 5% of the dataset.  To do this, we'll
 set ``num_batches: 94`` (because 5% of 60,000 is 3000, and for the default
@@ -515,8 +526,8 @@ Flexibility: Variables
 ----------------------
 
 Kur uses an *engine* to determine how do variable substitution. `Jinja2
-<jinja.pocoo.org>`_ is the default templating engine, and it is very powerful
-and extensible. Let's see how to use it!
+<http://jinja.pocoo.org>`_ is the default templating engine, and it is very
+powerful and extensible. Let's see how to use it!
 
 Let's look at the `CIFAR-10 <https://www.cs.toronto.edu/~kriz/cifar.html>`_
 dataset. This is a image classification dataset of small 32 by 32 pixel color
