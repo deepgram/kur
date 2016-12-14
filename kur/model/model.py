@@ -353,7 +353,7 @@ class Model:
 			if target.name not in sources:
 				logger.warning('Could not find a data source for model '
 					'input "%s". Maybe you meant one of these: %s',
-					target.name, ', '.join(provider.keys()))
+					target.name, ', '.join(provider.keys))
 				continue
 
 			source = sources.pop(target.name)
