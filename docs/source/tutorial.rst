@@ -129,7 +129,8 @@ The Model Itself
 
 Let's start with the ``model`` section of the specification. How big does the
 hidden layer need to be? Let's pick something like 128. How big does the last
-layer need to be? Just 1, because our output is just scalars.
+layer need to be? Just 1, because our output is just scalars (+/- 1, depending
+on if the point is above/below the sine curve).
 
 Also, we need to make sure the names of our inputs and outputs in the model
 match the names of the data dictionary. We called the inputs ``point`` and we
@@ -286,8 +287,8 @@ Boy, that was simple. Now plot the data:
 	>>> plt.xlabel('Epoch')
 	>>> plt.ylabel('Loss')
 	>>> epoch = list(range(1, 1+len(training_loss)))
-	>>> t_line, plt.plot(epoch, training_loss, 'ro-')
-	>>> v_line, plt.plot(epoch, validation_loss, 'bo-')
+	>>> t_line, = plt.plot(epoch, training_loss, 'co-', label='Training Loss')
+	>>> v_line, = plt.plot(epoch, validation_loss, 'mo-', label='Validation Loss')
 	>>> plt.legend(handles=[t_line, v_line])
 	>>> plt.show()
 
@@ -296,7 +297,14 @@ Boy, that was simple. Now plot the data:
 	:align: center
 
 	Loss per epoch. We can clearly watch both training and validation loss
-	decrease over time.
+	decrease over time. Why is the validation loss lower than the training
+	loss?  Simple. During training, your weights start out bad and get better
+	and better.  But when you run your validation set, you are only using the
+	very best weights.  So the weights are in tip-top shape for validation, but
+	they are changing during training (so *on average*, they are worse). Of
+	course, this is still stochastic: random fluctuations and the exact values
+	in the training and validation set will not cause this to happen every
+	single time.
 
 Okay, now let's verify that we get comparable loss on our test set:
 
@@ -358,15 +366,18 @@ this output file.
 		   [-0.96111816]], dtype=float32)
 
 So we see that in both cases, the name of the model output has been copied over,
-and it contains the numpy array. So the structure of our output file is this
-(in YAML):
+and it contains the numpy array. So the structure of our output file is this:
 
-.. code-block:: yaml
+.. code-block:: python
 
-	truth:
-	  above: numpy.array(...)
-	result:
-	  above: numpy.array(...)
+	{
+	    'truth' : {
+	        'above' : numpy.array(...)
+	    },
+	    'result' : {
+	        'above' : numpy.array(...)
+	    }
+	}
 
 Our model has been trained to produce outputs closer to -1 whenever the ground
 truth was -1 (below the sine), and to produce outputs closer to 1 whenever the
@@ -429,13 +440,25 @@ easy.
 
 At this point ``above`` is a boolean array. Because Kur didn't shuffle anything
 around on us, we know that the *i*-th element of ``above`` corresponds to the
-*i*-th value of the ``output`` arrays. The actual plotting looks just like code
-we used to plot the training data at the beginning of the tutorial.
+*i*-th value of the ``output`` arrays.
+
+We can also figure out which entries were misclassified by asking which entries
+that the model predicted were above the line are not, in fact, above the line:
+
+	>>> actually_above = evaluate['above'] > 0
+	>>> wrong = above != actually_above
+	>>> correct_above = above & ~wrong
+	>>> correct_below = ~above & ~wrong
+
+The actual plotting looks just like code we used to plot the training data at
+the beginning of the tutorial, except we'll also plot the incorrectly labeled
+points in green.
 
 	>>> import matplotlib.pyplot as plt
 	>>> plt.xlim(-numpy.pi, numpy.pi)
-	>>> plt.plot(evaluate['point'][above,0], evaluate['point'][above,1], 'ro')
-	>>> plt.plot(evaluate['point'][~above,0], evaluate['point'][~above,1], 'ro')
+	>>> plt.plot(evaluate['point'][correct_above,0], evaluate['point'][correct_above,1], 'ro')
+	>>> plt.plot(evaluate['point'][correct_below,0], evaluate['point'][correct_below,1], 'bo')
+	>>> plt.plot(evaluate['point'][wrong,0], evaluate['point'][wrong,1], 'go')
 	>>> X = numpy.linspace(-numpy.pi, numpy.pi)
 	>>> plt.plot(X, numpy.sin(X), 'k', linewidth=5)
 	>>> plt.show()
@@ -446,9 +469,10 @@ we used to plot the training data at the beginning of the tutorial.
 
 	Model classification on the evaluation set. Each 2D point's position was
 	generated randomly when we built the evaluation set. It's color is
-	determined by the model's trained classifier: red means that model thinks
-	the point falls above the sine curve, and blue means the model thinks the
-	point lies below the sine curve.
+	determined by the model's trained classifier: red means that model
+	correctly predicted that the point falls above the sine curve, blue means
+	the model correctly predicted that the point lies below the sine curve, and
+	green means that the model made an incorrect prediction.
 
 .. note::
 
