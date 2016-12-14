@@ -4,3 +4,4 @@
 *.pyc	binary
 *.pyo	binary
 *.patch	text
+*.ico	binary

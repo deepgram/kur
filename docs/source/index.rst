@@ -6,6 +6,10 @@
    :target: https://travis-ci.org/deepgram/kur
 .. |GITTER| image:: https://badges.gitter.im/deepgram-kur/Lobby.svg
    :target: https://gitter.im/deepgram-kur/Lobby
+.. |LOGO| image:: http://kur.deepgram.com/images/logo.png
+   :target: https://deepgram.com
+.. |nbsp| unicode:: 0xA0
+   :trim:
 
 .. _Facebook: https://www.facebook.com/sharer/sharer.php?u=https%3A//kur.deepgram.com
 .. _Google+: https://plus.google.com/share?url=https%3A//kur.deepgram.com
@@ -15,6 +19,8 @@
 ******************************
 Kur: Descriptive Deep Learning
 ******************************
+
+Designed by |nbsp| |nbsp| |LOGO|
 
 |BUILD| |LICENSE| |PYTHON| |GITTER|
 
