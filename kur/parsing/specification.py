@@ -135,51 +135,6 @@ class Specification:
 					'This section will be ignored.', SyntaxWarning)
 
 	###########################################################################
-	def apply_provider_knowledge(self, provider):
-		""" Enables inference of tensor shapes by modifying the parsed
-			containers given provider information.
-		"""
-		logger.debug('Applying provider-inferred shapes to input layers.')
-		if provider.keys is None:
-			logger.debug('No provider keys available. Cannot infer shapes.')
-			return
-
-		sources = dict(zip(provider.keys, provider.sources))
-		for container in self.containers:
-			for target in container.get_children(
-					recursive=True, include_self=True
-				):
-				if not isinstance(target, Placeholder):
-					continue
-
-				logger.debug('Trying to infer shape for input "%s"',
-					target.name)
-
-				if target.name not in sources:
-					logger.warning('Could not find a data source for model '
-						'input "%s". Maybe you meant one of these: %s',
-						target.name, ', '.join(provider.keys()))
-					continue
-
-				source = sources.pop(target.name)
-				shape = source.shape()
-
-				if target.shape is None:
-					logger.debug('Inferred shape for input "%s": %s',
-						target.name, shape)
-					target.set_shape(shape)
-
-				elif target.shape != shape:
-					logger.warning('The input placeholder "%s" in the model '
-						'has an explicit shape %s which disagrees with the '
-						'shape of the corresponding data source %s.',
-						target.name, target.shape, source.shape())
-
-				else:
-					logger.debug('Input "%s" already has a shape.',
-						target.name)
-
-	###########################################################################
 	def get_model(self, provider=None):
 		""" Returns the parsed Model instance.
 		"""
@@ -191,8 +146,7 @@ class Specification:
 				containers=self.containers
 			)
 			self.model.parse(self.engine)
-			if provider is not None:
-				self.model.apply_provider_knowledge(provider)
+			self.model.register_provider(provider)
 			self.model.build()
 		return self.model
 

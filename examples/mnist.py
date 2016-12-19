@@ -239,7 +239,7 @@ def main():									# pylint: disable=too-many-locals
 	# Parse and build the model.
 	engine = kur.engine.JinjaEngine()
 	model.parse(engine)
-	model.apply_provider_knowledge(training_provider)
+	model.register_provider(training_provider)
 	model.build()
 
 	# Create the training object.

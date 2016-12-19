@@ -274,6 +274,52 @@ class Model:
 
 		self._parsed = False
 
+		self.provider = None
+
+	###########################################################################
+	def register_provider(self, provider):
+		""" Let's the model know which data provider we are using.
+
+			This allows the model to do shape inference for layers.
+		"""
+		self.provider = provider
+
+	###########################################################################
+	def get_inferred_shape(self, name):
+		""" Tries to infer the shape of a container from the data.
+
+			# Arguments
+
+			name: str. The name of the data source.
+
+			# Return value
+
+			If a data provider has been registered (through a previous call to
+			`register_provider()`, and if `name` is one of that provider's data
+			sources, then the shape of that source is returned (as a tuple).
+			Otherwise, None is returned.
+		"""
+		logger.debug('Trying to infer shape for input "%s"', name)
+		if self.provider is None:
+			logger.debug(
+				'No provider has been registered to use for shape inference.')
+			return None
+		if self.provider.keys is None:
+			logger.debug(
+				'The provider does not have data keys associated with it.')
+			return None
+
+		try:
+			index = self.provider.keys.index(name)
+		except ValueError:
+			logger.warning(
+				'No such data source found for shape inference: %s', name)
+			return None
+
+		shape = self.provider.sources[index].shape()
+		logger.debug('Inferred shape for input "%s": %s', name, shape)
+		return shape
+
 	###########################################################################
 	def get_backend(self):
 		""" Returns the backend this model is using.
@@ -336,48 +382,6 @@ class Model:
 		"""
 		logger.debug('Loading model weights from: %s', filename)
 		self.backend.restore(self, filename)
-
-	###########################################################################
-	def apply_provider_knowledge(self, provider):
-		""" Enables inference of tensor shapes by modifying the parsed
-			containers given provider information.
-		"""
-		logger.debug('Applying provider-inferred shapes to input layers.')
-		if provider.keys is None:
-			logger.debug('No provider keys available. Cannot infer shapes.')
-			return
-
-		sources = dict(zip(provider.keys, provider.sources))
-		for target in self.root.get_children(
-				recursive=True, include_self=True
-			):
-			if not isinstance(target, Placeholder):
-				continue
-
-			logger.debug('Trying to infer shape for input "%s"', target.name)
-
-			if target.name not in sources:
-				logger.warning('Could not find a data source for model '
-					'input "%s". Maybe you meant one of these: %s',
-					target.name, ', '.join(provider.keys))
-				continue
-
-			source = sources.pop(target.name)
-			shape = source.shape()
-
-			if target.shape is None:
-				logger.debug('Inferred shape for input "%s": %s',
-					target.name, shape)
-				target.set_shape(shape)
-
-			elif target.shape != shape:
-				logger.warning('The input placeholder "%s" in the model '
-					'has an explicit shape %s which disagrees with the '
-					'shape of the corresponding data source %s.',
-					target.name, target.shape, source.shape())
-
-			else:
-				logger.debug('Input "%s" already has a shape.', target.name)
 
 	###########################################################################
 	def parse(self, engine):
