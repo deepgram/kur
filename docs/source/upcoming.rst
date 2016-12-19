@@ -22,7 +22,8 @@ Model Features
 Containers Features
 -------------------
 
-- New containers: RNNs (LSTMs and GRUs)
+- Transpose
+- Repeat
 
 Templating Features
 -------------------
@@ -32,7 +33,7 @@ Templating Features
 Loss/Optimizer Features
 -----------------------
 
-- New loss functions and optimizers
+- New optimizers
 
 Data Features
 =============

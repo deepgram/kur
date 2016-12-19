@@ -911,6 +911,115 @@ Valid loss functions (choices for ``name``) are:
   appropriate loss function for 1-of-N classification tasks.
 - ``mean_squared_error``: Mean-squared error, which calculates the average
   the squared distance between the model outputs and the ground truth vectors.
+- ``ctc``: Connectionist temporal classification. The is a soft-alignment loss
+  function appropriate for functions like automatic speech recognition (ASR).
+
+Using CTC Loss
+--------------
+
+CTC loss takes several extra parameters: ``input_length``, ``output_length``,
+and ``output``. Your specification should look like this:
+
+.. code-block:: yaml
+
+	- name: ctc
+	  target: PREDICTED_TRANSCRIPTION
+	  output: TRUE_TRANSCRIPTION
+	  input_length: LENGTH_OF_PREDICTED_TRANSCRIPTION
+	  output_length: LENGTH_OF_TRUE_TRANSCRIPTION
+
+Here is description of all these pieces:
+
+- ``PREDICTED_TRANSCRIPTION``: this is the name of your *model's output layer*,
+  once it has passed through a softmax classification. Your model's output
+  should be of shape ``(TIMESTEPS, VOCABULARY_SIZE+1)``, where
+  ``VOCABULARY_SIZE`` is the number of "words" in your vocabulary (the ``+1``
+  is needed to accommodate the CTC blank character). The model output should
+  thus be one-hot encoded "words". The model will learn to insert CTC blank
+  characters into the model output until the length of the output is
+  ``TIMESTEPS``. ``TIMESTEPS`` should always be at least as large as the
+  maximum true transcription.
+- ``LENGTH_OF_PREDICTED_TRANSCRIPTION``. This is the name of the *data source*
+  which contains the number of timesteps in the model's output to consider
+  during loss function calculations. It should be a tensor of shape
+  ``(NUMBER_OF_SAMPLES, 1)``, where each value is an integer indicating the
+  length. If all of your model's input samples span the entire duration of the
+  input timesteps, then this length is just a constant value, equal to the
+  number of timesteps outputted in the *output layer*. If your data samples are
+  of difference sizes, try zero-padding them and providing the appropriately
+  scaled number of timesteps as the length. For example, let's say you have a
+  maximum of 200 frames of audio per input sample, which you then pass through
+  a network that ultimately shapes the output into 32-length outputs. If you
+  have an audio sample of length 140 frames, then you should set the
+  ``LENGTH_OF_PREDICTED_TRANSCRIPTION`` length to ``ceil((140 / 200) * 32) =
+  23`` for that sample.
+- ``LENGTH_OF_TRUE_TRANSCRIPTION``. This is the name of the *data source* which
+  indicates the number of "words" in each ground-truth transcription. It should
+  be a tensor of shape ``(NUMBER_OF_SAMPLES, 1)``, where each value is an
+  integer indicating the number of "words" in the true transcription. So if you
+  are creating a character-level transcription model and one of your
+  ``TRUE_TRANSCRIPTION`` entries is "hello world", then the corresponding entry
+  in ``LENGTH_OF_TRUE_TRANSCRIPTION`` should be 11 (one for each character,
+  including the space).
+- ``TRUE_TRANSCRIPTION``. The name of the *data source* which contains the true
+  transcriptions for each sample. This should point to a tensor of shape
+  ``(NUMBER_OF_SAMPLES, MAX_TRANSCRIPTION_LENGTH)``. Each sample should be a
+  vector with sparse one-hot encodings of the correspond words. So for example,
+  if you have a character-level transcription of "hello world", then you might
+  encode this as ``[7, 4, 11, 11, 14, 26, 22, 14, 17, 11, 3, 0, 0, ..., 0,
+  0]``, where the encoding shown here is ``{'a' : 0, 'b' : 1, ..., ' ' : 26}``.
+  Note that you need to pad it out (here, with ``0``'s) so that the total
+  length is the maximum transcript length you are training on. The CTC blank
+  character will automatically be inserted as ``number_of_words``.
+
+Overall, you should make sure these constraints are satisfied:
+
+- Your model's output layer (``PREDICTED_TRANSCRIPTION``) is softmax'd, and are
+  2D tensors: for each timestep, your feature vector should be one longer than
+  your vocabulary size (to accommodate the CTC blank character). The number of
+  timesteps can easily be larger than the length of the transcriptions you are
+  trying to predict.
+- The maximum value of ``LENGTH_OF_PREDICTED_TRANSCRIPTION`` is the number of
+  timesteps in your model's output (again, often this is larger than the length
+  of the transcription you are trying to predict).
+- The maximum value of ``LENGTH_OF_TRUE_TRANSCRIPTION`` is less than or equal
+  to the number of timesteps in your model's output.
+
+Also remember that you essentially set the CTC loss function's ``target`` to
+your model's output (``PREDICTED_TRANSCRIPTION``), and then you are adding
+three new inputs to your model (which need to be defined in the training set):
+``LENGTH_OF_PREDICTED_TRANSCRIPTION``, ``LENGTH_OF_TRUE_TRANSCRIPTION``, and
+``TRUE_TRANSCRIPTION``.
+
+For example, imagine you have audio samples, each with exactly 200 frames which
+you are using to do character-level transcription. The number of characters in
+your longest transcription is 16. Your vocabulary is A-Z plus the "space"
+character (27 "words" total). You model's input should be ``[200, X]``, where
+``X`` is the number of features for each audio frame. Your model's output
+should be ``[Y, 28]`` after being softmax'd, where ``Y`` is at least 16 (but
+realistically might be 64). Let's say the model's output layer is ``output``.
+You need to provide additional input data sources:
+
+- ``transcription``. Each sample should be length 16, and should look like
+  ``[ 0, 15, 15, 11, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]``: length 16, with
+  values indicating the encoded transcription (here, the word "apply", where
+  ``{'a' : 0, ...}``).
+- ``transcription_length``. Each sample should be length 1, and should look
+  like ``[ 5 ]``, where ``5`` corresponds to the length of the transcription
+  (here, the length of "apply").
+- ``input_length``. Each samples should be length 1, and should look like ``[
+  20 ]``, where ``20`` is the number of timesteps of the model input, scaled to
+  the size of the output layer (here, ``64 * (5 / 16)``).
+
+Your CTC loss function would be:
+
+.. code-block:: yaml
+
+	- name: ctc
+	  target: output
+	  input_length: input_length
+	  output_length: transcription_length
+	  output: transcription
 
 .. _data_spec:
 
