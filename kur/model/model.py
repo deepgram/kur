@@ -15,7 +15,7 @@ limitations under the License.
 """
 
 import logging
-import warnings
+import types
 from collections import namedtuple, OrderedDict, deque
 from ..containers import Container
 from ..containers.operators import ContainerGroup
@@ -25,8 +25,10 @@ from ..engine import PassthroughEngine
 logger = logging.getLogger(__name__)
 
 # Convenience class for keeping track of high-level network nodes.
-ContainerNode = namedtuple('ContainerNode',
-	['inputs', 'container', 'sink', 'outputs']
+ContainerNode = types.SimpleNamespace
+
+CollapsedContainer = namedtuple('CollapsedContainer',
+	['inputs', 'container', 'names']
 )
 
 ###############################################################################
@@ -274,6 +276,10 @@ class Model:
 
 		self._parsed = False
 
+		self.input_aliases = {}
+		self.output_aliases = {}
+		self.key_cache = {}
+
 		self.provider = None
 		self.additional_sources = {}
 
@@ -415,264 +421,6 @@ class Model:
 			self._parsed = True
 
 	###########################################################################
-	@staticmethod
-	def _assemble(container, inputs, previous, outputs, sink, result):
-		""" Enumerates all pieces of the model that must be built.
-
-			This basically enumerates all containers, assigns them their
-			resolved names, and tracks their inputs.
-
-			# Arguments
-
-			container: Container instance. The container to assemble
-				ContainerNodes for.
-			inputs: list or None. If a list, it should be a list of strings
-				that indicate which containers are used as input to
-				`container`.
-			previous: str or None. If not None, then it is the name of the
-				most recent container that was assembled, and which would serve
-				as input to this container in the absence of any other explicit
-				inputs.
-			sink: bool. Whether or not the container is a sink.
-			outputs: list or None. If a list, it should be a list of strings
-				that indicate which names are associated with this
-				`container`'s output. There may be multiple names due to nested
-				containers.
-			result: list. The output list to populate with ContainerNodes.
-
-			# Return value
-
-			The name of the most recently assembled container, suitable for use
-			as `previous` in a recurrent/iterative call to `_assemble`.
-		"""
-
-		# If the order is `inputs or container.inputs` then the outermost
-		# input list is used. If the order is `container.inputs or inputs`
-		# then the innermost input list is used.
-		inputs = inputs or container.inputs or previous
-		if inputs is None:
-			inputs = []
-		elif not isinstance(inputs, (list, tuple)):
-			inputs = [inputs]
-
-		outputs = outputs or []
-		if container.name:
-			outputs = outputs + [container.name]
-
-		logger.debug('Assembling container: %s', container.name)
-		logger.debug('  Inputs: %s', inputs)
-		logger.debug('  Outputs: %s', outputs)
-		logger.debug('  Previous: %s', previous)
-
-		if container.terminal():
-			result.append(ContainerNode(
-				inputs=tuple(inputs),			# List of names.
-				container=container,			# Container instance.
-				sink=sink or container.sink,	# If the container is a sink
-				outputs=tuple(outputs)			# List of names.
-			))
-			return container.name
-
-		else:
-			children = list(container.get_children(recursive=False))
-			for child in children:
-				# Only the very last container should get tagged with the
-				# parent container's output name.
-				first_child = child == children[0]
-				last_child = child == children[-1]
-				previous = Model._assemble(
-					container=child,
-					inputs=inputs if first_child else previous,
-					previous=previous,
-					outputs=outputs if last_child else [],
-					sink=(sink or container.sink) if last_child else False,
-					result=result
-				)
-			return previous
-
-	###########################################################################
-	def assemble(self):
-		""" Convenience function for constructing all the container-level graph
-			nodes.
-
-			# Return value
-
-			A list of ContainerNodes.
-		"""
-		result = []
-		Model._assemble(
-			container=self.root,
-			inputs=None,
-			previous=None,
-			outputs=None,
-			sink=False,
-			result=result
-		)
-		return result
-
-	###########################################################################
-	@staticmethod
-	def _attach_within_container(backend, container_nodes):
-		""" Instantiates the subgraphs of the low-level network that are
-			trivially described within a container.
-
-			# Arguments
-
-			backend: Backend instance. The backend to use for instantiating
-				graph elements.
-			container_nodes: list of ContainerNodes. The list of assembled
-				containers (as returned by `assemble()`) to create connections
-				for.
-
-			# Return value
-
-			A tuple `(network, endpoints)`, where `network` is a list of
-			partially constructed Nodes describing the network, and `endpoints`
-			is a dictionary containing unlinked Nodes. `endpoints` has two
-			keys: 'input' and 'output', which indicate whether the nodes
-			contained in the respective keys are associated with the input or
-			output ends of the container. The values in `endpoint` are also
-			dictionaries of Nodes indexed by container name.
-		"""
-
-		network = []
-		endpoints = {
-			'input' : {},
-			'output' : {}
-		}
-
-		# For each container, assemble its nodes.
-		for container_node in container_nodes:
-			logger.debug('Processing container node: %s', container_node)
-
-			prev = None
-			for layer in container_node.container.build(backend):
-				node = Node(
-					inputs=[prev] if prev is not None else None,
-					operation=layer,
-					value=None,
-					outputs=[]
-				)
-				if prev is None:
-					endpoints['input'][container_node.container.name] = node
-					logger.debug('  Input: %s', node)
-				else:
-					prev.outputs.append(node)
-					logger.debug('  Middle: %s', node)
-				prev = node
-				network.append(node)
-			if prev is not None:
-				endpoints['output'][container_node.container.name] = node
-				logger.debug('  Output: %s', node)
-
-		return network, endpoints
-
-	###########################################################################
-	@staticmethod
-	def _attach_between_containers(container_nodes, endpoints):
-		""" Finishes initializing low-level graph Nodes by enumerating
-			connections between (rather than within) containers.
-
-			# Arguments
-
-			container_nodes: list of ContainerNodes. The ContainerNodes to
-				create connections between.
-			endpoints: dict. A dictionary describing the partially constructed
-				Nodes, as returned by `_attach_within_container`.
-
-			# Return value
-
-			A tuple `(inputs, outputs)` where each of `inputs` and `outputs`
-			are `OrderedDict' instances. These ordered dictionaries have keys
-			which are the names of the containers associated with the inputs
-			and outputs of the network, respectively. The values of these
-			dictionaries are the Node instances themselves.
-		"""
-		# Data structures for holding the return values.
-		inputs = OrderedDict()
-		outputs = OrderedDict()
-
-		# Find nodes which produce a given output name.
-		node_by_output = OrderedDict(
-			[(name, node) for node in container_nodes for name in node.outputs]
-		)
-
-		# Keep track of which nodes we use as inputs, so that later on we can
-		# decide if they are output nodes.
-		input_used = set()
-
-		# Loop over each container node.
-		for container_node in container_nodes:
-
-			# Grab its name.
-			container_name = container_node.container.name
-
-			# Check if we have inputs to attach.
-			if container_name not in endpoints['input']:
-				warnings.warn('Container name was not found in list of open '
-					'inputs. This is a bug, but we can try to skip it.')
-				continue
-
-			# Grab the node object.
-			node = endpoints['input'][container_name]
-
-			# Figure out where the input comes from.
-			if isinstance(container_node.container, Placeholder):
-				# Oh, it's just a placeholder. Sweet.
-				inputs[container_name] = node
-			else:
-				# It's another container. Let's connect to each of its inputs.
-				prev = []
-				for input_name in container_node.inputs:
-
-					# Was this created by another layer?
-					if input_name in node_by_output:
-						# Yes, attach to it.
-
-						# Get the node
-						input_node = node_by_output[input_name]
-
-						# Mark its output as used by someone.
-						input_used.add(input_node.container.name)
-
-						# Now grab the node associated with the
-						# input container's output.
-						input_node = \
-							endpoints['output'][input_node.container.name]
-
-						# Add it as an input
-						prev.append(input_node)
-
-						# Let the input node know that we are one of its
-						#outputs.
-						input_node.outputs.append(node)
-
-					else:
-						# No other container owns this input. It's probably
-						# because it is an implicit input, but without a
-						# Placeholder to mark it as such.
-						raise ValueError('Placeholder inference is not '
-							'supported yet.')
-
-				# Set the node's inputs.
-				node.inputs = prev
-
-		# Now figure out which nodes are truly outputs.
-		for container_name in endpoints['output']:
-			# Grab the node
-			node = endpoints['output'][container_name]
-
-			# Grab the container.
-			container_node = node_by_output[container_name]
-
-			# To be an output, the container needs to be a sink, or the output
-			# has to not be used as an input anywhere.
-			if container_node.sink or not container_name in input_used:
-				outputs[container_name] = node
-
-		return inputs, outputs
-
-	###########################################################################
 	def is_built(self):
 		""" Returns True if this model has been built at some point.
 		"""
@@ -683,45 +431,276 @@ class Model:
 		""" Builds the model.
 		"""
 
-		logger.info('Building the model.')
-
 		if not self._parsed:
 			logger.warning('The model has not been parsed yet. We will try to '
 				'parse it without context, but this may easily fail. Make '
 				'sure Model.parse() is called before Model.build().')
 			self.parse(None)
 
-		# Construct the high-level network nodes.
-		container_nodes = self.assemble()
+		logger.info('Enumerating the model containers.')
 
-		# Assemble the in-container nodes.
-		network, endpoints = Model._attach_within_container(
-			self.backend,
-			container_nodes
-		)
+		# Construct the high-level network nodes.
+		nodes = self.enumerate_nodes(self.root)
+
+		logger.info('Assembling the model dependency graph.')
+		input_nodes, output_nodes, network = self.assemble_graph(nodes)
 
 		if logger.isEnabledFor(logging.DEBUG):
+			queue = deque(input_nodes.values())
+			while queue:
+				node = queue.popleft()
+				logger.debug('Assembled Node: %s', node.container.name)
+				logger.debug('  Uses: %s', ', '
+					.join([x.container.name for x in node.inputs]))
+				logger.debug('  Used by: %s', ', '
+					.join([x.container.name for x in node.outputs]))
+				logger.debug('  Aliases: %s', ', '.join(node.names))
+				queue.extend(node.outputs)
 
-			logger.debug('Network:')
-			for entry in network:
-				logger.debug('  - %s', entry)
-
-		# Now do the between-container attaching.
-		inputs, outputs = Model._attach_between_containers(
-			container_nodes,
-			endpoints
-		)
+		logger.info('Connecting the model graph.')
+		inputs, input_aliases, outputs, output_aliases = \
+			self.build_graph(input_nodes, output_nodes, network)
 
 		logger.info('Model inputs:  %s', ', '.join(node for node in inputs))
 		logger.info('Model outputs: %s', ', '.join(node for node in outputs))
 
-		self._connect_network(self.backend, inputs)
-
-		self.network = network
 		self.inputs = inputs
 		self.outputs = outputs
-		self.endpoints = endpoints
-		self.container_nodes = container_nodes
+		self.network = network
+		self.input_aliases = input_aliases
+		self.output_aliases = output_aliases
+		self.key_cache = {}
+
+		#assert False
+
+	###########################################################################
+	def build_graph(self, input_nodes, output_nodes, network):
+		""" Builds and connects the model's underlying tensor operations.
+		"""
+		from ..utils.flatiter import flatten
+
+		# 1-to-1 mapping: canonical name to compiled object.
+		inputs = OrderedDict()
+		# Many-to-one map: every name the input might have should map to the
+		# key used in `inputs`.
+		input_aliases = {}
+		outputs = OrderedDict()
+		output_aliases = {}
+
+		for node in network.values():
+			logger.debug('Building node: %s', node.container.name)
+			logger.debug('  Aliases: %s', ', '.join(node.names))
+			logger.debug('  Inputs:')
+			for x in node.inputs:
+				logger.debug('  - %s: %s', x.container.name, x.value)
+
+			if node.inputs:
+
+				# If you say that node N gets input from node M, you expect a
+				# single tensor to be produced by M. After all, N is also going
+				# to produce a single tensor. So you can always expect previous
+				# nodes to produce single tensors.
+				# If the node M's value is None, it hasn't modified the inputs
+				# in any way. But if it only can produce a single output, then
+				# not modifying the inputs implies that is also has only one
+				# input.
+
+				value = list(flatten([
+					x.value for x in node.inputs
+				]))
+
+				for layer in node.container.build(self):
+					if layer is None:
+						continue
+					value = self.backend.connect(
+						inputs=value,
+						target=layer
+					)
+				node.value = value
+
+			else:
+				value = None
+				for layer in node.container.build(self):
+					if layer is None:
+						continue
+					if value is None:
+						value = layer
+						# Register inputs
+						inputs[node.container.name] = node #value
+						for name in node.names:
+							input_aliases[name] = node.container.name
+					else:
+						value = self.backend.connect(
+							inputs=value,
+							target=layer
+						)
+				# Comments:
+				# - If your layer didn't produce anything, then `value` is
+				#   None, and the `inputs` for this layer is set to None.
+				# - If you decide to have your first layers produce None, then
+				#   presumably you can figure out what to do with that value
+				#   in upstream calls to `Backend.connect()`.
+				# - If this layer produced nothing at all (not simply a None
+				#   layer, but truly no layers at all), then `value` is still
+				#   None
+
+				node.value = value
+
+			logger.debug('  Value: %s', node.value)
+
+			# Register outputs
+			if node.container.name in output_nodes:
+				outputs[node.container.name] = node #.value
+				for name in node.names:
+					output_aliases[name] = node.container.name
+
+		return inputs, input_aliases, outputs, output_aliases
+
+	###########################################################################
+	def assemble_graph(self, nodes):
+		""" Creates the dependency graph of containers in the model.
+		"""
+
+		name_map = {name : node.container
+			for node in nodes for name in node.names}
+
+		# Instantiate the network.
+		# Map names to resolved nodes.
+		network = OrderedDict()
+		for node in nodes:
+			network[node.container.name] = ContainerNode(
+				inputs=[],
+				container=node.container,
+				outputs=[],
+				names=node.names,
+				value=None
+			)
+
+		# Populate the inputs.
+		recent = deque()
+		for node in nodes:
+			# Get the new node.
+			resolved = network[node.container.name]
+
+			# Check if it has inputs.
+			if node.inputs:
+				if isinstance(node.container, Placeholder):
+					raise ValueError('Input nodes cannot themselves have '
+						'inputs. It looks like container "{}" tried to, '
+						'though.'.format(node.container.name))
+				# It has explicit inputs. Use them.
+				for name in node.inputs:
+					# This name is not necessarily the container's canonical
+					# name. Let's find it.
+					if name in name_map:
+						# Find the container by a name.
+						container = name_map[name]
+						# Get the ContainerNode instance by canonical name.
+						input_node = network[container.name]
+						# Add the input.
+						resolved.inputs.append(input_node)
+					else:
+						# Maybe this is supposed to be an input?
+						raise ValueError('Container "{}" is trying to attach '
+							'to input "{}", but we cannot find that input.'
+							.format(node.container.name, name))
+			else:
+				# It does not have explicit inputs.
+				if isinstance(node.container, Placeholder):
+					# No worries, it's just a new input.
+					recent = deque()
+				elif recent:
+					# There is something to connect to behind this node.
+					resolved.inputs.append(recent[-1])
+				else:
+					# There is nothing there.
+					# This should be an input layer.
+					raise ValueError('Container "{}" looks like it is '
+						'supposed to be an input layer. If that is true, '
+						'then it ought to be marked as "{}".'
+						.format(
+							node.container.name,
+							Placeholder.get_container_name()
+						))
+
+			recent.append(resolved)
+
+		# Populate the outputs.
+		for node in network.values():
+			for input_node in node.inputs:
+				input_node.outputs.append(node)
+
+		used_as_output = set()
+
+		input_names = set()
+		output_names = set()
+		for name, node in network.items():
+			if not node.inputs:
+				input_names.add(name)
+			else:
+				# Mark its inputs as not outputs.
+				for input_node in node.inputs:
+					used_as_output.add(input_node.container.name)
+
+			if node.container.sink:
+				output_names.add(name)
+
+		for name in set(network.keys()) - used_as_output:
+			output_names.add(name)
+
+		input_nodes = {name : network[name] for name in input_names}
+		output_nodes = {name : network[name] for name in output_names}
+
+		# Last step: resolve the dependency graph.
+		ordered = OrderedDict()
+		# Pre-populate with input nodes.
+		for k, v in network.items():
+			if not v.inputs:
+				ordered[k] = v
+		for k in ordered:
+			del network[k]
+		# Now add the rest of the graph.
+		while network:
+			# Make the next pass through the nodes.
+			changed = set()
+			for k, v in network.items():
+				for node in v.inputs:
+					if node.container.name not in ordered:
+						break
+				else:
+					ordered[k] = v
+					changed.add(k)
+			if not changed:
+				raise ValueError('No change during dependency graph '
+					'resolution. There is something wrong with the graph.')
+			for k in changed:
+				del network[k]
+		network = ordered
+
+		return input_nodes, output_nodes, network
+
+	###########################################################################
+	def enumerate_nodes(self, root):
+		""" Enumerates all of the layers in the model.
+		"""
+		if root.terminal():
+			return [CollapsedContainer(
+				inputs=root.inputs or [],
+				container=root,
+				names=[root.name] if root.name else []
+			)]
+
+		result = []
+		for child in root.get_children(recursive=False):
+			result.extend(self.enumerate_nodes(child))
+		if result:
+			if root.inputs:
+				result[0].inputs = root.inputs
+			if root.name:
+				result[-1].names.append(root.name)
+			if root.sink:
+				result[-1].sink = True
+		return result
 
 	###########################################################################
 	def has_extension(self, name):
@@ -794,35 +773,5 @@ class Model:
 			extension_callback.retracted(name)
 
 		return containers
-
-	###########################################################################
-	@staticmethod
-	def _connect_network(backend, inputs):
-		""" Applies all tensor operations to instantiate a fully-connected
-			tensor graph.
-
-			# Arguments
-
-			backend: Backend instance. The backend to use to connect graph
-				elements.
-			network: list of Nodes. The nodes which constitute the network.
-			inputs: list of Nodes. The input nodes of the network.
-		"""
-		queue = deque(inputs.values())
-		while queue:
-			node = queue.popleft()
-
-			logger.debug('Connecting node: %s', node)
-
-			if node.inputs is None:
-				node.value = node.operation
-			else:
-				node.value = backend.connect(
-					inputs=[x.value for x in node.inputs],
-					target=node.operation
-				)
-
-			if node.outputs:
-				queue.extend(node.outputs)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
