@@ -6,21 +6,20 @@
    :target: https://travis-ci.org/deepgram/kur
 .. |GITTER| image:: https://badges.gitter.im/deepgram-kur/Lobby.svg
    :target: https://gitter.im/deepgram-kur/Lobby
-.. |LOGO| image:: http://kur.deepgram.com/images/logo.png
-   :target: https://deepgram.com
-.. |nbsp| unicode:: 0xA0
-   :trim:
 
 .. _Facebook: https://www.facebook.com/sharer/sharer.php?u=https%3A//kur.deepgram.com
 .. _Google+: https://plus.google.com/share?url=https%3A//kur.deepgram.com
 .. _LinkedIn: https://www.linkedin.com/shareArticle?mini=true&url=https%3A//kur.deepgram.com&title=Kur%20-%20descriptive%20deep%20learning&summary=Kur%20is%20the%20future%20of%20deep%20learning%3A%20advanced%20AI%20without%20programming!&source=
 .. _Twitter: https://twitter.com/home?status=%40DeepgramAI%20has%20released%20the%20future%20of%20deep%20learning.%20https%3A//kur.deepgram.com%20%23Kur
 
+.. image:: http://kur.deepgram.com/images/logo.png
+   :width: 50%
+   :align: center
+   :target: https://deepgram.com
+
 ******************************
 Kur: Descriptive Deep Learning
 ******************************
-
-Designed by |nbsp| |nbsp| |LOGO|
 
 |BUILD| |LICENSE| |PYTHON| |GITTER|
 
