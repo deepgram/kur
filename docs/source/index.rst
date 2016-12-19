@@ -137,13 +137,15 @@ If you know what you are doing, then this is easy:
 
 	pip install kur
 
-**Quick Start**: Or, if you already have Python 3 and ``virtualenvwrapper``
-:ref:`installed <virtualenv_setup>`, then here's a few quick-start lines to get
-you training your first model:
+**Quick Start**: Or, if you already have :doc:`Python 3 installed
+<installing>`, then here's a few quick-start lines to get you training your
+first model:
 
 .. code-block:: bash
 
-	mkvirtualenv $(which python3) kur           # Set up a virtual environment
+	pip install virtualenv                      # Make sure virtualenv is present
+	virtualenv -p $(which python3) ~/kur-env    # Create a Python 3 environment for Kur
+	. ~/kur-env/bin/activate                    # Activate the Kur environment
 	pip install kur                             # Install Kur
 	kur --version                               # Check that everything works
 	git clone https://github.com/deepgram/kur   # Get the examples
@@ -161,13 +163,15 @@ Just check it out and run the setup script:
 	cd kur
 	pip install .
 
-**Quick Start**: Or, if you already have Python 3 and ``virtualenvwrapper``
-:ref:`installed <virtualenv_setup>`, then here's a few quick-start lines to get
-you training your first model:
+**Quick Start**: Or, if you already have :doc:`Python 3 installed
+<installing>`, then here's a few quick-start lines to get you training your
+first model:
 
 .. code-block:: bash
 
-	mkvirtualenv $(which python3) kur           # Set up a virtual environment
+	pip install virtualenv                      # Make sure virtualenv is present
+	virtualenv -p $(which python3) ~/kur-env    # Create a Python 3 environment for Kur
+	. ~/kur-env/bin/activate                    # Activate the Kur environment
 	git clone https://github.com/deepgram/kur   # Check out the latest code
 	cd kur                                      # Change directories
 	pip install .                               # Install Kur
