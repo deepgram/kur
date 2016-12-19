@@ -275,6 +275,26 @@ class Model:
 		self._parsed = False
 
 		self.provider = None
+		self.additional_sources = {}
+
+	###########################################################################
+	def has_data_source(self, name):
+		""" Checks if an auxiliary data source is present.
+		"""
+		return name in self.additional_sources
+
+	###########################################################################
+	def add_data_source(self, name, source):
+		""" Registers an auxiliary data source.
+		"""
+		self.additional_sources[name] = source
+
+	###########################################################################
+	def get_data_sources(self):
+		""" Returns an iterator over (key, value) tuples of auxiliary data
+			sources.
+		"""
+		return self.additional_sources.items()
 
 	###########################################################################
 	def register_provider(self, provider):

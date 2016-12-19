@@ -43,7 +43,7 @@ class Trainer:
 		self._compiled = None
 
 	###########################################################################
-	def compile(self, recompile=False):
+	def compile(self, recompile=False, with_provider=None):
 		""" Compiles a model.
 
 			This generates a backend-specific representation of the model,
@@ -53,6 +53,9 @@ class Trainer:
 
 			recompile: bool (default: False). If the model has already been
 				compiled, it is not compiled again unless this flag is True.
+			with_provider: Provider instance or None (default: None). If you
+				want to merge the model's auxiliary data sources into your
+				provider, you can specify the Provider instance here.
 
 			# Return value
 
@@ -75,6 +78,10 @@ class Trainer:
 			loss=self.loss,
 			optimizer=self.optimizer
 		)
+
+		if with_provider is not None:
+			for name, source in self.model.get_data_sources():
+				with_provider.add_source(source, name=name)
 
 	###########################################################################
 	@staticmethod
@@ -108,7 +115,7 @@ class Trainer:
 			The average loss across the validation set.
 		"""
 
-		self.compile()
+		self.compile(with_provider=provider)
 
 		if validating:
 			desc = ('Validating', 'Validation')
@@ -212,7 +219,7 @@ class Trainer:
 
 		Trainer.source_shapes(provider)
 
-		self.compile()
+		self.compile(with_provider=provider)
 
 		if log is None:
 			logger.info('No log specified, so no historical loss information '

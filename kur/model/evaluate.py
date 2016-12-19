@@ -38,7 +38,7 @@ class Evaluator:
 		self._compiled = None
 
 	###########################################################################
-	def compile(self, recompile=False):
+	def compile(self, recompile=False, with_provider=None):
 		""" Compiles a model.
 
 			This generates a backend-specific representation of the model,
@@ -48,6 +48,9 @@ class Evaluator:
 
 			recompile: bool (default: False). If the model has already been
 				compiled, it is not compiled again unless this flag is True.
+			with_provider: Provider instance or None (default: None). If you
+				want to merge the model's auxiliary data sources into your
+				provider, you can specify the Provider instance here.
 
 			# Return value
 
@@ -67,6 +70,10 @@ class Evaluator:
 		self._compiled = self.model.backend.compile(
 			model=self.model
 		)
+
+		if with_provider is not None:
+			for name, source in self.model.get_data_sources():
+				with_provider.add_source(source, name=name)
 
 	###########################################################################
 	def evaluate(self, provider, callback=None):
@@ -95,7 +102,7 @@ class Evaluator:
 			Otherwise, if `callback` is not None, this returns None.
 		"""
 
-		self.compile()
+		self.compile(with_provider=provider)
 
 		result = None
 		truth = None
