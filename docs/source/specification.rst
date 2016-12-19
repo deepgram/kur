@@ -874,8 +874,6 @@ details.
 	of users don't want that, so we offer ``destination`` as a convenience
 	function.
 
-.. _data_spec:
-
 Loss
 ====
 
@@ -913,6 +911,8 @@ Valid loss functions (choices for ``name``) are:
   appropriate loss function for 1-of-N classification tasks.
 - ``mean_squared_error``: Mean-squared error, which calculates the average
   the squared distance between the model outputs and the ground truth vectors.
+
+.. _data_spec:
 
 Data Specification
 ==================
