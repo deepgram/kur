@@ -61,7 +61,8 @@ class KerasBackend(Backend):
 			# Arguments
 
 			backend: str or None (default: None). The Keras backend to use
-			(either "theano" or "tensorflow"). None uses the system default.
+				(either "theano" or "tensorflow"). None uses the system
+				default.
 		"""
 
 		super().__init__(*args, **kwargs)
@@ -115,9 +116,17 @@ class KerasBackend(Backend):
 				import keras.backend as K		# pylint: disable=import-error
 				logger.debug('Keras is loaded. The backend is: %s',
 					K.backend())
+				self.toolchain = K.backend()
 
 		# And now we can set the dimension ordering.
 		keras.backend.set_image_dim_ordering('tf')
+
+	###########################################################################
+	def get_toolchain(self):
+		""" Returns a string describing the Keras backend being used, either
+			'theano' or 'tensorflow'.
+		"""
+		return self.toolchain
 
 	###########################################################################
 	@classmethod
