@@ -54,7 +54,7 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 		""" Return a reference to another layer.
 		"""
 		if self.reentrant:
-			raise ParsingError('Circular reference found while build reuse '
+			raise ParsingError('Circular reference found while building reuse '
 				'layer: {}'.format(self.name))
 
 		target = self.get_relative_by_name(self.target)
