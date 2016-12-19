@@ -486,9 +486,11 @@ class KerasBackend(Backend):
 		""" Fits the given model on a batch of data.
 		"""
 		metrics = compiled['model'].train_on_batch(
-			{compiled['alias'].get(name, name) : data[name]
+			{compiled['alias'].get(name, name) :
+				data[model.get_data_name_by_layer_name(data, name)]
 				for name in model.inputs},
-			{compiled['alias'].get(name, name) : data[name]
+			{compiled['alias'].get(name, name) :
+				data[model.get_data_name_by_layer_name(data, name)]
 				for name in model.outputs}
 		)
 
@@ -504,9 +506,11 @@ class KerasBackend(Backend):
 		""" Calculates the model loss on a batch of data.
 		"""
 		metrics = compiled['model'].test_on_batch(
-			{compiled['alias'].get(name, name) : data[name]
+			{compiled['alias'].get(name, name) :
+				data[model.get_data_name_by_layer_name(data, name)]
 				for name in model.inputs},
-			{compiled['alias'].get(name, name) : data[name]
+			{compiled['alias'].get(name, name) :
+				data[model.get_data_name_by_layer_name(data, name)]
 				for name in model.outputs}
 		)
 
@@ -547,7 +551,8 @@ class KerasBackend(Backend):
 		"""
 		# Returns an array of model outputs, with one entry per branch.
 		results = compiled['model'].predict_on_batch(
-			{compiled['alias'].get(name, name) : data[name]
+			{compiled['alias'].get(name, name) :
+				data[model.get_data_name_by_layer_name(data, name)]
 				for name in model.inputs}
 		)
 

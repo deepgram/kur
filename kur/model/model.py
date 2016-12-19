@@ -347,6 +347,52 @@ class Model:
 		return shape
 
 	###########################################################################
+	def get_data_name_by_layer_name(self, keys, layer_name):
+		""" Finds the key of a data dictionary which is intended to provide
+			data to a particular layer in the model.
+
+			# Example
+
+			```python
+			# Say that you have data of this form:
+			data = {'Aaron' : _, 'Barbara' : _, 'Charles' : _}
+			# And the set of model aliases is:
+			input_aliases = {'Apple' : 'A', 'Aaron' : 'A', 'Beth' : 'B', ...}
+			# Then:
+			assert get_data_name_by_layer_name(
+				data.keys(),
+				'A'
+			) == 'Aaron'
+			```
+		"""
+		key = self.key_cache.get(layer_name)
+		if key in keys:
+			return key
+
+		for alias_list in (self.input_aliases, self.output_aliases):
+			for key, name in alias_list.items():
+				if key in keys and name == layer_name:
+					self.key_cache[layer_name] = key
+					return key
+
+		logger.error('No such layer name found: "%s". Something will probably '
+			'break in a moment. This is probably a bug.', layer_name)
+		return layer_name
+
+	###########################################################################
+	def get_layer_name_by_data_name(self, data_name):
+		""" Finds the canonical name of the layer which uses a particular data
+			source.
+		"""
+		if data_name in self.input_aliases:
+			return self.input_aliases[data_name]
+		if data_name in self.output_aliases:
+			return self.output_aliases[data_name]
+		logger.error('No such data name found: "%s". Something will probably '
+			'break in a moment. This is probably a bug.', data_name)
+		return data_name
+
+	###########################################################################
 	def get_backend(self):
 		""" Returns the backend this model is using.
 		"""
