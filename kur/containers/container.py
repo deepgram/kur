@@ -333,7 +333,9 @@ class Container:
 		if container_name in self.data:
 			self.args = engine.evaluate(self.data[container_name])
 		else:
-			warnings.warn('This container has no arguments.', SyntaxError)
+			if not self.is_anonymous():
+				warnings.warn('This container "{}" has no arguments.'
+					.format(self.name), SyntaxWarning)
 			self.args = None
 
 		if 'inputs' in self.data:
@@ -472,5 +474,12 @@ class Container:
 			return False.
 		"""
 		raise NotImplementedError
+
+	###########################################################################
+	def is_anonymous(self):
+		""" Whether or not this container is intended to be used by end-users,
+			or is merely an internal container used by Kur.
+		"""
+		return False
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
