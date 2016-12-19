@@ -97,9 +97,10 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 			self.set_shape(engine.evaluate(self.args['shape'], recursive=True))
 
 	###########################################################################
-	def _build(self, backend):
+	def _build(self, model):
 		""" Create the backend-specific placeholder.
 		"""
+		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
 			if self.shape is None:

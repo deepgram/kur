@@ -52,10 +52,10 @@ class ContainerGroup(Operator):			# pylint: disable=too-few-public-methods
 			child.parse(engine)
 
 	###########################################################################
-	def _build(self, backend):
+	def _build(self, model):
 		""" Build all children.
 		"""
 		for child in self.children:
-			yield from child.build(backend)
+			yield from child.build(model)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

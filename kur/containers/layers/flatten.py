@@ -28,9 +28,10 @@ class Flatten(Layer):					# pylint: disable=too-few-public-methods
 		super().__init__(*args, **kwargs)
 
 	###########################################################################
-	def _build(self, backend):
+	def _build(self, model):
 		""" Create the backend-specific placeholder.
 		"""
+		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
 			import keras.layers as L			# pylint: disable=import-error

@@ -59,11 +59,12 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 			self.new_child_from_data(child).parse(engine)
 
 	###########################################################################
-	def _build(self, backend):
+	def _build(self, model):
 		""" Instantiate the container.
 		"""
+		backend = model.get_backend()
 		for child in self.children:
-			for layer in child.build(backend):
+			for layer in child.build(model):
 
 				if backend.get_name() == 'keras':
 

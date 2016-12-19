@@ -269,7 +269,7 @@ class Container:
 		self._parsed = True
 
 	###########################################################################
-	def build(self, backend, rebuild=False):
+	def build(self, model, rebuild=False):
 		""" Convenience function for building the underlying operations.
 
 			This should not be overriden in derived classes. Override
@@ -278,7 +278,7 @@ class Container:
 		if not self._parsed:
 			raise ParsingError('Container must be parsed before being built.')
 		if self._built is None or rebuild:
-			self._built = list(self._build(backend))
+			self._built = list(self._build(model))
 		yield from self._built
 
 	###########################################################################
@@ -362,17 +362,22 @@ class Container:
 			self.sink = False
 
 	###########################################################################
-	def _build(self, backend):
+	def _build(self, model):
 		""" Constructs the backend-specific data objects.
 
 			# Arguments
 
-			backend: Backend instance. The backend to use for constructing the
+			model: Model instance. The model to use for constructing the
 				container.
 
 			# Return value
 
 			An iterator that yields Layers.
+
+			# Notes
+
+			- If you need to get an instance of the backend while constructing
+			  your container, use `model.get_backend()`.
 		"""
 		raise NotImplementedError
 

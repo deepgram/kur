@@ -50,7 +50,7 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 		self.target = engine.evaluate(self.args['target'])
 
 	###########################################################################
-	def _build(self, backend):
+	def _build(self, model):
 		""" Return a reference to another layer.
 		"""
 		if self.reentrant:
@@ -64,9 +64,9 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 
 		if target._built is None:			# pylint: disable=protected-access
 			self.reentrant = True
-			target.build(backend)
+			target.build(model)
 			self.reentrant = False
 
-		yield from target.build(backend)
+		yield from target.build(model)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

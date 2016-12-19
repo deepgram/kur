@@ -117,9 +117,10 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 			self.activation = None
 
 	###########################################################################
-	def _build(self, backend):
+	def _build(self, model):
 		""" Instantiates the layer with the given backend.
 		"""
+		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
 			import keras.layers as L			# pylint: disable=import-error

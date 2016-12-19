@@ -275,6 +275,12 @@ class Model:
 		self._parsed = False
 
 	###########################################################################
+	def get_backend(self):
+		""" Returns the backend this model is using.
+		"""
+		return self.backend
+
+	###########################################################################
 	def add_extension_callback(self, extension_callback):
 		""" Adds an extension callback.
 

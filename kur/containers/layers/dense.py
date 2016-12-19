@@ -66,9 +66,10 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 				'boolean. Received: {}'.format(self.auto_flatten))
 
 	###########################################################################
-	def _build(self, backend):
+	def _build(self, model):
 		""" Create the backend-specific placeholder.
 		"""
+		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
 			import keras.layers as L			# pylint: disable=import-error

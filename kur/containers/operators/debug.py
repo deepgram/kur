@@ -51,7 +51,7 @@ class Debug(Operator):					# pylint: disable=too-few-public-methods
 		logger.debug('Container %s says: %s', self.name, self.args)
 
 	###########################################################################
-	def _build(self, backend):	# pylint: disable=unused-argument,no-self-use
+	def _build(self, model):	# pylint: disable=unused-argument,no-self-use
 		""" Debug statements don't produce layers.
 		"""
 		return iter(())
