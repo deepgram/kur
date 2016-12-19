@@ -85,7 +85,7 @@ class ShuffleProvider(Provider): \
 					'the provider to able to shuffle them.')
 
 			if randomize is True:
-				if self.entries is None:
+				if self.entries <= 0:
 					raise ValueError('Must know how long our shuffleable '
 						'sources are in order to shuffle them, but all '
 						'sources seem to be infinite. If this is the case, '
@@ -94,7 +94,7 @@ class ShuffleProvider(Provider): \
 						'entirely by setting `randomize` to False.')
 				self._shuffle_len = self.entries
 			elif isinstance(randomize, int):
-				self._shuffle_len = randomize
+				self._shuffle_len = randomize # pylint: disable=redefined-variable-type
 			else:
 				raise ValueError('`randomize` must be True/False or an '
 					'integer, but we received: {}'.format(randomize))
@@ -102,6 +102,20 @@ class ShuffleProvider(Provider): \
 			self.randomize = True
 		else:
 			self.randomize = False
+
+	###########################################################################
+	def add_source(self, source, name=None):
+		""" Adds a new data source to an existing provider.
+		"""
+		if self.randomize:
+			if not isinstance(source, Shuffleable):
+				raise ValueError('Cannot add a non-shuffleable source to an '
+					'already shuffled provider.')
+
+		super().add_source(source, name=name)
+
+		if self.randomize is True:
+			self._shuffle_len = self.entries
 
 	###########################################################################
 	def pre_iter(self):

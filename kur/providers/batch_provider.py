@@ -56,7 +56,19 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		if self.num_batches is not None:
 			logger.info('Maximum number of batches set to: %d',
 				self.num_batches)
-			if self.entries is not None:
+			if self.entries > 0:
+				self.entries = min(
+					self.entries,
+					self.num_batches * self.batch_size
+				)
+
+	###########################################################################
+	def add_source(self, source, name=None):
+		""" Adds a new data source to an existing provider.
+		"""
+		super().add_source(source, name=name)
+		if self.num_batches is not None:
+			if self.entries > 0:
 				self.entries = min(
 					self.entries,
 					self.num_batches * self.batch_size
@@ -118,7 +130,15 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 				else:
 					break
 			else:
-				raise ValueError('Unable to accumulate equal-length batches '
-					'for each data source.')
+				if proceed:
+					raise ValueError('Managed to accumulate unequal-length '
+						'batches, but we were still told to continue '
+						'iterating. This is a bug.')
+
+				smallest = min(lens)
+				if smallest == 0:
+					break
+				result = [x[:smallest] for x in result]
+				yield self.wrap(result)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

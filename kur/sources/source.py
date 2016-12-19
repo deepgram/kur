@@ -53,7 +53,7 @@ class Source:						# pylint: disable=too-few-public-methods
 			same as the number of training samples in an epoch. If this number
 			is unknown or effectively infinite (because it is from some
 			real-time data generator or is being streamed from some
-			uncontrolled source, for example), then this should return None.
+			uncontrolled source, for example), then this should return <= 0.
 		"""
 		raise NotImplementedError
 

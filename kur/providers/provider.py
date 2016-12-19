@@ -50,7 +50,7 @@ class Provider:						# pylint: disable=too-few-public-methods
 		  then you should consider restructuring your data sources, or using
 		  Shuffleable sources with a ShuffleProvider.
 		- Sources are said to be infinite if they cannot determine how many
-		  samples they can provide (i.e., "len" returns None for the Source).
+		  samples they can provide (i.e., "len" returns <= 0 for the Source).
 		  A Provider is said to be infinite if all of its Sources are infinite.
 		  Note that an infinite Provider or Source does not need to never
 		  terminate; it simply means that it cannot determine when the iterator
@@ -110,8 +110,14 @@ class Provider:						# pylint: disable=too-few-public-methods
 			raise ValueError('Unknown or unexpected type for "sources": {}'
 				.format(type(sources)))
 
+		self._calculate_sizes()
+
+	###########################################################################
+	def _calculate_sizes(self):
+		""" Calculates the sizes of each of the sources.
+		"""
 		lens = [len(source) for source in self.sources]
-		len_set = {i for i in lens if i is not None}
+		len_set = {i for i in lens if i > 0}
 		if len(len_set) == 1:
 			# All finite sources are the same length.
 			self.entries = len_set.pop()
@@ -133,8 +139,24 @@ class Provider:						# pylint: disable=too-few-public-methods
 					'you are doing. %s', msg)
 		else:
 			# There are no finite sources.
-			self.entries = None
+			self.entries = 0
 		self.lens = lens
+
+	###########################################################################
+	def add_source(self, source, name=None):
+		""" Adds a new data source to an existing provider.
+
+			# Arguments
+
+			source: Source instance. The data source to add.
+			name: str or None (default: None). The name of the data source.
+		"""
+		if name is None:
+			self.keys = None
+		elif self.keys is not None:
+			self.keys.append(name)
+		self.sources.append(source)
+		self._calculate_sizes()
 
 	###########################################################################
 	def pre_iter(self):
@@ -191,7 +213,7 @@ class Provider:						# pylint: disable=too-few-public-methods
 			source).
 
 			If the provider is infinite (because all of its sources are
-			infinite), then it should return None.
+			infinite), then it should return <= 0.
 		"""
 		return self.entries
 
