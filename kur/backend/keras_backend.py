@@ -24,7 +24,6 @@ import shutil
 import logging
 import numpy
 from . import Backend
-from ..containers import Layer
 from ..loss import Loss
 from ..model import ExtensionState
 from ..utils import can_import, EnvironmentalVariable, redirect_stderr, idx
@@ -138,7 +137,7 @@ class KerasBackend(Backend):
 			- You will need input placeholders in place before doing this,
 			  otherwise Keras's shape-checking will fail.
 		"""
-		if isinstance(inputs, Layer):
+		if not isinstance(inputs, list):
 			inputs = [inputs]
 		return target(inputs)
 
