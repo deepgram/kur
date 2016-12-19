@@ -41,6 +41,7 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 		"""
 		super().__init__(*args, **kwargs)
 		self.shape = None
+		self.type = None
 
 	###########################################################################
 	def _parse_pre(self, engine):
@@ -96,6 +97,9 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 		else:
 			self.set_shape(engine.evaluate(self.args['shape'], recursive=True))
 
+		if 'type' in self.args:
+			self.type = engine.evaluate(self.args['type'], recursive=True)
+
 	###########################################################################
 	def _build(self, model):
 		""" Create the backend-specific placeholder.
@@ -103,14 +107,25 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
+			import keras.backend as K			# pylint: disable=import-error
+			if self.type is None:
+				dtype = K.floatx()
+			else:
+				dtype = self.type
+			logger.debug('Creating placeholder for "%s" with data type "%s".',
+				self.name, dtype)
+
 			if self.shape is None:
-				raise ParsingError(
-					'Placeholder "{}" requires a shape.'.format(self.name))
+				self.shape = model.get_inferred_shape(self.name)
+				if not self.shape:
+					raise ParsingError(
+						'Placeholder "{}" requires a shape.'.format(self.name))
 
 			import keras.layers as L			# pylint: disable=import-error
 			yield L.Input(
 				shape=self.shape,
-				name=self.name
+				name=self.name,
+				dtype=dtype
 			)
 
 		else:
