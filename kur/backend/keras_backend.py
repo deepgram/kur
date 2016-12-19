@@ -340,11 +340,11 @@ class KerasBackend(Backend):
 			if loss is not None:# and optimizer is not None:
 				logger.debug('Starting to compile the Keras model.')
 				result.compile(
-					loss={name : func.get_loss(self)
+					loss={alias[name] : func.get_loss(self)
 						for name, func in loss.items()},
 					optimizer=optimizer.get_optimizer(self) \
 						if optimizer is not None else None,
-					loss_weights={name : func.get_weight()
+					loss_weights={alias[name] : func.get_weight()
 						for name, func in loss.items()}
 				)
 
