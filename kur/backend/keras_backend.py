@@ -323,7 +323,15 @@ class KerasBackend(Backend):
 		""" Returns the Keras model instance.
 		"""
 
-		with ExtensionState(model):
+		# FIXME: Decide if we want to make guarantees about the model being
+		# changed/unchanged. We could also move the
+		# `get_data_name_by_layer_name()` functionality from `Model` to here,
+		# and then add the compiled model's inputs/outputs to the dictionary
+		# that this function returns.
+		# We used to use:
+		#   with ExtensionState(model):
+		# But for now we will use:
+		with contextlib.ExitStack():
 
 			if loss is not None:
 				loss, alias = self._apply_loss(model, loss)
