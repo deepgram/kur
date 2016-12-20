@@ -67,7 +67,8 @@ class KerasBackend(Backend):
 		super().__init__(*args, **kwargs)
 
 		if backend is not None:
-			logger.info('The %s backend for Keras has been requested.')
+			logger.info('The %s backend for Keras has been requested.',
+				backend)
 
 			if 'keras' in sys.modules:
 				import keras.backend as K		# pylint: disable=import-error
@@ -451,10 +452,10 @@ class KerasBackend(Backend):
 					loss.append(loss[0])
 			elif len(loss) != num_outputs:
 				raise ValueError('Wrong number of loss functions specified. '
-					'There must be as many loss functions as model outputs, or '
-					'a single loss function that can be replicated for each '
-					'model output. In this case, there were {} loss functions '
-					'given, but the model has {} outputs.'
+					'There must be as many loss functions as model outputs, '
+					'or a single loss function that can be replicated for '
+					'each model output. In this case, there were {} loss '
+					'functions given, but the model has {} outputs.'
 						.format(len(loss), num_outputs))
 
 			temp = {}
@@ -473,9 +474,9 @@ class KerasBackend(Backend):
 
 		for name in supplied_loss - required_loss:
 			logger.warning('Loss function was supplied for "%s", but no such '
-				'output exists in the model. Maybe you meant one of these: %s. '
-				'Supplied loss functions: %s. Required loss functions: %s.',
-				name,
+				'output exists in the model. Maybe you meant one of these: '
+				'%s. Supplied loss functions: %s. Required loss functions: '
+				'%s.', name,
 				', '.join(x for x in required_loss - supplied_loss),
 				', '.join(supplied_loss),
 				', '.join(required_loss)
