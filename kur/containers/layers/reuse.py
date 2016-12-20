@@ -45,9 +45,16 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 		"""
 		super()._parse(engine)
 
-		if 'target' not in self.args:
-			raise ParsingError('Missing key "target" in Reuse layer.')
-		self.target = engine.evaluate(self.args['target'])
+		if isinstance(self.args, dict):
+			if 'target' not in self.args:
+				raise ParsingError('Missing key "target" in Reuse layer.')
+			self.target = engine.evaluate(self.args['target'])
+		elif isinstance(self.args, str):
+			self.target = engine.evaluate(self.args)
+		else:
+			raise ParsingError('Reuse layer expected either a dictionary or '
+				'a string for an argument, but we received: {}'
+				.format(self.args))
 
 	###########################################################################
 	def _build(self, model):

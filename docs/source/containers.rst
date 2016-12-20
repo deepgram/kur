@@ -251,6 +251,10 @@ model (as opposed to multiple tensor operations in multiple places).
 	reuse:
 	  target: TARGET
 
+or::
+
+	reuse: TARGET
+
 - ``TARGET``: the name of the layer to re-apply.
 
 Recurrent
