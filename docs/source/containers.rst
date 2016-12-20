@@ -289,6 +289,29 @@ Recurrent
   of the forward and backward RNNs is merged. If bidirectional is not set, then
   "merge" cannot be used. The default value is ``average``.
 
+Output
+------
+
+**Description**. A convenience layer for explicitly marking a point in the model
+as an output.
+
+**Purpose**. Any layer can be marked as an output using the ``sink: True``
+value. But this is often awkward, especially if preceding layers are nested
+deeply within a ``for`` or ``parallel`` block. This can be used to resolve
+those ambiguities, as well as make your model easier to read.
+
+**Usage**::
+
+	output: NAME
+
+or::
+
+	output:
+	  name: NAME
+
+- ``NAME``: the name of the output layer. It will be associated with the
+  tensors produced by the most recent layers.
+
 Operators
 =========
 
