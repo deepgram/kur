@@ -120,4 +120,34 @@ class TestTrain:
 		)
 		trainer.test(provider=ctc_data)
 
+	###########################################################################
+	def test_uber_train(self, uber_model, uber_data, jinja_engine, loss,
+		optimizer):
+		""" Tests that we can compile and train a diverse model.
+		"""
+		uber_model.parse(jinja_engine)
+		uber_model.register_provider(uber_data)
+		uber_model.build()
+		trainer = Trainer(
+			model=uber_model,
+			loss=loss,
+			optimizer=optimizer
+		)
+		trainer.compile()
+		trainer.train(provider=uber_data, epochs=1)
+
+	###########################################################################
+	def test_uber_test(self, uber_model, uber_data, jinja_engine, loss):
+		""" Tests that we can compile and test a diverse model.
+		"""
+		uber_model.parse(jinja_engine)
+		uber_model.register_provider(uber_data)
+		uber_model.build()
+		trainer = Trainer(
+			model=uber_model,
+			loss=loss
+		)
+		trainer.compile()
+		trainer.test(provider=uber_data)
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

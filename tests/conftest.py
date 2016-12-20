@@ -19,7 +19,7 @@ import numpy
 
 from kur.utils import get_subclasses
 
-from kur.engine import Engine
+from kur.engine import Engine, JinjaEngine
 from kur.backend import Backend
 from kur.containers import Container
 from kur.model import Model
@@ -82,6 +82,13 @@ def an_engine(request):
 	""" Fixture for obtaining an engine.
 	"""
 	return request.param()
+
+###############################################################################
+@pytest.fixture
+def jinja_engine():
+	""" Returns a Jinja2 engine.
+	"""
+	return JinjaEngine()
 
 ###############################################################################
 def model_with_containers(backend, containers):
@@ -161,6 +168,63 @@ def ctc_data():
 			'TEST_transcription_length' : VanillaSource(
 				numpy.random.random_integers(1, maximum_transcription_length,
 				size=(number_of_samples, 1)
+			))
+		}
+	)
+
+###############################################################################
+@pytest.fixture
+def uber_model(a_backend):
+	""" One model to rule them all...
+		Every single container type should be represented here.
+	"""
+	return model_with_containers(
+		backend=a_backend,
+		containers=[
+			# Force it to infer the shape from data.
+			{'input' : 'TEST_input'},
+			# Shape: (32, 32)
+			{'expand' : -1},
+			{'debug' : 'hello world'},
+			# Shape: (32, 32, 1)
+			{'for' : {'with_index' : 'idx', 'range' : 2, 'iterate' : [
+				{'convolution' : {'kernels' : '{{ 2*(idx+1) }}', 'size' : [2, 2]}},
+				# Shape: (32, 32, 2), (16, 16, 4)
+				{'activation' : 'relu'},
+				{'pool' : {'size' : [2, 2], 'strides' : 2}},
+				# Shape: (16, 16, 2), (8, 8, 4)
+				{'assert' : '{{ idx < 2 }}'}
+			]}},
+			{'parallel' : {'apply' : [
+				'flatten',
+				# Shape: (8, 32)
+				{'dense' : {'size' : 10}, 'name' : 'TEST_reuse'}
+				# Shape: (8, 10)
+			]}},
+			{'recurrent' : {'size' : 32}},
+			# Shape: (8, 32)
+			'batch_normalization',
+			{'reuse' : 'TEST_reuse'},
+			# Shape: (8, 10)
+			'flatten',
+			# Shape: (80, )
+			{'output' : 'TEST_output'}
+		]
+	)
+
+###############################################################################
+@pytest.fixture
+def uber_data():
+	""" In the land of Mordor, where the shadows lie.
+		Data for the uber model.
+	"""
+	return BatchProvider(
+		sources={
+			'TEST_input' : VanillaSource(numpy.random.uniform(
+				low=-1, high=1, size=(2, 32, 32)
+			)),
+			'TEST_output' : VanillaSource(numpy.random.uniform(
+				low=-1, high=1, size=(2, 80)
 			))
 		}
 	)

@@ -67,4 +67,16 @@ class TestEvaluate:
 		)
 		evaluator.evaluate(provider=ctc_eval_data)
 
+	###########################################################################
+	def test_uber_evaluating(self, uber_model, uber_data, jinja_engine):
+		""" Tests that we can evaluate a very diverse model.
+		"""
+		uber_model.parse(jinja_engine)
+		uber_model.register_provider(uber_data)
+		uber_model.build()
+		evaluator = Evaluator(
+			model=uber_model
+		)
+		evaluator.evaluate(provider=uber_data)
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

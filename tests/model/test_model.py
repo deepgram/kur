@@ -27,4 +27,12 @@ class TestModel:
 		a_model.parse(an_engine)
 		a_model.build()
 
+	###########################################################################
+	def test_uber(self, uber_model, uber_data, jinja_engine):
+		""" Tests if we can assemble the uber model.
+		"""
+		uber_model.parse(jinja_engine)
+		uber_model.register_provider(uber_data)
+		uber_model.build()
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
