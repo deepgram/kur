@@ -54,7 +54,7 @@ def enumerate_backends():
 		if backend is Backend.get_backend_by_name('keras'):
 			result.extend([
 				keras_mock(backend, 'theano', ('theano', )),
-				keras_mock(backend, 'theano', ('tensorflow', ))
+				keras_mock(backend, 'tensorflow', ('tensorflow', ))
 			])
 		else:
 			result.append(backend)
