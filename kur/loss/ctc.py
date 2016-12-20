@@ -131,7 +131,6 @@ class Ctc(Loss):
 						""" Wrapper for the actual CTC loss function.
 						"""
 						y_pred, labels, input_length, label_length = args
-						print(repr(args))
 						return K.ctc_batch_cost(
 							labels,			# True output
 							y_pred,			# Model output
@@ -148,14 +147,16 @@ class Ctc(Loss):
 					#Placeholder({'input' : self.input_length}),
 					Placeholder({
 						'input' : {
-							'type' : 'int32'
+							'type' : 'int32',
+							'shape' : (1,)
 						},
 						'name' : self.input_length
 					}),
 					#Placeholder({'input' : self.output_length}),
 					Placeholder({
 						'input' : {
-							'type' : 'int32'
+							'type' : 'int32',
+							'shape' : (1,)
 						},
 						'name' : self.output_length
 					}),
@@ -174,7 +175,7 @@ class Ctc(Loss):
 					container.parse(engine)
 
 				model.extend(ctc_name, new_containers)
-				model.add_data_source(ctc_name, RepeatSource([0.]))
+				model.add_data_source(ctc_name, RepeatSource(0.))
 
 				return ctc_name
 

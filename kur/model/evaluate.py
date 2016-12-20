@@ -65,6 +65,8 @@ class Evaluator:
 				'going to try to build it now. But the model should always be '
 				'built with Model.build() before trying to compile it, just '
 				'to ensure that everything has been parsed as you expect.')
+			if with_provider is not None:
+				self.model.register_provider(with_provider)
 			self.model.build()
 
 		self._compiled = self.model.backend.compile(

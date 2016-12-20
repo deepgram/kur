@@ -25,7 +25,6 @@ import logging
 import numpy
 from . import Backend
 from ..loss import Loss
-from ..model import ExtensionState
 from ..utils import can_import, EnvironmentalVariable, redirect_stderr, idx
 
 logger = logging.getLogger(__name__)
@@ -346,6 +345,12 @@ class KerasBackend(Backend):
 				output=[node.value for node in model.outputs.values()]
 			)
 
+			keras_names = {}
+			for kur_name, keras_name in zip(model.inputs, result.input_names):
+				keras_names[kur_name] = keras_name
+			for kur_name, keras_name in zip(model.outputs, result.output_names):
+				keras_names[kur_name] = keras_name
+
 			if logger.isEnabledFor(logging.DEBUG):
 				x = io.StringIO()
 				with contextlib.redirect_stdout(x):
@@ -356,11 +361,11 @@ class KerasBackend(Backend):
 			if loss is not None:# and optimizer is not None:
 				logger.debug('Starting to compile the Keras model.')
 				result.compile(
-					loss={alias[name] : func.get_loss(self)
+					loss={keras_names[alias[name]] : func.get_loss(self)
 						for name, func in loss.items()},
 					optimizer=optimizer.get_optimizer(self) \
 						if optimizer is not None else None,
-					loss_weights={alias[name] : func.get_weight()
+					loss_weights={keras_names[alias[name]] : func.get_weight()
 						for name, func in loss.items()}
 				)
 
@@ -374,7 +379,12 @@ class KerasBackend(Backend):
 					keras_model=result
 				)
 
-			return {'model' : result, 'alias' : alias, 'rev_alias' : rev}
+			return {
+				'model' : result,
+				'alias' : alias,
+				'rev_alias' : rev,
+				'keras_names' : keras_names
+			}
 
 	###########################################################################
 	def wait_for_compile(self, mode, keras_model):
@@ -494,6 +504,7 @@ class KerasBackend(Backend):
 		# But the Keras model has inputs/outputs named after `alias[name]`.
 		alias = {name : func.modify(model, name)
 			for name, func in loss.items()}
+		logger.debug('Loss function aliases: %s', alias)
 
 		return loss, alias
 
@@ -502,10 +513,10 @@ class KerasBackend(Backend):
 		""" Fits the given model on a batch of data.
 		"""
 		metrics = compiled['model'].train_on_batch(
-			{compiled['alias'].get(name, name) :
+			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
 				data[model.get_data_name_by_layer_name(data, name)]
 				for name in model.inputs},
-			{compiled['alias'].get(name, name) :
+			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
 				data[model.get_data_name_by_layer_name(data, name)]
 				for name in model.outputs}
 		)
@@ -522,10 +533,10 @@ class KerasBackend(Backend):
 		""" Calculates the model loss on a batch of data.
 		"""
 		metrics = compiled['model'].test_on_batch(
-			{compiled['alias'].get(name, name) :
+			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
 				data[model.get_data_name_by_layer_name(data, name)]
 				for name in model.inputs},
-			{compiled['alias'].get(name, name) :
+			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
 				data[model.get_data_name_by_layer_name(data, name)]
 				for name in model.outputs}
 		)
@@ -567,7 +578,7 @@ class KerasBackend(Backend):
 		"""
 		# Returns an array of model outputs, with one entry per branch.
 		results = compiled['model'].predict_on_batch(
-			{compiled['alias'].get(name, name) :
+			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
 				data[model.get_data_name_by_layer_name(data, name)]
 				for name in model.inputs}
 		)
