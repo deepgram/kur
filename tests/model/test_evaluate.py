@@ -14,7 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import pytest
+
 from kur.model import Evaluator
+from kur.providers import BatchProvider
+
+###############################################################################
+@pytest.fixture
+def ctc_eval_data(ctc_data):
+	""" Provides CTC data with only the evaluation-time input data available.
+	"""
+	for key, source in zip(ctc_data.keys, ctc_data.sources):
+		if key == 'TEST_input':
+			return BatchProvider(sources={key : source})
 
 ###############################################################################
 class TestEvaluate:
@@ -23,7 +35,7 @@ class TestEvaluate:
 
 	###########################################################################
 	def test_evaluator(self, simple_model):
-		""" Tests if we can compile a Trainer instance without an optimizer.
+		""" Tests if we can compile an Evaluator instance.
 		"""
 		simple_model.parse(None)
 		simple_model.build()
@@ -42,5 +54,17 @@ class TestEvaluate:
 			model=simple_model
 		)
 		evaluator.evaluate(provider=simple_data)
+
+	###########################################################################
+	def test_ctc_evaluating(self, ctc_model, ctc_eval_data):
+		""" Tests that we can evaluate a model that was trained with CTC loss.
+		"""
+		ctc_model.parse(None)
+		ctc_model.register_provider(ctc_eval_data)
+		ctc_model.build()
+		evaluator = Evaluator(
+			model=ctc_model
+		)
+		evaluator.evaluate(provider=ctc_eval_data)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

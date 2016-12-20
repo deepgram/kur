@@ -16,13 +16,21 @@ limitations under the License.
 
 import pytest
 
-from kur.loss import MeanSquaredError
+from kur.loss import MeanSquaredError, Ctc
 from kur.optimizer import Adam
 from kur.model import Trainer
 
 @pytest.fixture
 def loss():
 	return MeanSquaredError()
+
+@pytest.fixture
+def ctc_loss():
+	return Ctc(
+		input_length='TEST_input_length',
+		output_length='TEST_transcription_length',
+		output='TEST_transcription'
+	)
 
 @pytest.fixture
 def optimizer():
@@ -47,15 +55,14 @@ class TestTrain:
 		trainer.compile()
 
 	###########################################################################
-	def test_trainer_without_optimizer(self, simple_model, loss, optimizer):
+	def test_trainer_without_optimizer(self, simple_model, loss):
 		""" Tests if we can compile a Trainer instance without an optimizer.
 		"""
 		simple_model.parse(None)
 		simple_model.build()
 		trainer = Trainer(
 			model=simple_model,
-			loss=loss,
-			optimizer=optimizer
+			loss=loss
 		)
 		trainer.compile()
 
@@ -83,5 +90,34 @@ class TestTrain:
 			loss=loss
 		)
 		trainer.test(provider=simple_data)
+
+	###########################################################################
+	def test_ctc_train(self, ctc_model, ctc_data, ctc_loss, optimizer):
+		""" Tests that we can compile and train a model using the CTC loss
+			function.
+		"""
+		ctc_model.parse(None)
+		ctc_model.register_provider(ctc_data)
+		ctc_model.build()
+		trainer = Trainer(
+			model=ctc_model,
+			loss=ctc_loss,
+			optimizer=optimizer
+		)
+		trainer.train(provider=ctc_data, epochs=1)
+
+	###########################################################################
+	def test_ctc_test(self, ctc_model, ctc_data, ctc_loss):
+		""" Tests that we can compile and test a model using the CTC loss
+			function.
+		"""
+		ctc_model.parse(None)
+		ctc_model.register_provider(ctc_data)
+		ctc_model.build()
+		trainer = Trainer(
+			model=ctc_model,
+			loss=ctc_loss
+		)
+		trainer.test(provider=ctc_data)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

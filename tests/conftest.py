@@ -121,4 +121,61 @@ def simple_data():
 		}
 	)
 
+###############################################################################
+@pytest.fixture
+def ctc_model(a_backend):
+	""" Returns a model which uses the CTC loss function.
+	"""
+	output_timesteps = 10
+	vocab_size = 4
+	return model_with_containers(
+		backend=a_backend,
+		containers=[
+			{'input' : {'shape' : [output_timesteps, 2]}, 'name' : 'TEST_input'},
+			{'recurrent' : {'size' : vocab_size+1, 'sequence' : True}},
+			{'activation' : 'softmax', 'name' : 'TEST_output'}
+		]
+	)
+
+###############################################################################
+@pytest.fixture
+def ctc_data():
+	""" Returns a provider that can be used with `ctc_model()`.
+	"""
+	number_of_samples = 11
+	vocab_size = 4	# Same as above
+	output_timesteps = 10
+	maximum_transcription_length = 4	# Must be <= output_timesteps
+	return BatchProvider(
+		sources={
+			'TEST_input' : VanillaSource(numpy.random.uniform(
+				low=-1, high=1, size=(number_of_samples, output_timesteps, 2)
+			)),
+			'TEST_transcription' : VanillaSource(numpy.random.random_integers(
+				0, vocab_size-1,
+				size=(number_of_samples, maximum_transcription_length)
+			)),
+			'TEST_input_length' : VanillaSource(numpy.ones(
+				shape=(number_of_samples, 1)
+			) * output_timesteps),
+			'TEST_transcription_length' : VanillaSource(
+				numpy.random.random_integers(1, maximum_transcription_length,
+				size=(number_of_samples, 1)
+			))
+		}
+	)
+
+###############################################################################
+@pytest.fixture(
+	params=[
+		(simple_model, simple_data),
+		(ctc_model, ctc_data)
+	]
+)
+def any_model_with_data(request, a_backend):
+	""" Returns a few different models with their data.
+	"""
+	model, data = request.param
+	return (model(a_backend), data())
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

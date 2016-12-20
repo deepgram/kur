@@ -20,10 +20,11 @@ class TestModel:
 	"""
 
 	###########################################################################
-	def test_simple(self, simple_model, an_engine):
-		""" Tests if we can build even the simplest model.
+	def test_all(self, any_model_with_data, an_engine):
+		""" Tests if we can assemble a handful of different simple models.
 		"""
-		simple_model.parse(an_engine)
-		simple_model.build()
+		a_model, _ = any_model_with_data
+		a_model.parse(an_engine)
+		a_model.build()
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
