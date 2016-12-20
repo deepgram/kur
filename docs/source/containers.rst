@@ -289,6 +289,23 @@ Recurrent
   of the forward and backward RNNs is merged. If bidirectional is not set, then
   "merge" cannot be used. The default value is ``average``.
 
+Batch Normalization
+-------------------
+
+**Description**. A layer which directs Kur to normalize activations across the
+previous layer.
+
+**Purpose**. Batch normalization is useful to help prevent bad initializations
+and improve convergence.
+
+**Usage**::
+
+	batch_normalization
+
+or::
+
+	batch_normalization:
+
 Output
 ------
 

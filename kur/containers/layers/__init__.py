@@ -26,6 +26,7 @@ from .dense import Dense
 from .activation import Activation
 from .pooling import Pooling
 from .recurrent import Recurrent
+from .batchnorm import BatchNormalization
 from .output import Output
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
