@@ -554,15 +554,28 @@ class Model:
 				value = list(flatten([
 					x.value for x in node.inputs
 				]))
+				meat = False
 
 				for layer in node.container.build(self):
 					if layer is None:
 						continue
+					meat = True
 					value = self.backend.connect(
 						inputs=value,
 						target=layer
 					)
-				node.value = value
+
+				if meat:
+					node.value = value
+				else:
+					if len(value) != 1:
+						raise ValueError('You cannot have an "empty" layer '
+							'with more than one input. The "{}" layer has {} '
+							'input layers.'.format(node.container.name,
+							len(value)))
+					node.value = value[0]
+					node.names.extend(node.inputs[0].names)
+					node.inputs[0].names = []
 
 			else:
 				value = None
@@ -596,7 +609,7 @@ class Model:
 
 			# Register outputs
 			if node.container.name in output_nodes:
-				outputs[node.container.name] = node #.value
+				outputs[node.container.name] = node
 				for name in node.names:
 					output_aliases[name] = node.container.name
 
