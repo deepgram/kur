@@ -113,6 +113,12 @@ class Provider:						# pylint: disable=too-few-public-methods
 		self._calculate_sizes()
 
 	###########################################################################
+	def __contains__(self, key):
+		if self.keys is None:
+			raise ValueError('Cannot use "in" with a key-less provider.')
+		return key in self.keys
+
+	###########################################################################
 	def _calculate_sizes(self):
 		""" Calculates the sizes of each of the sources.
 		"""
