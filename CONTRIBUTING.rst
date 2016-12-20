@@ -67,7 +67,7 @@ Development Setup
 
 	.. code-block:: bash
 
-		pip install tox pytest pylint
+		pip install tox pytest pytest-xdist pylint
 
 Running the Unit Tests
 ======================
@@ -109,12 +109,11 @@ Running the Unit Tests with ``pytest``
 
 ``tox`` already uses ``pytest`` behind the scenes to run the unit tests. But if
 you want to run the tests manually, you can do so. They will only test against
-the current Python environment. These commands do the same thing:
+the current Python environment.
 
 .. code-block:: bash
 
-	python -m pytest tests/
-	python setup.py test
+	python -m pytest --boxed tests/
 
 .. note::
 
@@ -133,6 +132,14 @@ the current Python environment. These commands do the same thing:
 		.. code-block:: bash
 
 			PYTHONPATH=venv/lib/python3.5/site-packages:$PYTHONPATH pytest
+
+.. node::
+
+	What's up with the ``--boxed`` option? It's an option for the
+	``pytest-xdist`` plugin which runs each test in its own subprocess. This is
+	important when testing backends like Keras, which do not seem to allow easy
+	swapping of Theano/Tensorflow backends on-the-fly. Thus, when a test does
+	``import keras``, the Keras backend will get "stuck" for that process.
 
 Style Guide
 ===========
