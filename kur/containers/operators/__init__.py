@@ -19,5 +19,6 @@ from .operator import Operator
 from .container_group import ContainerGroup
 from .debug import Debug
 from .for_loop import ForLoop
+from .assertion import Assertion
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -339,3 +339,21 @@ models. You can print out variable values, for example.
 
 **Note**: you must have debug-level (``kur -vv ...``) log messages enabled to
 see this.
+
+Assert
+------
+
+*Description*. A debug-style assertion checker.
+
+**Purpose**. The assert layer does not affect the model in any way, but simply
+provides a debug-style "assert" condition that will immediately raise an
+AssertionError if the condition evaluates to False. This can be useful for
+checking that your model is not being constructed incorrectly and that is shape
+is correct.
+
+**Usage**::
+
+	assert: CONDITION
+
+- ``CONDITION``: the condition to assert must be True. It will be evaluated by
+  an Engine before being checked for true/false.
