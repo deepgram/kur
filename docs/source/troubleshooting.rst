@@ -61,6 +61,69 @@ Kur takes a very long before it starts training.
 
 See :ref:`this answer <looks_stuck>`.
 
+Theano is complaining about BLAS.
+---------------------------------
+
+Theano might throw an exception that looks like this::
+
+	AssertionError: AbstractConv2d Theano optimization failed: there is no
+	implementation available supporting the requested options. Did you exclude
+	both "conv_dnn" and "conv_gemm" from the optimizer? If on GPU, is cuDNN
+	available and does the GPU support it? If on CPU, do you have a BLAS
+	library installed Theano can link against?
+
+There are a number of ways to solve this.
+
+- If you are trying to run on a CPU, do *one* of the following.
+
+	- Switch another backend. For example, if you are currently using the Keras
+	  backend with Theano (the default), try switching to the Tensorflow
+	  backend:
+
+	  .. code-block:: yaml
+
+	  	settings:
+		  backend:
+			name: keras
+			params:
+			  backend: tensorflow
+
+	- If you want to use the Keras backend with Theano, then you can add the
+	  ``optimizer: no`` setting to your specification file:
+
+	  .. code-block:: yaml
+
+		settings:
+		  backend:
+			name: keras
+			params:
+			  backend: theano
+			  optimizer: no
+
+	- If you are using the Keras backend with Theano programmatically through
+	  the Python API, you can pass the Keras backend constructor an additional
+	  parameter:
+
+	  .. code-block:: python
+
+		backend = KerasBacked(optimizer=False)
+
+	- Install a linear algebra library. This depends a little on your platform.
+	  For Ubuntu, you can do this:
+
+	  .. code-block:: bash
+
+	  	sudo apt-get install libblas-dev liblapack-dev gfortran-4.9
+
+	- Disable optimizer in Theano globally. Edit your ``~/.theanorc`` file and
+	  make sure these lines are present::
+
+		[global]
+		optimizer = None
+
+- If you are trying to run on an NVIDIA GPU
+	- Install cuDNN from NVIDIA's website.
+
 Plotting
 ========
 

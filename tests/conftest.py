@@ -28,12 +28,12 @@ from kur.sources import VanillaSource
 from kur.utils import can_import
 
 ################################################################################
-def keras_mock(cls, backend, deps):
+def keras_mock(cls, backend, deps, **kwargs):
 	""" Fakes a backend-looking object that can be used in place of a Keras
 		backend. It is used to force certain variations of the Keras backend to
 		get tested.
 	"""
-	result = lambda: cls(backend=backend)
+	result = lambda: cls(backend=backend, **kwargs)
 	setattr(result, 'is_supported',
 		lambda: cls.is_supported() and all(can_import(dep) for dep in deps))
 	setattr(result, 'get_name',
@@ -53,7 +53,7 @@ def enumerate_backends():
 	for backend in all_backends:
 		if backend is Backend.get_backend_by_name('keras'):
 			result.extend([
-				keras_mock(backend, 'theano', ('theano', )),
+				keras_mock(backend, 'theano', ('theano', ), optimizer=False),
 				keras_mock(backend, 'tensorflow', ('tensorflow', ))
 			])
 		else:

@@ -50,7 +50,7 @@ class KerasBackend(Backend):
 		)
 
 	###########################################################################
-	def __init__(self, backend=None, *args, **kwargs):
+	def __init__(self, backend=None, optimizer=None, *args, **kwargs):
 		""" Creates a new Keras backend.
 
 			As per the base class documentation, we should do all necessary
@@ -62,6 +62,11 @@ class KerasBackend(Backend):
 			backend: str or None (default: None). The Keras backend to use
 				(either "theano" or "tensorflow"). None uses the system
 				default.
+			optimizer: None or False (default: None). If False, Theano is told
+				to disable optimizations. If None, Theano is not told to do
+				anything special with optimization. This is supplied as a
+				workaround to installing a BLAS library when training on the
+				CPU. This is ignored for the Tensorflow backend.
 		"""
 
 		super().__init__(*args, **kwargs)
@@ -111,7 +116,18 @@ class KerasBackend(Backend):
 		x = io.StringIO()
 		with redirect_stderr(x):
 
-			with EnvironmentalVariable(KERAS_BACKEND=backend):
+			env = {'KERAS_BACKEND' : backend}
+			if optimizer is False:
+				logger.debug('Disabling the Theano optimizer.')
+				if 'THEANO_FLAGS' in os.environ:
+					parts = [i for i in os.environ['THEANO_FLAGS'].split(',') \
+						if not i.startswith('optimizer=')]
+				else:
+					parts = []
+				parts.append('optimizer=None')
+				env['THEANO_FLAGS'] = ','.join(parts)
+
+			with EnvironmentalVariable(**env):
 				import keras	# pylint: disable=import-error,unused-variable
 				import keras.backend as K		# pylint: disable=import-error
 				logger.debug('Keras is loaded. The backend is: %s',
