@@ -32,54 +32,6 @@ CollapsedContainer = namedtuple('CollapsedContainer',
 )
 
 ###############################################################################
-class Node:							# pylint: disable=too-few-public-methods
-	""" Class for representing nodes in the low-level neural network graph.
-
-		Each Node instance represents one primitive tensor operation.
-	"""
-
-	# Counter for tracking node IDs (used for debugging purposes).
-	counter = 0
-
-	###########################################################################
-	def __init__(self, inputs=None, operation=None, value=None, outputs=None):
-		""" Creates a new Node.
-
-			# Arguments
-
-			inputs: list of Nodes. The Nodes that are inputs to this operation.
-			operation: object. The tensor operation to perform; the type is
-				backend-specific.
-			value: object. The output of the tensor operation, or None to
-				indicate that it hasn't been evaluated yet.
-			outputs: list of Nodes. The Nodes that use this node as input.
-		"""
-		self.inputs = inputs
-		self.operation = operation
-		self.value = value
-		self.outputs = outputs
-
-		# Increment and store the Node ID counter for debugging purposes.
-		self.node_id = Node.counter
-		Node.counter += 1
-
-	###########################################################################
-	def __str__(self):
-		""" Return a string representation of this Node, suitable for
-			debugging.
-		"""
-		return 'Node(id={node_id}, inputs={inputs}, operation={operation}, ' \
-			'value={value}, outputs={outputs})'.format(
-				node_id=self.node_id,
-				inputs=[node.node_id for node in self.inputs]
-					if self.inputs else None,
-				operation=self.operation,
-				value=self.value,
-				outputs=[node.node_id for node in self.outputs]
-					if self.outputs else None
-			)
-
-###############################################################################
 class ExtensionCallback:
 	""" Callback interface for Model's extension callback hooks.
 	"""
@@ -516,8 +468,6 @@ class Model:
 		self.input_aliases = input_aliases
 		self.output_aliases = output_aliases
 		self.key_cache = {}
-
-		#assert False
 
 	###########################################################################
 	def build_graph(self, input_nodes, output_nodes, network):
