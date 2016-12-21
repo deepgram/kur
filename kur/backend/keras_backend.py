@@ -392,6 +392,7 @@ class KerasBackend(Backend):
 		""" Waits for the model to finish compiling.
 		"""
 		logger.info('Waiting for model to finish compiling...')
+		num_samples = 2
 
 		weight_path = None
 		tempdir = tempfile.mkdtemp()
@@ -402,14 +403,14 @@ class KerasBackend(Backend):
 			inputs = {}
 			for i in range(len(keras_model.inputs)):
 				inputs[keras_model.input_names[i]] = numpy.ones(
-					shape=(1,) + keras_model.internal_input_shapes[i][1:]
+					shape=(num_samples,) + keras_model.internal_input_shapes[i][1:]
 				)
 
 			if mode != 'evaluate':
 				outputs = {}
 				for i in range(len(keras_model.outputs)):
 					outputs[keras_model.output_names[i]] = numpy.ones(
-						shape=(1,) + keras_model.internal_output_shapes[i][1:]
+						shape=(num_samples,) + keras_model.internal_output_shapes[i][1:]
 					)
 
 				if mode == 'train':
