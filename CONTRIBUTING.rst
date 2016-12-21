@@ -133,7 +133,7 @@ the current Python environment.
 
 			PYTHONPATH=venv/lib/python3.5/site-packages:$PYTHONPATH pytest
 
-.. node::
+.. note::
 
 	What's up with the ``--boxed`` option? It's an option for the
 	``pytest-xdist`` plugin which runs each test in its own subprocess. This is
