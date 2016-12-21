@@ -43,15 +43,18 @@ class Assertion(Operator):			# pylint: disable=too-few-public-methods
 		""" Parse the debug statement and print it.
 		"""
 		super()._parse(engine)
-		self.condition = self.args
+		self.condition = engine.evaluate(self.args, recursive=True)
+		if not self.condition:
+			raise AssertionError('"assert" layer failed. Condition evaluated '
+				'to: {} (type={})'.format(
+					self.condition,
+					type(self.condition)
+				))
 
 	###########################################################################
 	def _build(self, model):	# pylint: disable=unused-argument,no-self-use
-		""" Debug statements don't produce layers.
+		""" Assert statements don't produce layers.
 		"""
-		if self.condition:
-			return iter(())
-		raise AssertionError('"assert" layer failed. Condition evaluated to: '
-			'{} (type={})'.format(self.condition, type(self.condition)))
+		return iter(())
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
