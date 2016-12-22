@@ -2,6 +2,9 @@
 
 language: python
 
+dist: trusty
+sudo: required
+
 python:
   - "3.4"
   - "3.5"
