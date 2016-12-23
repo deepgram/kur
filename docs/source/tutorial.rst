@@ -219,6 +219,48 @@ used in the data files and in the model.
 	  - target: above
 	    name: mean_squared_error
 
+Summary
+-------
+
+At this point, your entire YAML file should look like this:
+
+.. code-block:: yaml
+
+	model:
+	  - input: point
+	  - dense: 128
+	  - activation: tanh
+	  - dense: 1
+	  - activation: tanh
+	    name: above
+
+	train:
+	  data:
+	    - pickle: train.pkl
+	  epochs: 10
+	  weights: best.w
+	  log: tutorial-log
+
+	validate:
+	  data:
+	    - pickle: validate.pkl
+	  weights: best.w
+
+	test:
+	  data:
+	    - pickle: test.pkl
+	  weights: best.w
+
+	evaluate:
+	  data:
+	    - pickle: evaluate.pkl
+	  weights: best.w
+	  destination: output.pkl
+
+	loss:
+	  - target: above
+	    name: mean_squared_error
+
 Running Kur
 ===========
 
