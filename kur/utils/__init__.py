@@ -25,5 +25,6 @@ from . import idx
 from . import mergetools
 from .environtools import EnvironmentalVariable
 from .contexttools import redirect_stderr
+from .package import unpack, canonicalize
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
