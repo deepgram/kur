@@ -44,6 +44,23 @@ def get_hash(path):
 	return sha.hexdigest()
 
 ###############################################################################
+def do_download(url, target):
+	""" Downloads a URL.
+	"""
+	response = requests.get(url, stream=True)
+	with open(target, 'wb') as fh:
+		for chunk in tqdm.tqdm(
+			response.iter_content(),
+			total=int(response.headers['content-length']),
+			unit='bytes',
+			unit_scale=True,
+			desc='Downloading'
+		):
+			fh.write(chunk)
+
+	logger.info('File downloaded: %s', target)
+
+###############################################################################
 def download_file(url, sha256=None, target_dir=None):
 	""" Downloads a URL to the system temporary directory.
 
@@ -91,18 +108,7 @@ def download_file(url, sha256=None, target_dir=None):
 	else:
 		logger.info('File does not exist. Downloading: %s', url)
 
-	response = requests.get(url, stream=True)
-	with open(target, 'wb') as fh:
-		for chunk in tqdm.tqdm(
-			response.iter_content(),
-			total=int(response.headers['content-length']),
-			unit='bytes',
-			unit_scale=True,
-			desc='Downloading'
-		):
-			fh.write(chunk)
-
-	logger.info('File downloaded: %s', target)
+	do_download(url, target)
 
 	if sha256 is not None:
 		if get_hash(target) != sha256:
