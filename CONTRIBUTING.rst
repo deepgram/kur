@@ -138,7 +138,7 @@ the current Python environment.
 	What's up with the ``--boxed`` option? It's an option for the
 	``pytest-xdist`` plugin which runs each test in its own subprocess. This is
 	important when testing backends like Keras, which do not seem to allow easy
-	swapping of Theano/Tensorflow backends on-the-fly. Thus, when a test does
+	swapping of Theano/TensorFlow backends on-the-fly. Thus, when a test does
 	``import keras``, the Keras backend will get "stuck" for that process.
 
 Style Guide

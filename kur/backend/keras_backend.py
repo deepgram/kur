@@ -66,7 +66,7 @@ class KerasBackend(Backend):
 				to disable optimizations. If None, Theano is not told to do
 				anything special with optimization. This is supplied as a
 				workaround to installing a BLAS library when training on the
-				CPU. This is ignored for the Tensorflow backend.
+				CPU. This is ignored for the TensorFlow backend.
 		"""
 
 		super().__init__(*args, **kwargs)

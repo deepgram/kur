@@ -77,7 +77,7 @@ There are a number of ways to solve this.
 - If you are trying to run on a CPU, do *one* of the following.
 
 	- Switch another backend. For example, if you are currently using the Keras
-	  backend with Theano (the default), try switching to the Tensorflow
+	  backend with Theano (the default), try switching to the TensorFlow
 	  backend:
 
 	  .. code-block:: yaml
@@ -123,6 +123,30 @@ There are a number of ways to solve this.
 
 - If you are trying to run on an NVIDIA GPU
 	- Install cuDNN from NVIDIA's website.
+
+TensorFlow throws an ``ImportError`` about ``GLIBC`` not found.
+---------------------------------------------------------------
+
+This is an unfortunate problem in TensorFlow that boils down to this: your
+operating system's version of ``libc`` (the C standard library) is too old. On
+some platforms, you can easily upgrade the OS or ``libc`` and fix the problem;
+on other platforms, it isn't as easy. For example, we've seen this bug crop up
+on Ubuntu 12.04 (Precise Pangolin), but upgrading the distribution to Ubuntu
+14.04 (Trusty Tahr) resolved the problem.
+
+If you don't know how to upgrade your system, or if you just don't want to,
+then the easiest workaround is to simply not use TensorFlow, and instead use a
+backend based on, e.g., Theano instead. If you are using Keras as a backend to
+Kur, then you can request that Keras use Theano behind the scenes by putting
+this in your specification:
+
+.. code-block:: yaml
+
+	settings:
+	  backend:
+		name: keras
+		params:
+		  backend: theano
 
 Plotting
 ========
