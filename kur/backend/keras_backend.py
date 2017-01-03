@@ -410,6 +410,9 @@ class KerasBackend(Backend):
 		logger.info('Waiting for model to finish compiling...')
 		num_samples = 2
 
+		def happy_shape(shape):
+			return tuple(x or 100 for x in shape)
+
 		weight_path = None
 		tempdir = tempfile.mkdtemp()
 		try:
@@ -419,14 +422,14 @@ class KerasBackend(Backend):
 			inputs = {}
 			for i in range(len(keras_model.inputs)):
 				inputs[keras_model.input_names[i]] = numpy.ones(
-					shape=(num_samples,) + keras_model.internal_input_shapes[i][1:]
+					shape=happy_shape((num_samples,) + keras_model.internal_input_shapes[i][1:])
 				)
 
 			if mode != 'evaluate':
 				outputs = {}
 				for i in range(len(keras_model.outputs)):
 					outputs[keras_model.output_names[i]] = numpy.ones(
-						shape=(num_samples,) + keras_model.internal_output_shapes[i][1:]
+						shape=happy_shape((num_samples,) + keras_model.internal_output_shapes[i][1:])
 					)
 
 				if mode == 'train':
