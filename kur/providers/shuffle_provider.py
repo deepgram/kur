@@ -79,10 +79,13 @@ class ShuffleProvider(Provider): \
 		super().__init__(*args, **kwargs)
 
 		if randomize:
-			x = [isinstance(source, Shuffleable) for source in self.sources]
-			if not all(x):
-				raise ValueError('All data sources must be Shuffleable for '
-					'the provider to able to shuffle them.')
+			for i, source in enumerate(self.sources):
+				if not isinstance(source, Shuffleable):
+					raise ValueError('All data sources must be Shuffleable '
+						'for the provider to able to shuffle them. Source '
+						'"{}" does not seem to match: {}'.format(
+							'unknown' if self.keys is None else self.keys[i],
+							source))
 
 			if randomize is True:
 				if self.entries <= 0:
