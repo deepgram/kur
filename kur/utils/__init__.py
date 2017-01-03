@@ -27,6 +27,7 @@ from .environtools import EnvironmentalVariable
 from .contexttools import redirect_stderr
 from .package import unpack, canonicalize
 from .shuffleable import Shuffleable
+from .audiotools import load_audio, get_audio_features
 from .normalize import Normalize
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

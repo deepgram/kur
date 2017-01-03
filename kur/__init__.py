@@ -14,6 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+__homepage__ = 'https://kur.deepgram.com'
+from .version import __version__
+
 from . import utils
 from . import backend
 from . import containers
@@ -27,8 +30,5 @@ from . import model
 from . import supplier
 from . import parsing
 from . import loggers
-from .version import __version__
-
-__homepage__ = 'https://kur.deepgram.com'
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

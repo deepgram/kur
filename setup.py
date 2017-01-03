@@ -109,7 +109,13 @@ setup(
 
 		# Keras - the default backend (with Theano)
 		'keras>=1.1.2',
-		'theano>=0.8.2'
+		'theano>=0.8.2',
+
+		'scipy>=0.18.1',
+		'python-magic>=0.4.12',
+		'pydub>=0.16.6',
+		'python_speech_features>=0.4',
+		'stft>=0.5.2'
 	],
 	dependency_links=[
 	],
