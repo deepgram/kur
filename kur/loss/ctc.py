@@ -142,6 +142,9 @@ class Ctc(Loss):
 							used by end-users.
 						"""
 						return True
+					###########################################################
+					def shape(self, input_shapes):
+						return ()
 
 				new_containers = [
 					#Placeholder({'input' : self.input_length}),

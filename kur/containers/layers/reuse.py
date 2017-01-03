@@ -37,6 +37,7 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 		"""
 		super().__init__(*args, **kwargs)
 		self.target = None
+		self.target_container = None
 		self.reentrant = False
 
 	###########################################################################
@@ -74,6 +75,21 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 			target.build(model)
 			self.reentrant = False
 
+		self.target_container = target
 		yield from target.build(model)
+
+	###########################################################################
+	def shape(self, input_shapes):
+		""" Returns the output shape of this layer for a given input shape.
+		"""
+		if self.target_container is None:
+			raise ValueError('Cannot compute shape for unresolved target.')
+		cur_shape = input_shapes
+		for child in self.target_container.get_children(
+			recursive=True, include_self=True
+		):
+			if child.terminal():
+				cur_shape = [child.shape(cur_shape)]
+		return cur_shape[0]
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

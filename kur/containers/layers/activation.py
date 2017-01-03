@@ -58,4 +58,13 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))
 
+	###########################################################################
+	def shape(self, input_shapes):
+		""" Returns the output shape of this layer for a given input shape.
+		"""
+		if len(input_shapes) > 1:
+			raise ValueError('Activations only take a single input.')
+		input_shape = input_shapes[0]
+		return input_shape
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

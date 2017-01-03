@@ -89,4 +89,20 @@ class Expand(Layer):					# pylint: disable=too-few-public-methods
 		else:
 			raise ValueError('Unknown or unsupported backend: {}'.format(backend))
 
+	###########################################################################
+	def shape(self, input_shapes):
+		""" Returns the output shape of this layer for a given input shape.
+		"""
+		if len(input_shapes) > 1:
+			raise ValueError('Activations only take a single input.')
+		input_shape = input_shapes[0]
+
+		dim = self.dimension
+		if dim < 0:
+			dim += len(input_shape) + 1
+		if dim > len(input_shape) or dim < 0:
+			raise ValueError('Invalid input shape for expand layer with '
+				'dimension {}: {}'.format(self.dimension, input_shape))
+		return input_shape[:dim] + (1, ) + input_shape[dim:]
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

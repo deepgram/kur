@@ -30,4 +30,21 @@ class Layer(Container):						# pylint: disable=abstract-method
 		"""
 		return True
 
+	###########################################################################
+	def shape(self, input_shapes):
+		""" Returns the output shape of this layer for a given input shape.
+
+			# Arguments
+
+			input_shape: list of tuples. A list of tuples, corresponding to the
+				shapes of the input layers, one for each input layer, excluding
+				batch size.
+
+			# Return value
+
+			A tuple specifying the shape of each output from the layer,
+			excluding batch size.
+		"""
+		raise NotImplementedError
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

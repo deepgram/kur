@@ -79,4 +79,18 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 						'Unknown or unsupported backend: {}'.format(backend)
 					)
 
+	###########################################################################
+	def shape(self, input_shapes):
+		""" Returns the output shape of this layer for a given input shape.
+		"""
+		if len(input_shapes) > 1:
+			raise ValueError('Parallel layers only take a single input.')
+		input_shape = input_shapes[0]
+
+		cur_shape = input_shape[1:]
+		for child in self.get_children(recursive=True):
+			if child.terminal():
+				cur_shape = child.shape([cur_shape])
+		return (input_shape[0], ) + cur_shape
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

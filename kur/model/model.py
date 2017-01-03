@@ -576,14 +576,18 @@ class Model:
 		# Instantiate the network.
 		# Map names to resolved nodes.
 		network = OrderedDict()
+		network.by_name = {}
 		for node in nodes:
-			network[node.container.name] = ContainerNode(
+			container_node = ContainerNode(
 				inputs=[],
 				container=node.container,
 				outputs=[],
 				names=node.names,
 				value=None
 			)
+			network[node.container.name] = container_node
+			for name in node.names:
+				network.by_name[name] = container_node
 
 		# Populate the inputs.
 		recent = deque()
@@ -684,6 +688,7 @@ class Model:
 					'resolution. There is something wrong with the graph.')
 			for k in changed:
 				del network[k]
+		ordered.by_name = network.by_name
 		network = ordered
 
 		return input_nodes, output_nodes, network
@@ -782,5 +787,28 @@ class Model:
 			extension_callback.retracted(name)
 
 		return containers
+
+	###########################################################################
+	def get_shape_at_layer(self, name, assumptions=None):
+		return self.get_shape_at_node(
+			self.network.by_name[name],
+			assumptions or {}
+		)
+
+	###########################################################################
+	def get_shape_at_node(self, node, assumptions):
+		for k, v in assumptions.items():
+			if k in node.names:
+				return v
+
+		if node.inputs:
+			return node.container.shape(
+				input_shapes=[
+					self.get_shape_at_node(input_node, assumptions)
+					for input_node in node.inputs
+				]
+			)
+		else:
+			return node.container.shape(None)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

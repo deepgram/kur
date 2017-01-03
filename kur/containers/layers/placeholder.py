@@ -40,7 +40,7 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 		""" Creates a new placeholder.
 		"""
 		super().__init__(*args, **kwargs)
-		self.shape = None
+		self._shape = None
 		self.type = None
 
 	###########################################################################
@@ -71,7 +71,7 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 	def set_shape(self, shape):
 		""" Sets a shape.
 		"""
-		if self.shape is not None:
+		if self._shape is not None:
 			logger.warning('Modifying the shape of Placeholder "%s".',
 				self.name)
 
@@ -83,7 +83,7 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 					'All entries in "shape" must be integers. Shape is: {}'
 					.format(shape)
 				)
-		self.shape = shape
+		self._shape = shape
 
 	###########################################################################
 	def _parse(self, engine):
@@ -115,20 +115,29 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 			logger.debug('Creating placeholder for "%s" with data type "%s".',
 				self.name, dtype)
 
-			if self.shape is None:
-				self.shape = model.get_inferred_shape(self.name)
-				if not self.shape:
+			if self._shape is None:
+				self._shape = model.get_inferred_shape(self.name)
+				if not self._shape:
 					raise ParsingError(
 						'Placeholder "{}" requires a shape.'.format(self.name))
 
 			import keras.layers as L			# pylint: disable=import-error
 			yield L.Input(
-				shape=self.shape,
+				shape=self._shape,
 				name=self.name,
 				dtype=dtype
 			)
 
 		else:
-			raise ValueError('Unknown or unsupported backend: {}'.format(backend))
+			raise ValueError(
+				'Unknown or unsupported backend: {}'.format(backend))
+
+	###########################################################################
+	def shape(self, input_shapes=None):
+		""" Returns the output shape of this layer for a given input shape.
+		"""
+		if input_shapes is not None:
+			raise ValueError('Input placeholders do not take inputs.')
+		return self._shape
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

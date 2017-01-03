@@ -165,4 +165,21 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))
 
+	###########################################################################
+	def shape(self, input_shapes):
+		""" Returns the output shape of this layer for a given input shape.
+		"""
+		if len(input_shapes) > 1:
+			raise ValueError('Convolutions only take a single input.')
+		input_shape = input_shapes[0]
+		if len(input_shape) != len(self.size) + 1:
+			raise ValueError('Invalid input shape to a convolution layer: {}'
+				.format(input_shape))
+
+		output_shape = tuple(
+			(input_shape[i] + self.strides[i] - 1) // self.strides[i]
+			for i in range(len(self.size))
+		) + (self.kernels, )
+		return output_shape
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
