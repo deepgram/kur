@@ -290,7 +290,7 @@ class Model:
 		try:
 			index = self.provider.keys.index(name)
 		except ValueError:
-			logger.warning(
+			logger.debug(
 				'No such data source found for shape inference: %s', name)
 			return None
 

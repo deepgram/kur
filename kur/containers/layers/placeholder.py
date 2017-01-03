@@ -115,11 +115,46 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 			logger.debug('Creating placeholder for "%s" with data type "%s".',
 				self.name, dtype)
 
-			if self._shape is None:
-				self._shape = model.get_inferred_shape(self.name)
-				if not self._shape:
+			inferred_shape = model.get_inferred_shape(self.name)
+			if inferred_shape is None:
+				if self._shape is None:
 					raise ParsingError(
 						'Placeholder "{}" requires a shape.'.format(self.name))
+			else:
+				if self._shape is None:
+					self._shape = inferred_shape
+					logger.debug('Inferred shape: %s', self._shape)
+				else:
+					if len(self._shape) != len(inferred_shape):
+						raise ValueError('Placeholder "{}" does not have the '
+							'same dimensionality as the data source it is '
+							'connected to. Placeholder: {}, data source: {}.'
+							.format(self.name, self._shape, inferred_shape))
+
+					merged_shape = ()
+					for user_shape, data_shape in \
+						zip(self._shape, inferred_shape):
+						if user_shape is None or data_shape is None:
+							if user_shape is None:
+								merged_shape += (data_shape, )
+							else:
+								merged_shape += (user_shape, )
+						elif user_shape != data_shape:
+							logger.warning('Placeholder "%s" specified a '
+								'along a dimension that disagrees with the '
+								'data source. We will defer to the data '
+								'source, but this may cause an unexpected '
+								'model to be built. Placeholder: %s, data: '
+								'%s.', self.name, self._shape, inferred_shape)
+							merged_shape += (data_shape, )
+						else:
+							merged_shape += (data_shape, )
+
+					if merged_shape != self._shape:
+						logger.debug('Using inferred shape for data %s: %s '
+							'instead of %s', self.name, merged_shape,
+							self._shape)
+						self._shape = merged_shape
 
 			import keras.layers as L			# pylint: disable=import-error
 			yield L.Input(
