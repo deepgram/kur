@@ -148,6 +148,43 @@ this in your specification:
 		params:
 		  backend: theano
 
+Couldn't find ffmpeg or avconv
+------------------------------
+
+So, you want to do some speech-based learning. Great! In order to handle the
+wide variety of audio and video formats that your training set might need, we
+use ``ffmpeg`` as a format-conversion tool. This is not a native Python
+package, so we can't make it trivially use with ``pip install``. Instead, you
+need to install the appropriate package for your operating system:
+
+- macOS / OS X. Make sure you have Homebrew installed (see our :ref:`installation
+  instructions <get_python3>` for some guidance). Then you can install it with:
+
+  .. code-block:: bash
+
+  	$ brew install ffmpeg
+
+- Ubuntu 14.04 (Trusty Tahr). `Ubuntu switched
+  <http://askubuntu.com/a/432585>`_ to ``avconv`` briefly as a replacement for
+  ``ffmpeg``. So you can install a similar tool with:
+
+  .. code-block:: bash
+
+  	$ sudo apt-get install libav-tools
+
+- Ubuntu 16.04 (Xenial Xerus). ``ffmpeg`` made a return in Ubuntu 15.04, so you
+  can install it with:
+
+  .. code-block:: bash
+
+  	$ sudo apt-get install ffmpeg
+
+- Arch Linux. Pretty simple:
+
+  .. code-block:: bash
+
+  	$ sudo pacman -S ffmpeg
+
 Plotting
 ========
 

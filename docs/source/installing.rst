@@ -12,6 +12,8 @@ Ready to install Kur? Let's get going!
 Setting Up an Environment
 =========================
 
+.. _get_python3:
+
 Getting Python 3
 ----------------
 
