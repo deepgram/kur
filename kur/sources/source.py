@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from ..utils import Shuffleable
+
 ###############################################################################
 class Source:						# pylint: disable=too-few-public-methods
 	""" Base class for all data sources.
@@ -38,6 +40,14 @@ class Source:						# pylint: disable=too-few-public-methods
 			The iterator should return a tensor of shape `(X, ) +
 			self.shape()`, where `X` is the number of entries provided by this
 			data source.
+
+			# Note
+
+			If `is_derived()` is False, then this should simply `yield` data.
+			If `is_derived()` is True, then Kur will set up a bi-directional
+			generator with two `yield`s expected. The first `yield` will give
+			input to the Source, and the second `yield` is for returning the
+			data back to Kur.
 		"""
 		raise NotImplementedError
 
@@ -67,5 +77,91 @@ class Source:						# pylint: disable=too-few-public-methods
 			A shape tuple (length of each dimension in the tensor).
 		"""
 		raise NotImplementedError
+
+	###########################################################################
+	def on_added(self, provider):
+		""" Called when this source is added to a provider.
+		"""
+		pass
+
+	###########################################################################
+	def is_derived(self):
+		""" Returns True if this source is a derived source (requires other
+			sources to be present in a provider in order to function).
+		"""
+		raise NotImplementedError
+
+###############################################################################
+class OriginalSource(Source):				# pylint: disable=abstract-method
+	""" A source which is not derived.
+	"""
+
+	###########################################################################
+	def is_derived(self):
+		""" By definition, this source is not derived.
+		"""
+		return False
+
+###############################################################################
+class DerivedSource(Source, Shuffleable):	# pylint: disable=abstract-method
+	""" A source which is not derived.
+	"""
+
+	###########################################################################
+	def is_derived(self):
+		""" By definition, this source is derived.
+		"""
+		return True
+
+	############################################################################
+	def requires(self):
+		""" Returns a tuple of data sources that this source requires.
+		"""
+		raise NotImplementedError
+
+	###########################################################################
+	def __iter__(self):
+		""" Derived sources take two steps: a `yield` to get input, and `yield`
+			to send output. We provide a default implementation that is likely
+			suitable for many derived sources.
+		"""
+		self.setup()
+		while True:
+			inputs = yield
+			outputs = self.derive(inputs)
+			yield outputs
+
+	###########################################################################
+	def __len__(self):
+		""" Returns the total number of entries that this source can return.
+		"""
+		return 0
+
+	###########################################################################
+	def setup(self):
+		""" Called at the beginning of iteration.
+		"""
+		pass
+
+	###########################################################################
+	def derive(self, inputs):
+		""" Compute the derived source given its inputs.
+
+			# Arguments
+
+			inputs: list of arrays. Each list corresponds to the respective
+				data source specified in `requires()`.
+
+			# Return value
+
+			An array that is passed back to the data provider.
+		"""
+		raise NotImplementedError
+
+	###########################################################################
+	def shuffle(self, indices):
+		""" Applies a permutation to the data.
+		"""
+		pass
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

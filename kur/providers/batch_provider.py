@@ -88,6 +88,8 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		super().pre_iter()
 
 		iterators = [iter(source) for source in self.sources]
+		ordering = self.order_sources()
+		dependencies = self.source_dependencies()
 		queues = [next(it) for it in iterators]
 		sentinel = object()
 		proceed = True
@@ -98,25 +100,41 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 			result = [None for it in iterators]
 
 			# Go over each data source.
-			for i, it in enumerate(iterators):
+			for i in ordering:
+				it = iterators[i]
+				source = self.sources[i]
+				depends = dependencies[i]
 
-				# Get enough data out of each one.
-				while len(queues[i]) < self.batch_size:
-
-					# Get the next batch. If there isn't any data left, flag
-					# it.  After all, we may have collected at least some data
-					# during the `while` loop, and we should return that data.
-					x = next(it, sentinel)
-					if x is sentinel:
+				if source.is_derived():
+					requirements = [result[k] for k in depends]
+					if any(x is None for x in requirements):
+						raise ValueError('One of the dependent data sources '
+							'has not been calculated yet. This is a bug.')
+					try:
+						result[i] = it.send(requirements)
+						next(it)
+					except StopIteration:
 						proceed = False
-						break
 
-					# Add the data to the queue.
-					queues[i] = numpy.concatenate([queues[i], x])
+				else:
+					# Get enough data out of each one.
+					while len(queues[i]) < self.batch_size:
 
-				# Get the data ready.
-				result[i] = queues[i][:self.batch_size]
-				queues[i] = queues[i][self.batch_size:]
+						# Get the next batch. If there isn't any data left,
+						# flag it.  After all, we may have collected at least
+						# some data during the `while` loop, and we should
+						# return that data.
+						x = next(it, sentinel)
+						if x is sentinel:
+							proceed = False
+							break
+
+						# Add the data to the queue.
+						queues[i] = numpy.concatenate([queues[i], x])
+
+					# Get the data ready.
+					result[i] = queues[i][:self.batch_size]
+					queues[i] = queues[i][self.batch_size:]
 
 			lens = {len(q) for q in result}
 			if len(lens) == 1:

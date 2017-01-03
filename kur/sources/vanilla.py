@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . import Source
+from . import OriginalSource
 from ..utils import Shuffleable
 
 ###############################################################################
-class VanillaSource(Source, Shuffleable):
+class VanillaSource(OriginalSource, Shuffleable):
 	""" A data source which is simple wrapper around an in-memory array.
 	"""
 

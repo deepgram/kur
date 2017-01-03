@@ -112,6 +112,17 @@ class Provider:						# pylint: disable=too-few-public-methods
 
 		self._calculate_sizes()
 
+		if self.keys is None:
+			for source in self.sources:
+				if source.is_derived() and source.requires():
+					# In principle, we could support this by giving a list of
+					# all the data to these sources, but that sounds hazardous.
+					raise ValueError('Anonymous providers cannot have named, '
+						'dependent sources.')
+
+		for source in self.sources:
+			source.on_added(self)
+
 	###########################################################################
 	def __contains__(self, key):
 		if self.keys is None:
@@ -157,12 +168,19 @@ class Provider:						# pylint: disable=too-few-public-methods
 			source: Source instance. The data source to add.
 			name: str or None (default: None). The name of the data source.
 		"""
+		if name is None or self.keys is None:
+			if source.is_derived() and source.requires():
+				raise ValueError('Anonymous providers cannot have named, '
+					'dependent sources.')
+
 		if name is None:
 			self.keys = None
 		elif self.keys is not None:
 			self.keys.append(name)
 		self.sources.append(source)
 		self._calculate_sizes()
+
+		source.on_added(self)
 
 	###########################################################################
 	def pre_iter(self):
@@ -222,5 +240,80 @@ class Provider:						# pylint: disable=too-few-public-methods
 			infinite), then it should return <= 0.
 		"""
 		return self.entries
+
+	###########################################################################
+	def source_dependencies(self):
+		dependencies = {}
+		for i, source in enumerate(self.sources):
+			x = set()
+			if source.is_derived():
+				if source.requires() and self.keys is None:
+					raise ValueError('Anonymous providers cannot have derived '
+						'sources which have named requirements.')
+				for k in source.requires():
+					if k not in self.keys:
+						raise ValueError('Tried to resolve source '
+							'dependencies, but we cannot find this source: {}'
+							.format(k))
+					x.add(self.keys.index(k))
+			dependencies[i] = x
+		return dependencies
+
+	###########################################################################
+	def order_sources(self):
+		result = [
+			i for i, source in enumerate(self.sources)
+			if not source.is_derived()
+		] + [
+			i for i, source in enumerate(self.sources)
+			if source.is_derived() and not source.requires()
+		]
+
+		remaining = set(
+			i for i, source in enumerate(self.sources)
+			if source.is_derived() and source.requires()
+		)
+
+		if not remaining:
+			return result
+
+		# At this point, only derived sources with named dependencies have yet
+		# to be resolved.
+
+		if self.keys is None:
+			raise ValueError('Anonymous providers cannot have derived '
+				'sources which have named requirements. This should have '
+				'already been checked, so this is definitely a bug.')
+
+		# Get the dependency tree.
+		dependencies = {}
+		for i in remaining:
+			depends = set()
+			for k in self.sources[i].requires():
+				if k not in self.keys:
+					raise ValueError('Tried to resolve source '
+						'dependencies, but we cannot find this source: {}'
+						.format(k))
+				depends.add(self.keys.index(k))
+			dependencies[i] = depends
+
+		while dependencies:
+			changed = False
+			for this_source, needs_these_sources in list(dependencies.items()):
+				if any(source in dependencies \
+					for source in needs_these_sources):
+					# Can't use this yet.
+					continue
+
+				result.append(this_source)
+				del dependencies[this_source]
+				changed = True
+			if not changed:
+				raise ValueError('We are stuck in a circular dependency '
+					'while trying to process derived, named sources. Make '
+					'sure to eliminate circular dependencies; if you cannot '
+					'find any, this may be a bug.')
+
+		return result
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

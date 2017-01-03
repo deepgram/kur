@@ -15,11 +15,11 @@ limitations under the License.
 """
 
 import numpy
-from . import Source
+from . import OriginalSource
 from ..utils import Shuffleable
 
 ###############################################################################
-class RepeatSource(Source, Shuffleable):
+class RepeatSource(OriginalSource, Shuffleable):
 	""" A data source which always returns the same value.
 	"""
 

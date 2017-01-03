@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from .source import Source
+from .source import Source, DerivedSource, OriginalSource
 from .vanilla import VanillaSource
 from .repeat import RepeatSource
 
