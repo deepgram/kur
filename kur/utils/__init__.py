@@ -27,5 +27,6 @@ from .environtools import EnvironmentalVariable
 from .contexttools import redirect_stderr
 from .package import unpack, canonicalize
 from .shuffleable import Shuffleable
+from .normalize import Normalize
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
