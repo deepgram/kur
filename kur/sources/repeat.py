@@ -15,7 +15,8 @@ limitations under the License.
 """
 
 import numpy
-from . import Source, Shuffleable
+from . import Source
+from ..utils import Shuffleable
 
 ###############################################################################
 class RepeatSource(Source, Shuffleable):

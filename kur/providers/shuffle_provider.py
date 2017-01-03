@@ -17,7 +17,7 @@ limitations under the License.
 import numpy
 
 from . import Provider
-from ..sources import Shuffleable
+from ..utils import Shuffleable
 
 ###############################################################################
 class ShuffleProvider(Provider): \

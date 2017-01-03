@@ -15,7 +15,6 @@ limitations under the License.
 """
 
 from .source import Source
-from .shuffleable import Shuffleable
 from .vanilla import VanillaSource
 from .repeat import RepeatSource
 
