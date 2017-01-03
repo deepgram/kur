@@ -19,5 +19,6 @@ from .numpy_dict import NumpyDictSupplier
 from .mnist import MnistSupplier
 from .cifar import CifarSupplier
 from .pickle_supplier import PickleSupplier
+from .speechrec import SpeechRecognitionSupplier
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
