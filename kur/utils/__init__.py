@@ -26,6 +26,7 @@ from . import mergetools
 from .environtools import EnvironmentalVariable
 from .contexttools import redirect_stderr
 from .package import unpack, canonicalize
+from .filetools import count_lines
 from .shuffleable import Shuffleable
 from .audiotools import load_audio, get_audio_features
 from .normalize import Normalize
