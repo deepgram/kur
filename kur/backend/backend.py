@@ -37,11 +37,11 @@ class Backend:
 			# Arguments
 
 			variant: str, list/tuple of str, or None (default: None). The
-			variants to label this backend with. This allows for more
-			streamlined and flexible modification of backend behavior at the
-			layer level. These are simply tags that software components can
-			query and modify their behavior in response, without requiring an
-			entirely new backend.
+				variants to label this backend with. This allows for more
+				streamlined and flexible modification of backend behavior at
+				the layer level. These are simply tags that software components
+				can query and modify their behavior in response, without
+				requiring an entirely new backend.
 		"""
 		if not self.is_supported():
 			logger.warning('Backend claims to not be supported. We will try '
@@ -124,9 +124,8 @@ class Backend:
 			global:
 			  backend:
 			    name: BACKEND
-				params:
-				  PARAM1: VALUE1
-				  PARAM2: VALUE2
+				PARAM1: VALUE1
+				PARAM2: VALUE2
 				  ...
 			```
 
@@ -135,10 +134,9 @@ class Backend:
 			```yaml
 			global:
 			  backend:
-				params:
-				  PARAM1: VALUE1
-				  PARAM2: VALUE2
-				  ...
+				PARAM1: VALUE1
+				PARAM2: VALUE2
+				...
 			```
 		"""
 		if spec is None:
@@ -151,21 +149,15 @@ class Backend:
 			target = Backend.get_backend_by_name(spec)
 			params = {}
 		elif isinstance(spec, dict):
-			variant = spec.get('variant')
-			params = spec.get('params', {})
-			params = dict(params)
-			params['variant'] = variant
-
 			if 'name' in spec:
-				target = Backend.get_backend_by_name(
-					spec['name']
-				)
+				target = Backend.get_backend_by_name(spec.pop('name'))
 			else:
 				all_supported = list(Backend.get_all_backends(
 					supported_only=True))
 				if not all_supported:
 					raise ValueError('No supported backends available.')
 				target = all_supported[0]
+			params = spec
 		else:
 			raise ValueError(
 				'Unexpected backend specification: {}'.format(spec))

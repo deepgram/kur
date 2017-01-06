@@ -85,8 +85,7 @@ There are a number of ways to solve this.
 	  	settings:
 		  backend:
 			name: keras
-			params:
-			  backend: tensorflow
+			backend: tensorflow
 
 	- If you want to use the Keras backend with Theano, then you can add the
 	  ``optimizer: no`` setting to your specification file:
@@ -96,9 +95,8 @@ There are a number of ways to solve this.
 		settings:
 		  backend:
 			name: keras
-			params:
-			  backend: theano
-			  optimizer: no
+			backend: theano
+			optimizer: no
 
 	- If you are using the Keras backend with Theano programmatically through
 	  the Python API, you can pass the Keras backend constructor an additional
@@ -145,8 +143,7 @@ this in your specification:
 	settings:
 	  backend:
 		name: keras
-		params:
-		  backend: theano
+		backend: theano
 
 Couldn't find ffmpeg or avconv
 ------------------------------

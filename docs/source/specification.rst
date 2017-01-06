@@ -335,9 +335,12 @@ The Kur backend can be chosen like this:
 	  backend:
 	    name: NAME
 		variant: VARIANT
-		params: PARAMS
+		device: DEVICE
+		PARAM_KEY: PARAM_VALUE
+		PARAM_KEY: PARAM_VALUE
+		...
 
-The ``NAME``, ``VARIANT``, and ``PARAMS`` fields are all optional.
+The ``NAME``, ``VARIANT``, ``DEVICE``, and ``PARAM_`` fields are all optional.
 
 The ``NAME`` field specifies which backend Kur should use (e.g., ``keras``). If
 no ``NAME`` is specified (or indeed, if the entire ``backend`` or ``settings``
@@ -349,8 +352,12 @@ to the backend. They do not have any defined meaning. They are useful for
 developers who want to be able to make small, functional changes to an existing
 backend without having to re-write an entire backend.
 
-The ``PARAMS`` field is a dictionary of key/values that the backend uses to
-configure itself. Their meaning is backend specific.
+The ``DEVICE`` field tells Kur that it should use a particular device for its
+calculations. This can be ``cpu``, ``gpu``, or ``gpuX`` where ``X`` is an
+integer.
+
+The remaining ``PARAM_KEY``, ``PARAM_VALUE`` fields are just key/value pairs
+that the backend uses to configure itself. Their meaning is backend specific.
 
 An example ``backend`` specification that asks Kur to use Keras over TensorFlow
 is:
@@ -360,8 +367,7 @@ is:
 	settings:
 	  backend:
 	    name: keras
-	    params:
-	      backend: tensorflow
+	    backend: tensorflow
 
 Global variables
 ----------------
