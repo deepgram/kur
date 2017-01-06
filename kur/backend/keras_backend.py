@@ -26,6 +26,7 @@ import numpy
 from . import Backend
 from ..loss import Loss
 from ..utils import can_import, EnvironmentalVariable, redirect_stderr, idx
+from ..model import ExtensionState
 
 logger = logging.getLogger(__name__)
 
@@ -339,15 +340,7 @@ class KerasBackend(Backend):
 		""" Returns the Keras model instance.
 		"""
 
-		# FIXME: Decide if we want to make guarantees about the model being
-		# changed/unchanged. We could also move the
-		# `get_data_name_by_layer_name()` functionality from `Model` to here,
-		# and then add the compiled model's inputs/outputs to the dictionary
-		# that this function returns.
-		# We used to use:
-		#   with ExtensionState(model):
-		# But for now we will use:
-		with contextlib.ExitStack():
+		with ExtensionState(model):
 
 			if loss is not None:
 				loss, alias = self._apply_loss(model, loss)
@@ -400,7 +393,13 @@ class KerasBackend(Backend):
 				'model' : result,
 				'alias' : alias,
 				'rev_alias' : rev,
-				'keras_names' : keras_names
+				'keras_names' : keras_names,
+				'model_aliases' : (model.input_aliases, model.output_aliases),
+				'model_key_cache' : model.key_cache,
+				'io_names' : {
+					'input' : list(model.inputs.keys()),
+					'output' : list(model.outputs.keys())
+				}
 			}
 
 	###########################################################################
@@ -535,18 +534,30 @@ class KerasBackend(Backend):
 		"""
 		metrics = compiled['model'].train_on_batch(
 			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
-				data[model.get_data_name_by_layer_name(data, name)]
-				for name in model.inputs},
+				data[model.get_data_name_by_layer_name(
+					data,
+					name,
+					aliases=compiled['model_aliases'],
+					key_cache=compiled['model_key_cache']
+				)]
+				for name in compiled['io_names']['input']
+			},
 			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
-				data[model.get_data_name_by_layer_name(data, name)]
-				for name in model.outputs}
+				data[model.get_data_name_by_layer_name(
+					data,
+					name,
+					aliases=compiled['model_aliases'],
+					key_cache=compiled['model_key_cache']
+				)]
+				for name in compiled['io_names']['output']
+			}
 		)
 
 		return KerasBackend._convert_metrics(
 			metrics,
 			compiled['model'].metrics_names,
 			compiled['rev_alias'],
-			model.outputs
+			compiled['io_names']['output']
 		)
 
 	###########################################################################
@@ -555,18 +566,30 @@ class KerasBackend(Backend):
 		"""
 		metrics = compiled['model'].test_on_batch(
 			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
-				data[model.get_data_name_by_layer_name(data, name)]
-				for name in model.inputs},
+				data[model.get_data_name_by_layer_name(
+					data,
+					name,
+					aliases=compiled['model_aliases'],
+					key_cache=compiled['model_key_cache']
+				)]
+				for name in compiled['io_names']['input']
+			},
 			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
-				data[model.get_data_name_by_layer_name(data, name)]
-				for name in model.outputs}
+				data[model.get_data_name_by_layer_name(
+					data,
+					name,
+					aliases=compiled['model_aliases'],
+					key_cache=compiled['model_key_cache']
+				)]
+				for name in compiled['io_names']['output']
+			}
 		)
 
 		return KerasBackend._convert_metrics(
 			metrics,
 			compiled['model'].metrics_names,
 			compiled['rev_alias'],
-			model.outputs
+			compiled['io_names']['output']
 		)
 
 	###########################################################################
@@ -600,13 +623,20 @@ class KerasBackend(Backend):
 		# Returns an array of model outputs, with one entry per branch.
 		results = compiled['model'].predict_on_batch(
 			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
-				data[model.get_data_name_by_layer_name(data, name)]
-				for name in model.inputs}
+				data[model.get_data_name_by_layer_name(
+					data,
+					name,
+					aliases=compiled['model_aliases'],
+					key_cache=compiled['model_key_cache']
+				)]
+				for name in compiled['io_names']['input']
+			}
 		)
 
 		if len(model.outputs) == 1:
 			results = [results]
 
-		return {name : result for name, result in zip(model.outputs, results)}
+		return {name : result for name, result in \
+			zip(compiled['io_names']['output'], results)}
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

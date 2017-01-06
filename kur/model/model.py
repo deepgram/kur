@@ -299,7 +299,8 @@ class Model:
 		return shape
 
 	###########################################################################
-	def get_data_name_by_layer_name(self, keys, layer_name):
+	def get_data_name_by_layer_name(self, keys, layer_name,
+		key_cache=None, aliases=None):
 		""" Finds the key of a data dictionary which is intended to provide
 			data to a particular layer in the model.
 
@@ -317,14 +318,17 @@ class Model:
 			) == 'Aaron'
 			```
 		"""
-		key = self.key_cache.get(layer_name)
+		key_cache = key_cache or self.key_cache
+		aliases = aliases or (self.input_aliases, self.output_aliases)
+
+		key = key_cache.get(layer_name)
 		if key in keys:
 			return key
 
-		for alias_list in (self.input_aliases, self.output_aliases):
+		for alias_list in aliases:
 			for key, name in alias_list.items():
 				if key in keys and name == layer_name:
-					self.key_cache[layer_name] = key
+					key_cache[layer_name] = key
 					return key
 
 		logger.error('No such layer name found: "%s". Something will probably '
