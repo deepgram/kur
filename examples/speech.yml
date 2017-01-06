@@ -44,17 +44,19 @@ train:
     # - transcript
     # - transcript_length
     - speech_recognition:
-        path: "~/Downloads/kur-data/librispeech-dev-clean"
+        url: "http://kur.deepgram.com/data/librispeech-dev-clean.tar.gz"
+        checksum: 32f2c7e62299bd2abb401fdc320e4f03374b4c5ba0a3d391330adaf277be30cc
+        path: "~/kur"
         normalization: "norm.yml"
 
 loss:
   - name: ctc
     # The model's output (its best-guest transcript).
     target: asr
-	# How long the corresponding audio utterance is.
+    # How long the corresponding audio utterance is.
     input_length: utterance_length
     relative_to: utterance
-	# How long the ground-truth transcript is.
+    # How long the ground-truth transcript is.
     output_length: transcript_length
-	# The ground-truth transcipt itself.
+    # The ground-truth transcipt itself.
     output: transcript
