@@ -1,0 +1,60 @@
+---
+
+settings:
+
+  cnn:
+    kernels: 1024
+    size: 11
+    stride: 2
+  rnn:
+    size: 1024
+    depth: 3
+  vocab:
+    size: 28
+
+model:
+
+  - input: utterance
+  - convolution:
+      kernels: "{{ cnn.kernels }}"
+      size: "{{ cnn.size }}"
+      strides: "{{ cnn.stride }}"
+  - activation: relu
+  - batch_normalization
+  - for:
+      range: "{{ rnn.depth }}"
+      iterate:
+        - recurrent:
+            size: "{{ rnn.size }}"
+            sequence: yes
+        - activation: relu
+        - batch_normalization
+  - parallel:
+      apply:
+        - dense: "{{ vocab.size + 1 }}"
+        - activation: softmax
+  - output: asr
+
+train:
+
+  data:
+    # This will produce:
+    # - utterance
+    # - utterance_length
+    # - transcript
+    # - transcript_length
+    - speech_recognition:
+        path: "~/Downloads/kur-data/librispeech-dev-clean"
+        normalization: "norm.yml"
+
+loss:
+  - name: ctc
+    # The model's output (its best-guest transcript).
+    target: asr
+	# How long the corresponding audio utterance is.
+    input_length: utterance_length
+    relative_to: utterance
+	# How long the ground-truth transcript is.
+    output_length: transcript_length
+	# The ground-truth transcipt itself.
+    output: transcript
