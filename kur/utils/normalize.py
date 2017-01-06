@@ -161,7 +161,7 @@ class Normalize:
 		""" Saves normalization statistics.
 		"""
 		to_save = {
-			key : value.to_list() if hasattr(value, 'to_list') else value
+			key : value.tolist() if hasattr(value, 'tolist') else value
 			for key, value in self.state.items()
 		}
 
