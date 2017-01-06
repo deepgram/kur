@@ -78,10 +78,10 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 		if not isinstance(shape, (list, tuple)):
 			shape = (shape, )
 		for x in shape:
-			if not isinstance(x, int):
+			if not isinstance(x, (int, type(None))):
 				raise ParsingError(
-					'All entries in "shape" must be integers. Shape is: {}'
-					.format(shape)
+					'All entries in "shape" must be integers, or in special '
+					'cases None. Shape is: {}'.format(shape)
 				)
 		self._shape = shape
 
