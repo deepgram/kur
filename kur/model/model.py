@@ -99,7 +99,7 @@ class ExtensionState(ExtensionCallback):\
 				'monitoring.')
 
 			# Remove all current extensions.
-			for name in reversed(self.model.extensions):
+			for name in reversed(list(self.model.extensions)):
 				self.model.retract(name, rebuild=False)
 
 			# Add all the previous extensions.
