@@ -118,15 +118,37 @@ class KerasBackend(Backend):
 		with redirect_stderr(x):
 
 			env = {'KERAS_BACKEND' : backend}
-			if optimizer is False:
-				logger.debug('Disabling the Theano optimizer.')
+
+			def replace_theano_flag(key, value):
+				""" Updates the Theano flag variable.
+				"""
 				if 'THEANO_FLAGS' in os.environ:
 					parts = [i for i in os.environ['THEANO_FLAGS'].split(',') \
-						if not i.startswith('optimizer=')]
+						if not i.startswith('{}='.format(key))]
 				else:
 					parts = []
-				parts.append('optimizer=None')
+				parts.append('{}={}'.format(key, value))
 				env['THEANO_FLAGS'] = ','.join(parts)
+
+			if optimizer is False:
+				logger.debug('Disabling the Theano optimizer.')
+				replace_theano_flag('optimizer', 'None')
+
+			if self.device is not None:
+				replace_theano_flag('force_device', 'true')
+				if self.device == 'cpu':
+					replace_theano_flag('device', 'cpu')
+					env['CUDA_VISIBLE_DEVICES'] = '100'
+					logger.info('Requesting CPU')
+				else:
+					if self.device_number is None:
+						replace_theano_flag('device', 'gpu')
+						logger.info('Requesting GPU')
+					else:
+						replace_theano_flag('device', 'gpu{}'.format(
+							self.device_number))
+						env['CUDA_VISIBLE_DEVICES'] = str(self.device_number)
+						logger.info('Requesting GPU %d', self.device_number)
 
 			with EnvironmentalVariable(**env):
 				import keras	# pylint: disable=import-error,unused-variable

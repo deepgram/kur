@@ -26,7 +26,7 @@ class Backend:
 	"""
 
 	###########################################################################
-	def __init__(self, variant=None):
+	def __init__(self, variant=None, device=None):
 		""" Create a new backend.
 
 			Part of this call should be to ensure that all the necessary
@@ -54,6 +54,28 @@ class Backend:
 			variant = set()
 
 		self.variant = set(variant)
+
+		if device is None:
+			self.device = None
+		elif device == 'cpu':
+			self.device = 'cpu'
+		elif device.startswith('gpu'):
+			self.device = 'gpu'
+			x = device[3:]
+			if x:
+				try:
+					x = int(x)
+				except ValueError:
+					raise ValueError('Failed to parse GPU device number: {}'
+						.format(x))
+				else:
+					self.device_number = x
+			else:
+				self.device_number = None
+		else:
+			raise ValueError('Invalid device specification: {}. If a '
+				'device is explicitly specified, it must be "cpu", "gpu" '
+				'or "gpuX" where "X" is an integer.'.format(device))
 
 		logger.info('Creating backend: %s', self.get_name())
 		logger.info('Backend variants: %s',
