@@ -17,6 +17,9 @@ limitations under the License.
 import os
 import gzip
 import tarfile
+import logging
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 def canonicalize(path):
@@ -148,9 +151,9 @@ def unpack(path, dest=None, recursive=False, ignore_error=False):
 				dest))
 		os.makedirs(dest, exist_ok=True)
 
-	if tarfile.is_tarfile(path):
+	if os.path.isfile(path) and tarfile.is_tarfile(path):
 		extracted = sandbox_extract(path, dest)
-	elif is_gzipped(path):
+	elif os.path.isfile(path) and is_gzipped(path):
 		extracted = gzip_extract(path, dest)
 	else:
 		if ignore_error:
@@ -161,6 +164,8 @@ def unpack(path, dest=None, recursive=False, ignore_error=False):
 
 	if recursive:
 		for filename in list(extracted):
+			logger.debug('Recursive extraction: path=%s, filename=%s',
+				path, filename)
 			extracted.extend(unpack(
 				filename,
 				os.path.dirname(filename),

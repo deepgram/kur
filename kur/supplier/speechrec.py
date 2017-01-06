@@ -359,7 +359,7 @@ class SpeechRecognitionSupplier(Supplier):
 		)
 
 		if is_packed and unpack:
-			logger.debug('Unpacking input data.')
+			logger.debug('Unpacking input data: %s', local_path)
 			extracted = package.unpack(local_path, recursive=True)
 			is_packed = False
 		elif is_packed and not unpack:
@@ -470,11 +470,9 @@ class SpeechRecognitionSupplier(Supplier):
 					if actual.lower() != checksum.lower():
 						raise ValueError('Input file "{}" failed its '
 							'checksum.'.format(path))
-				local_path = path
-				is_packed = True
+				return path, True
 			elif os.path.isdir(path):
-				local_path = path
-				is_packed = False
+				return path, False
 			else:
 				raise ValueError('"path" was specified in a speech '
 					'recognition supplier, but the path does not exist. Check '
@@ -500,23 +498,33 @@ class SpeechRecognitionSupplier(Supplier):
 			if os.path.isfile(path):
 				# File already exists. Checksum it.
 				if checksum is not None:
-					actual = get_hash(path)
-					if actual.lower() != checksum.lower():
+					if get_hash(path).lower() == checksum.lower():
+						logger.debug('File exists and passed checksum: %s',
+							path)
+						return path, True
+					else:
 						# Checksum fails -> redownload
 						logger.warning('Input file "%s" failed its checksum. '
 							'Redownloading...', path)
-						do_download(url, path)
-						actual = get_hash(path)
-						if actual.lower() != checksum.lower():
-							raise ValueError('Failed to download URL: {}. The '
-								'integrity check failed.'.format(url))
-				local_path = path
-				is_packed = True
-			else:
-				raise ValueError('Unknown target type. Expected a path to a '
-					'file or directory, but instead we got: {}'.format(path))
+				else:
+					logger.debug('File exists, but there is not checksum: %s',
+						path)
+					return path, True
 
-		return local_path, is_packed
+			# Need to download the file.
+			do_download(url, path)
+			if checksum is not None:
+				if get_hash(path).lower() != checksum.lower():
+					raise ValueError('Failed to download URL: {}. The '
+						'integrity check failed.'.format(url))
+				else:
+					logger.debug('Downloaded file passed checksum: %s', path)
+			else:
+				logger.debug('Downloaded file, but there is not checksum: %s',
+					path)
+			return path, True
+
+		raise ValueError('Unhandled download path. This is a bug.')
 
 	###########################################################################
 	def get_data(self, start, end):
