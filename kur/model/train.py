@@ -273,11 +273,13 @@ class Trainer:
 				# Present each batch to the network.
 				for batch in provider:
 					# The loss averaged over this batch.
+					logger.debug('Training on batch...')
 					batch_loss = self.model.backend.train(
 						model=self.model,
 						data=batch,
 						compiled=self._compiled
 					)
+					logger.debug('Finished training on batch.')
 
 					if log is not None:
 						log.log_batch(batch_loss, 'loss')
