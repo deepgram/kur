@@ -87,6 +87,8 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		# Should always be the first call in __iter__
 		super().pre_iter()
 
+		logger.debug('Preparing next batch of data...')
+
 		iterators = [iter(source) for source in self.sources]
 		ordering = self.order_sources()
 		dependencies = self.source_dependencies()
@@ -96,6 +98,9 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		batches_produced = 0
 
 		while iterators and proceed:
+
+			if batches_produced:
+				logger.debug('Preparing next batch of data...')
 
 			result = [None for it in iterators]
 
@@ -136,6 +141,8 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 					result[i] = queues[i][:self.batch_size]
 					queues[i] = queues[i][self.batch_size:]
 
+			logger.debug('Next batch of data has been prepared.')
+
 			lens = {len(q) for q in result}
 			if len(lens) == 1:
 				if lens.pop():
@@ -149,6 +156,8 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 					break
 			else:
 				if proceed:
+					logger.error('Unequal length batches were produced: '
+						'%s', self.wrap(result))
 					raise ValueError('Managed to accumulate unequal-length '
 						'batches, but we were still told to continue '
 						'iterating. This is a bug.')
