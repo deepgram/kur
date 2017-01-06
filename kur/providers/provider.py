@@ -245,7 +245,7 @@ class Provider:						# pylint: disable=too-few-public-methods
 	def source_dependencies(self):
 		dependencies = {}
 		for i, source in enumerate(self.sources):
-			x = set()
+			x = []
 			if source.is_derived():
 				if source.requires() and self.keys is None:
 					raise ValueError('Anonymous providers cannot have derived '
@@ -255,7 +255,7 @@ class Provider:						# pylint: disable=too-few-public-methods
 						raise ValueError('Tried to resolve source '
 							'dependencies, but we cannot find this source: {}'
 							.format(k))
-					x.add(self.keys.index(k))
+					x.append(self.keys.index(k))
 			dependencies[i] = x
 		return dependencies
 
