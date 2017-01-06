@@ -130,41 +130,34 @@ class Evaluator:
 					has_truth = all(k in batch for k in self.model.outputs)
 
 				if callback is None:
+					# There is no callback. We need to hang on to everything.
 					if total is None:
+						# We don't know how many entries there will be.
 						if result is None:
+							# This is our first batch.
 							result = {k : [] for k in self.model.outputs}
 						for k, v in evaluated.items():
-							result[k].append(v)
+							result[k].extend(v)
 
 						if has_truth:
 							if truth is None:
 								truth = {k : [] for k in self.model.outputs}
 							for k in truth:
-								truth[k].append(batch[k])
+								truth[k].extend(batch[k])
 					else:
+						# We know how many entries there will be.
 						if result is None:
-							result = {
-								k : numpy.empty(
-									shape=(total, ) + v.shape[1:],
-									dtype=v.dtype
-								) for k, v in evaluated.items()
-							}
+							# This is our first batch.
+							result = {k : [None]*total for k in evaluated}
 						for k, v in evaluated.items():
 							result[k][n_entries:(n_entries+batch_size)] = v[:]
 
 						if has_truth:
 							if truth is None:
-								truth = {
-									k : numpy.empty(
-										shape=(total, ) + v.shape[1:],
-										dtype=v.dtype
-									) for k, v in evaluated.items()
-								}
+								truth = {k : [None]*total for k in evaluated}
 							for k in truth:
 								truth[k][n_entries:(n_entries+batch_size)] = \
-									batch[k][:].reshape(
-										(-1,) + truth[k].shape[1:]
-									)
+									batch[k][:]
 				else:
 					callback(evaluated, truth)
 
