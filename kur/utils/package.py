@@ -164,8 +164,6 @@ def unpack(path, dest=None, recursive=False, ignore_error=False):
 
 	if recursive:
 		for filename in list(extracted):
-			logger.debug('Recursive extraction: path=%s, filename=%s',
-				path, filename)
 			extracted.extend(unpack(
 				filename,
 				os.path.dirname(filename),
