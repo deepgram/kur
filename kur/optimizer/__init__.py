@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from .optimizer import Optimizer
+from .sgd import SGD
 from .adam import Adam
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
