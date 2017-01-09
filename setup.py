@@ -110,6 +110,7 @@ setup(
 		# Keras - the default backend (with Theano)
 		'keras>=1.1.2',
 		'theano>=0.8.2',
+		'tensorflow>=0.12.0rc1',
 
 		'scipy>=0.18.1',
 		'python-magic>=0.4.12',
@@ -123,8 +124,7 @@ setup(
 	# Testing
 	test_suite='tests',
 	tests_require=[
-		'pytest',
-		'tensorflow'
+		'pytest'
 	],
 	setup_requires=['pytest-runner'],
 
