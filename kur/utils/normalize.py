@@ -160,10 +160,13 @@ class Normalize:
 	def save(self, filename):
 		""" Saves normalization statistics.
 		"""
-		to_save = {
-			key : value.tolist() if hasattr(value, 'tolist') else value
-			for key, value in self.state.items()
-		}
+		if self.state is None:
+			to_save = {}
+		else:
+			to_save = {
+				key : value.tolist() if hasattr(value, 'tolist') else value
+				for key, value in self.state.items()
+			}
 
 		with open(filename, 'w') as fh:
 			fh.write(yaml.dump(to_save))
