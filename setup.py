@@ -104,7 +104,6 @@ setup(
 		'pyyaml>=3.12',
 		'jinja2>=2.8',
 		'numpy>=1.11.2',
-		'requests>=2.12.3',
 		'tqdm>=4.10.0',
 
 		# Keras - the default backend (with Theano)

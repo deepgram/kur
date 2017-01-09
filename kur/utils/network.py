@@ -20,7 +20,7 @@ import tempfile
 import logging
 
 import tqdm
-import requests
+import urllib.request
 
 logger = logging.getLogger(__name__)
 
@@ -47,16 +47,20 @@ def get_hash(path):
 def do_download(url, target):
 	""" Downloads a URL.
 	"""
-	response = requests.get(url, stream=True)
+	response = urllib.request.urlopen(url)
 	with open(target, 'wb') as fh:
-		for chunk in tqdm.tqdm(
-			response.iter_content(),
-			total=int(response.headers['content-length']),
+		with tqdm.tqdm(
+			total=int(response.info().get('Content-Length')),
 			unit='bytes',
 			unit_scale=True,
 			desc='Downloading'
-		):
-			fh.write(chunk)
+		) as pbar:
+			while True:
+				chunk = response.read(8192)
+				if not chunk:
+					break
+				fh.write(chunk)
+				pbar.update(len(chunk))
 
 	logger.info('File downloaded: %s', target)
 
