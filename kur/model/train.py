@@ -17,6 +17,7 @@ limitations under the License.
 import logging
 import shutil
 import tqdm
+import math
 from ..utils import get_any_value, CriticalSection
 
 logger = logging.getLogger(__name__)
@@ -311,6 +312,12 @@ class Trainer:
 						epoch+1, epochs or 'inf', sum(train_loss.values())
 					))
 					pbar.update(batch_size)
+
+					for k, v in batch_loss.items():
+						if math.isnan(v):
+							logger.error('Received NaN loss value for model '
+								'output "%s".', k)
+							return
 
 			if not n_entries:
 				logger.warning('No data provided to training loop. Trying to '
