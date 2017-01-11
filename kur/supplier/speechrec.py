@@ -255,6 +255,7 @@ class RawTranscript(OriginalSource, Shuffleable):
 				data = json.loads(fh.read())
 			flat = set(x.lower() for x in data)
 
+		logger.info('Loaded a %d-word vocabulary.', len(flat))
 		return {x : i for i, x in enumerate(sorted(flat))}
 
 	###########################################################################
