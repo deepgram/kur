@@ -17,6 +17,18 @@ limitations under the License.
 from ..utils import get_subclasses
 
 ###############################################################################
+def keras_clip(optimizer):
+	if optimizer.clip_type is None:
+		return {}
+	elif optimizer.clip_type == 'norm':
+		return {'clipnorm' : optimizer.clip_value}
+	elif optimizer.clip_type == 'abs':
+		return {'clipvalue' : optimizer.clip_value}
+	else:
+		raise ValueError('Unhandled clip type: {}. This is a bug.'
+			.format(optimizer.clip_type))
+
+###############################################################################
 class Optimizer:
 	""" Base class for all optimizers
 	"""
@@ -52,10 +64,29 @@ class Optimizer:
 		raise ValueError('No such optimizer with name "{}"'.format(name))
 
 	###########################################################################
-	def __init__(self):
+	def __init__(self, clip=None):
 		""" Creates a new optimizer.
 		"""
-		pass
+		if clip is None:
+			self.clip_type = None
+		elif isinstance(clip, dict):
+			if 'norm' in clip:
+				self.clip_type = 'norm'
+				self.clip_value = clip['norm']
+			elif 'abs' in clip:
+				self.clip_type = 'abs'
+				self.clip_value = clip['abs']
+			else:
+				raise ValueError('Unknown clip spec: {}'.format(clip))
+
+			try:
+				self.clip_value = float(self.clip_value)
+			except ValueError:
+				raise ValueError('Invalid clip value: {}'
+					.format(self.clip_value))
+		else:
+			raise ValueError('"clip" expected a dictionary with key "norm" or '
+				'"value". Instead, we got: {}'.format(clip))
 
 	###########################################################################
 	def get_optimizer(self, backend):
