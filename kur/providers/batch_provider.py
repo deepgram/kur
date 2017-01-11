@@ -141,6 +141,10 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 					result[i] = queues[i][:self.batch_size]
 					queues[i] = queues[i][self.batch_size:]
 
+					if len(result[i]) == 0:
+						logger.debug('An original source has no data.')
+						return
+
 			logger.debug('Next batch of data has been prepared.')
 
 			lens = {len(q) for q in result}
