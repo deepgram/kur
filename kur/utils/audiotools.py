@@ -26,7 +26,6 @@ import magic						# python-magic
 import scipy.io.wavfile as wav		# scipy
 from pydub import AudioSegment		# pydub
 import python_speech_features		# python_speech_features
-import stft							# stft
 # pylint: enable=import-error
 
 from .. import __homepage__
@@ -71,6 +70,12 @@ def load_pydub(filename):
 		'sample_width' : data.sample_width * 8,
 		'channels' : data.channels
 	}
+
+###############################################################################
+def scale_signal(audio):
+	""" Returns an audio signal scaled so that the max/min values are +1/-1.
+	"""
+	return audio['signal'] / 2**(audio['sample_width'] - 1)
 
 ###############################################################################
 def load_audio(filename):
@@ -171,12 +176,39 @@ def get_audio_features(audio, feature_type, **kwargs):
 		# Step size, in seconds
 		step_size = 0.010
 
-		# Calculate the spectrogram
-		spec = stft.spectrogram(
-			audio['signal'],
-			framelength=int(window_size * audio['sample_rate']),
-			hopsize=int(step_size * audio['sample_rate'])
+		signal = scale_signal(audio)
+
+		hop_size = int(step_size * audio['sample_rate'])
+		frame_size = int(window_size * audio['sample_rate'])
+
+		# Cleave off any samples that do not cleanly fit into our step size.
+		clean = signal[:-(
+			(len(signal) - frame_size) % hop_size
+		)]
+
+		# Optimization: instead of doing a for loop or list comprehension to
+		# apply the window to the signal, we can just create a new view into
+		# the data with each window.
+		num_frames = (len(clean) - frame_size) // hop_size + 1
+		frames = numpy.lib.stride_tricks.as_strided(
+			clean,
+			shape=(frame_size, num_frames),
+			strides=(clean.strides[0], clean.strides[0] * hop_size)
 		)
+
+		filter_window = numpy.hanning(frame_size)
+		fft = numpy.fft.rfft(
+			frames * numpy.expand_dims(filter_window, -1),
+			axis=0
+		)
+		norm = numpy.absolute(fft)**2
+
+		scale = numpy.sum(filter_window**2) * audio['sample_rate']
+		scaled = norm
+		scaled[1:-1] /= scale/2
+		scaled[[0, -1]] /= scale
+
+		spec = scaled
 		# At this point, `spec` is shape (frequency, time).
 
 		# Apply frequency cutoffs, if necessary
@@ -198,6 +230,7 @@ def get_audio_features(audio, feature_type, **kwargs):
 				)
 			spec = spec[get_bin(low_freq, 0):get_bin(high_freq, num_bins)]
 
+		spec = numpy.log(spec + 1e-14)
 		# Format `spec` as (time, frequency)
 		spec = spec.T
 		return spec

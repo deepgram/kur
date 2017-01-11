@@ -114,8 +114,7 @@ setup(
 		'scipy>=0.18.1',
 		'python-magic>=0.4.12',
 		'pydub>=0.16.6',
-		'python_speech_features>=0.4',
-		'stft>=0.5.2'
+		'python_speech_features>=0.4'
 	],
 	dependency_links=[
 	],
