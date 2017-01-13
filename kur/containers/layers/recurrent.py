@@ -121,6 +121,11 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 				'recurrent layer. Expected an integer. Received: {}'
 				.format(self.size))
 
+		if 'outer_activation' in self.args:
+			self.activation = engine.evaluate(self.args['outer_activation'])
+		else:
+			self.activation = None
+
 	###########################################################################
 	def _build(self, model):
 		""" Instantiates the layer with the given backend.
@@ -139,6 +144,7 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 					.format(self.type))
 
 			kwargs = {
+				'activation' : self.activation or 'relu',
 				'output_dim' : self.size,
 				'return_sequences' : self.sequence,
 				'go_backwards' : False

@@ -112,10 +112,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		else:
 			self.strides = [1] * len(self.size)
 
-		if 'activation' in self.args:
-			self.activation = engine.evaluate(self.args['activation'])
-		else:
-			self.activation = None
+		self.activation = None
 
 		if 'border' in self.args:
 			self.border = engine.evaluate(self.args['border'])
@@ -168,8 +165,6 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 
 			yield func(**kwargs)
 
-			if self.activation:
-				yield L.Activation(self.activation)
 		else:
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))
