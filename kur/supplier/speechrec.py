@@ -323,7 +323,7 @@ class SpeechRecognitionSupplier(Supplier):
 
 	###########################################################################
 	def __init__(self, url=None, path=None, checksum=None, unpack=None, 
-		type=None, normalization=None, *args, **kwargs):
+		type=None, normalization=None, max_duration=None, *args, **kwargs):
 		""" Creates a new speech recognition supplier.
 
 			# Arguments
@@ -332,9 +332,10 @@ class SpeechRecognitionSupplier(Supplier):
 
 		if unpack is None:
 			unpack = SpeechRecognitionSupplier.DEFAULT_UNPACK
-		self.load_data(url=url, path=path, checksum=checksum, unpack=unpack)
-		logger.debug('Data loaded. Creating sources.')
+		self.load_data(url=url, path=path, checksum=checksum, unpack=unpack,
+			max_duration=max_duration)
 
+		logger.debug('Creating sources.')
 		utterance_raw = RawUtterance(
 			self.data['audio'],
 			feature_type=type or 'mfcc',
@@ -350,7 +351,8 @@ class SpeechRecognitionSupplier(Supplier):
 		}
 
 	###########################################################################
-	def load_data(self, url=None, path=None, checksum=None, unpack=None):
+	def load_data(self, url=None, path=None, checksum=None, unpack=None,
+		max_duration=None):
 		""" Loads the data for this supplier.
 		"""
 		local_path, is_packed = self.download_data(
@@ -380,10 +382,10 @@ class SpeechRecognitionSupplier(Supplier):
 		else:
 			logger.error('Unhandled data package requirements. This is a bug.')
 
-		self.metadata, self.data = self.get_metadata(extracted)
+		self.metadata, self.data = self.get_metadata(extracted, max_duration)
 
 	###########################################################################
-	def get_metadata(self, package_contents):
+	def get_metadata(self, package_contents, max_duration):
 		""" Scans the package for a metadata file, makes sure everything is in
 			order, and returns some information about the data set.
 		"""
@@ -425,6 +427,10 @@ class SpeechRecognitionSupplier(Supplier):
 					raise IOError('Line {} in the metadata file is missing '
 						'one of its required keys.'.format(line_number))
 
+				duration = entry['duration_s']
+				if max_duration and duration > max_duration:
+					continue
+
 				data['duration'][entries] = entry['duration_s']
 				data['transcript'][entries] = entry['text']
 
@@ -442,6 +448,7 @@ class SpeechRecognitionSupplier(Supplier):
 
 				entries += 1
 
+		logger.debug('Entries kept: %d', entries)
 		for k in data:
 			data[k] = data[k][:entries]
 
