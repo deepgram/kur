@@ -117,13 +117,16 @@ class KerasBackend(Backend):
 		x = io.StringIO()
 		with redirect_stderr(x):
 
-			env = {'KERAS_BACKEND' : backend}
+			env = {
+				'KERAS_BACKEND' : backend,
+				'THEANO_FLAGS' : os.environ.get('THEANO_FLAGS')
+			}
 
 			def replace_theano_flag(key, value):
 				""" Updates the Theano flag variable.
 				"""
-				if 'THEANO_FLAGS' in os.environ:
-					parts = [i for i in os.environ['THEANO_FLAGS'].split(',') \
+				if env['THEANO_FLAGS']:
+					parts = [i for i in env['THEANO_FLAGS'].split(',') \
 						if not i.startswith('{}='.format(key))]
 				else:
 					parts = []
@@ -137,23 +140,23 @@ class KerasBackend(Backend):
 			if self.device is not None:
 				replace_theano_flag('force_device', 'true')
 				if self.device == 'cpu':
+					logger.info('Forcing CPU.')
 					replace_theano_flag('device', 'cpu')
 					env['CUDA_VISIBLE_DEVICES'] = '100'
 					logger.info('Requesting CPU')
 				else:
 					if self.device_number is None:
 						replace_theano_flag('device', 'gpu')
-						logger.info('Requesting GPU')
+						logger.info('Requesting any GPU')
 					else:
-						replace_theano_flag('device', 'gpu{}'.format(
-							self.device_number))
+						replace_theano_flag('device', 'gpu0')
 						env['CUDA_VISIBLE_DEVICES'] = str(self.device_number)
 						logger.info('Requesting GPU %d', self.device_number)
 
 			with EnvironmentalVariable(**env):
 				import keras	# pylint: disable=import-error,unused-variable
 				import keras.backend as K		# pylint: disable=import-error
-				logger.debug('Keras is loaded. The backend is: %s',
+				logger.info('Keras is loaded. The backend is: %s',
 					K.backend())
 				self.toolchain = K.backend()
 
