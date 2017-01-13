@@ -55,6 +55,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		self.size = None
 		self.strides = None
 		self.activation = None
+		self.border = None
 
 	###########################################################################
 	def _parse(self, engine):
@@ -116,6 +117,14 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		else:
 			self.activation = None
 
+		if 'border' in self.args:
+			self.border = engine.evaluate(self.args['border'])
+			if not isinstance(self.border, str) or \
+				not self.border in ('valid', 'same'):
+				raise ParsingError('"border" must be one of: "valid", "same".')
+		else:
+			self.border = 'same'
+
 	###########################################################################
 	def _build(self, model):
 		""" Instantiates the layer with the given backend.
@@ -128,7 +137,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 			kwargs = {
 				'nb_filter' : self.kernels,
 				'activation' : self.activation or 'linear',
-				'border_mode' : 'same',
+				'border_mode' : self.border,
 				'name' : self.name
 			}
 
@@ -176,8 +185,15 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 			raise ValueError('Invalid input shape to a convolution layer: {}'
 				.format(input_shape))
 
+		def apply_border(input_shape, size):
+			if self.border == 'same':
+				return input_shape
+			else:
+				return input_shape - size + 1
+
 		output_shape = tuple(
-			(input_shape[i] + self.strides[i] - 1) // self.strides[i]
+			(apply_border(input_shape[i], self.size[i]) \
+				+ self.strides[i] - 1) // self.strides[i]
 			for i in range(len(self.size))
 		) + (self.kernels, )
 		return output_shape
