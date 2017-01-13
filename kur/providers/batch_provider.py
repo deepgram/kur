@@ -17,6 +17,7 @@ limitations under the License.
 import logging
 import numpy
 from . import ShuffleProvider
+from ..sources import ChunkSource
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,11 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 
 		# Should always be the first call in __iter__
 		super().pre_iter()
+
+		for source in self.sources:
+			if isinstance(source, ChunkSource):
+				if source.chunk_size is ChunkSource.USE_BATCH_SIZE:
+					source.set_chunk_size(self.batch_size)
 
 		logger.debug('Preparing next batch of data...')
 

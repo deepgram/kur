@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from .source import Source, DerivedSource, OriginalSource
+from .chunk import ChunkSource
 from .vanilla import VanillaSource
 from .repeat import RepeatSource
 

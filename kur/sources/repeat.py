@@ -15,16 +15,16 @@ limitations under the License.
 """
 
 import numpy
-from . import OriginalSource
+from . import ChunkSource
 from ..utils import Shuffleable
 
 ###############################################################################
-class RepeatSource(OriginalSource, Shuffleable):
+class RepeatSource(ChunkSource, Shuffleable):
 	""" A data source which always returns the same value.
 	"""
 
 	###########################################################################
-	def __init__(self, value=None, chunk_size=None, *args, **kwargs):
+	def __init__(self, value=None, *args, **kwargs):
 		""" Create a new repeat data source.
 
 			# Arguments
@@ -36,7 +36,6 @@ class RepeatSource(OriginalSource, Shuffleable):
 		"""
 		super().__init__(*args, **kwargs)
 
-		self.chunk_size = chunk_size or 2048
 		self.data = numpy.array([value for _ in range(self.chunk_size)])
 
 	###########################################################################

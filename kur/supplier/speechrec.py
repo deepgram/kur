@@ -22,7 +22,7 @@ import random
 
 import numpy
 
-from ..sources import OriginalSource, DerivedSource, VanillaSource
+from ..sources import DerivedSource, VanillaSource, ChunkSource
 from ..utils import Shuffleable
 from . import Supplier
 from ..utils.network import get_hash, do_download
@@ -73,15 +73,21 @@ class Utterance(DerivedSource):
 		return (self.source, )
 
 ###############################################################################
-class RawUtterance(OriginalSource, Shuffleable):
+class RawUtterance(ChunkSource, Shuffleable):
 	""" Data source for audio samples
 	"""
 
-	DEFAULT_CHUNK_SIZE = 32
 	NORMALIZATION_DEPTH = 100
 
 	###########################################################################
-	def __init__(self, audio_paths, chunk_size=None, feature_type=None,
+	@classmethod
+	def default_chunk_size(cls):
+		""" Returns the default chunk size for this source.
+		"""
+		return ChunkSource.USE_BATCH_SIZE
+
+	###########################################################################
+	def __init__(self, audio_paths, feature_type=None,
 		normalization=None, *args, **kwargs):
 		""" Creates a new raw utterance source.
 		"""
@@ -90,7 +96,6 @@ class RawUtterance(OriginalSource, Shuffleable):
 		self.audio_paths = audio_paths
 		self.indices = numpy.arange(len(self))
 		self.feature_type = feature_type
-		self.chunk_size = chunk_size or RawUtterance.DEFAULT_CHUNK_SIZE
 		self.features = None
 
 		self._init_normalizer(normalization)
@@ -226,14 +231,12 @@ class Transcript(DerivedSource):
 		return (self.source, )
 
 ###############################################################################
-class RawTranscript(OriginalSource, Shuffleable):
+class RawTranscript(ChunkSource, Shuffleable):
 	""" Data source for variable-length transcripts.
 	"""
 
-	DEFAULT_CHUNK_SIZE = 8192
-
 	###########################################################################
-	def __init__(self, transcripts, chunk_size=None, vocab=None, *args,
+	def __init__(self, transcripts, vocab=None, *args,
 		**kwargs):
 		""" Creates a new raw transcript source.
 		"""
@@ -241,7 +244,6 @@ class RawTranscript(OriginalSource, Shuffleable):
 		self.transcripts = transcripts
 		self.indices = numpy.arange(len(self))
 		self.vocab = self.make_vocab(vocab)
-		self.chunk_size = chunk_size or RawTranscript.DEFAULT_CHUNK_SIZE
 
 	###########################################################################
 	def make_vocab(self, vocab):

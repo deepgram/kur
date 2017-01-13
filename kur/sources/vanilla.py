@@ -14,16 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . import OriginalSource
+from . import ChunkSource
 from ..utils import Shuffleable
 
 ###############################################################################
-class VanillaSource(OriginalSource, Shuffleable):
+class VanillaSource(ChunkSource, Shuffleable):
 	""" A data source which is simple wrapper around an in-memory array.
 	"""
 
 	###########################################################################
-	def __init__(self, data, chunk_size=None, *args, **kwargs):
+	@classmethod
+	def default_chunk_size(cls):
+		""" Returns the default chunk size for this source.
+		"""
+		return ChunkSource.ALL_ITEMS
+
+	###########################################################################
+	def __init__(self, data, *args, **kwargs):
 		""" Create a new vanilla data provider.
 
 			# Arguments
@@ -43,7 +50,6 @@ class VanillaSource(OriginalSource, Shuffleable):
 		super().__init__(*args, **kwargs)
 
 		self.data = data
-		self.chunk_size = chunk_size
 
 	###########################################################################
 	def __len__(self):
@@ -74,7 +80,7 @@ class VanillaSource(OriginalSource, Shuffleable):
 		start = 0
 		num_entries = len(self)
 		while start < num_entries:
-			if self.chunk_size is None:
+			if self.chunk_size is ChunkSource.ALL_ITEMS:
 				end = num_entries
 			else:
 				end = min(num_entries, start + self.chunk_size)
