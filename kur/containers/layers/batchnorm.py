@@ -33,7 +33,20 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 		""" Creates a new batch normalization layer.
 		"""
 		super().__init__(*args, **kwargs)
-		self.dimension = None
+		self.axis = None
+
+	###########################################################################
+	def _parse(self, engine):
+		""" Parse the layer.
+		"""
+
+		super()._parse(engine)
+
+		if isinstance(self.args, dict):
+			if 'axis' in self.args:
+				self.axis = engine.evaluate(self.args['axis'], recursive=True)
+				if not isinstance(self.axis, int):
+					raise ParsingError('"axis" must be an integer.')
 
 	###########################################################################
 	def _build(self, model):
@@ -45,7 +58,7 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 			import keras.layers as L			# pylint: disable=import-error
 			yield L.BatchNormalization(
 				mode=2,
-				axis=-1
+				axis=-1 if self.axis is None else self.axis
 			)
 
 		else:
