@@ -112,7 +112,7 @@ class Ctc(Loss):
 			elif self.variant == 'warp':
 
 				# Just use the built-in Keras CTC loss function.
-				logger.debug('Attaching Warp-CTC loss function to model '
+				logger.info('Attaching Warp-CTC loss function to model '
 					'output "%s".', name)
 
 				if backend.get_toolchain() != 'theano':
