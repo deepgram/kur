@@ -182,9 +182,11 @@ def get_audio_features(audio, feature_type, **kwargs):
 		frame_size = int(window_size * audio['sample_rate'])
 
 		# Cleave off any samples that do not cleanly fit into our step size.
-		clean = signal[:-(
-			(len(signal) - frame_size) % hop_size
-		)]
+		remove = (len(signal) - frame_size) % hop_size
+		if remove:
+			clean = signal[:-remove]
+		else:
+			clean = signal
 
 		# Optimization: instead of doing a for loop or list comprehension to
 		# apply the window to the signal, we can just create a new view into
