@@ -33,6 +33,12 @@ from .. import __homepage__
 logger = logging.getLogger(__name__)
 
 ###############################################################################
+class DependencyError(Exception):
+	""" Exception class for missing dependencies.
+	"""
+	pass
+
+###############################################################################
 def load_wav(filename):
 	""" Loads a WAV file.
 	"""
@@ -53,7 +59,13 @@ def load_wav(filename):
 def load_pydub(filename):
 	""" Loads an MP3 or FLAC file.
 	"""
-	data = AudioSegment.from_file(filename)
+	try:
+		data = AudioSegment.from_file(filename)
+	except FileNotFoundError:
+		if os.path.isfile(filename):
+			raise DependencyError()
+		else:
+			raise
 
 	if data.channels > 1:
 		data = functools.reduce(
@@ -117,7 +129,7 @@ def load_audio(filename):
 
 	try:
 		return loaders[ftype](filename)
-	except:
+	except DependencyError:
 		logger.exception('Failed to load audio file: %s. Its MIME type is: '
 			'%s. The most likely cause is that you do not have FFMPEG '
 			'installed. Check out our troubleshooting guide for more '
@@ -126,6 +138,14 @@ def load_audio(filename):
 				__homepage__,
 				'troubleshooting.html#couldn-t-find-ffmpeg-or-avconv'
 			)
+		)
+		raise
+	except KeyboardInterrupt:
+		raise
+	except:
+		logger.exception('Failed to load audio file: %s. Its MIME type is: '
+			'%s. Check out our troubleshooting guide for more information: %s',
+			filename, ftype, os.path.join(__homepage__, 'troubleshooting.html')
 		)
 		raise
 
