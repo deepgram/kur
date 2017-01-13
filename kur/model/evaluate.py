@@ -17,7 +17,7 @@ limitations under the License.
 import logging
 import tqdm
 import numpy
-from ..utils import get_any_value
+from ..utils import get_any_value, parallelize
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ class Evaluator:
 					desc='Evaluating'
 				) as pbar:
 
-			for batch in provider:
+			for batch in parallelize(provider):
 				evaluated = self.model.backend.evaluate(
 					model=self.model,
 					data=batch,

@@ -18,7 +18,7 @@ import logging
 import shutil
 import tqdm
 import math
-from ..utils import get_any_value, CriticalSection
+from ..utils import get_any_value, CriticalSection, parallelize
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ class Trainer:
 				) as pbar:
 
 			# Present each batch to the network.
-			for batch in provider:
+			for batch in parallelize(provider):
 				batch_loss = self.model.backend.test(
 					model=self.model,
 					data=batch,
@@ -272,7 +272,7 @@ class Trainer:
 					) as pbar:
 
 				# Present each batch to the network.
-				for batch in provider:
+				for batch in parallelize(provider):
 					# The loss averaged over this batch.
 					logger.debug('Training on batch...')
 					batch_loss = self.model.backend.train(

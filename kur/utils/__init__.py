@@ -16,7 +16,7 @@ limitations under the License.
 
 from .subclass import get_subclasses
 from .flatiter import flatten, concatenate
-from .iterhelp import get_any_value, merge_dict
+from .iterhelp import get_any_value, merge_dict, parallelize
 from .importhelp import can_import
 from .network import download_file, get_hash, do_download
 from .timer import Timer

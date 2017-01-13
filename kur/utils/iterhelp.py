@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 
 ###############################################################################
 def get_any_value(x):
@@ -75,5 +76,24 @@ def merge_dict(*args):
 	for x in args:
 		result.update(x)
 	return result
+
+###############################################################################
+class parallelize:
+
+	def __init__(self, it):
+		self.it = it
+
+	def _next(self, it):
+		return next(it)
+
+	def __iter__(self):
+		pool = ThreadPoolExecutor(1)
+		it = iter(self.it)
+
+		future = pool.submit(self._next, it)
+		while True:
+			result = future.result()
+			future = pool.submit(self._next, it)
+			yield result
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
