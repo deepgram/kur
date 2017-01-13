@@ -22,7 +22,7 @@ import random
 
 import numpy
 
-from ..sources import OriginalSource, DerivedSource
+from ..sources import OriginalSource, DerivedSource, VanillaSource
 from ..utils import Shuffleable
 from . import Supplier
 from ..utils.network import get_hash, do_download
@@ -347,7 +347,8 @@ class SpeechRecognitionSupplier(Supplier):
 			'transcript' : Transcript('transcript_raw'),
 			'utterance_raw' : utterance_raw,
 			'utterance_length' : UtteranceLength('utterance_raw'),
-			'utterance' : Utterance('utterance_raw', utterance_raw)
+			'utterance' : Utterance('utterance_raw', utterance_raw),
+			'duration' : VanillaSource(numpy.array(self.data['duration']))
 		}
 
 	###########################################################################
