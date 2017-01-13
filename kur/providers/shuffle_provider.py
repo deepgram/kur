@@ -14,10 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
+
 import numpy
 
 from . import Provider
 from ..utils import Shuffleable
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 class ShuffleProvider(Provider): \
@@ -65,7 +69,8 @@ class ShuffleProvider(Provider): \
 	"""
 
 	###########################################################################
-	def __init__(self, *args, randomize=True, **kwargs):
+	def __init__(self, *args, randomize=True, sort_by=None, sortagrad=None,
+		shuffle_after=None, **kwargs):
 		""" Create a new data provider that can shuffle Shuffleable sources.
 
 			# Arguments
@@ -106,6 +111,34 @@ class ShuffleProvider(Provider): \
 		else:
 			self.randomize = False
 
+		if sortagrad:
+			if sort_by or shuffle_after:
+				raise ValueError('"sortagrad" cannot be used with "sort_by" '
+					'or "shuffle_after". That is because sortagrad=X is '
+					'equivalent to sort_by=X, shuffle_after=1.')
+			sort_by = sortagrad
+			shuffle_after = 1
+
+		if sort_by:
+			if self.keys is None:
+				raise ValueError('Cannot use "sort_by" with unnamed sources.')
+			try:
+				sort_data = self.sources[self.keys.index(sort_by)]
+			except ValueError:
+				raise ValueError('Could not find the "sort_by" key "{}" in '
+					'list of available sources: {}'
+					.format(sort_by, ', '.join(self.keys)))
+
+			if len(sort_data) <= 0:
+				raise ValueError('Data sorting requires a finite source.')
+		else:
+			sort_data = None
+		self.sort_by = sort_by
+		self.sort_data = sort_data
+		self.is_sorted = False
+
+		self.shuffle_after = shuffle_after or 0
+
 	###########################################################################
 	def add_source(self, source, name=None):
 		""" Adds a new data source to an existing provider.
@@ -129,8 +162,29 @@ class ShuffleProvider(Provider): \
 		super().pre_iter()
 
 		if self.randomize:
-			indices = numpy.random.permutation(self._shuffle_len)
-			for source in self.sources:
-				source.shuffle(indices)
+			if self.shuffle_after > 0:
+				self.shuffle_after -= 1
+
+				if self.sort_by and not self.is_sorted:
+					logger.info('Sorting data by key %s...', self.sort_by)
+					n = numpy.empty(
+						(len(self.sort_data), ) + self.sort_data.shape()
+					)
+					start = 0
+					for batch in self.sort_data:
+						n[start:start+len(batch)] = batch[:]
+						start += len(batch)
+					indices = numpy.argsort(n)
+					for source in self.sources:
+						source.shuffle(indices)
+
+					self.is_sorted = True
+				else:
+					logger.info('Suppressing shuffle...')
+			else:
+				logger.debug('Shuffling...')
+				indices = numpy.random.permutation(self._shuffle_len)
+				for source in self.sources:
+					source.shuffle(indices)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
