@@ -3,11 +3,11 @@
 settings:
 
   cnn:
-    kernels: 1024
+    kernels: 256
     size: 11
     stride: 2
   rnn:
-    size: 1024
+    size: 256
     depth: 3
   vocab:
     size: 28
@@ -19,20 +19,18 @@ model:
       kernels: "{{ cnn.kernels }}"
       size: "{{ cnn.size }}"
       strides: "{{ cnn.stride }}"
+      border: valid
   - activation: relu
-  - batch_normalization
   - for:
       range: "{{ rnn.depth }}"
       iterate:
         - recurrent:
             size: "{{ rnn.size }}"
             sequence: yes
-        - activation: relu
-        - batch_normalization
   - parallel:
       apply:
         - dense: "{{ vocab.size + 1 }}"
-        - activation: softmax
+  - activation: softmax
   - output: asr
 
 train:
@@ -43,11 +41,25 @@ train:
     # - utterance_length
     # - transcript
     # - transcript_length
+    # - duration
     - speech_recognition:
         url: "http://kur.deepgram.com/data/librispeech-dev-clean.tar.gz"
         checksum: 32f2c7e62299bd2abb401fdc320e4f03374b4c5ba0a3d391330adaf277be30cc
         path: "~/kur"
-        normalization: "norm.yml"
+        type: spec
+        max_duration: 10
+
+  provider:
+    batch_size: 16
+    sortagrad: duration
+
+  optimizer:
+    name: sgd
+    nesterov: yes
+    learning_rate: 1e-4
+    momentum: 0.9
+    clip:
+      norm: 1
 
 loss:
   - name: ctc
