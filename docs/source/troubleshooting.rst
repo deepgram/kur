@@ -182,6 +182,13 @@ need to install the appropriate package for your operating system:
 
   	$ sudo pacman -S ffmpeg
 
+No matching distribution found for `tensorflow`
+-----------------------------------------------
+
+This is usually because you are using Python 3.6, and at the time of this
+writing, there is not a PyPI release of TensorFlow that is compatible with
+Python 3.6. Try a different backend, or switch to Python 3.4 or Python 3.5.
+
 Plotting
 ========
 
