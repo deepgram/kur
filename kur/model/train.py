@@ -367,7 +367,7 @@ class Trainer:
 								saved_recent
 							)
 							with CriticalSection():
-								shutil.rmtree(best_valid)
+								shutil.rmtree(best_valid, ignore_errors=True)
 								shutil.copytree(saved_recent, best_valid)
 
 				if log is not None:

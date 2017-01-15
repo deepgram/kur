@@ -474,7 +474,7 @@ class KerasBackend(Backend):
 						'The weights may be in a bad state.')
 					raise
 
-			shutil.rmtree(tempdir)
+			shutil.rmtree(tempdir, ignore_errors=True)
 
 	###########################################################################
 	def _apply_loss(self, model, loss=None):	# pylint: disable=no-self-use
