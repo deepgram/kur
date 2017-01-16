@@ -160,6 +160,15 @@ class Provider:						# pylint: disable=too-few-public-methods
 		self.lens = lens
 
 	###########################################################################
+	def has_source(self, name):
+		if name is None or self.keys is None:
+			raise ValueError('Cannot check for anonymous sources.')
+		try:
+			return self.keys.index(name)
+		except ValueError:
+			return False
+
+	###########################################################################
 	def add_source(self, source, name=None):
 		""" Adds a new data source to an existing provider.
 
@@ -172,6 +181,9 @@ class Provider:						# pylint: disable=too-few-public-methods
 			if source.is_derived() and source.requires():
 				raise ValueError('Anonymous providers cannot have named, '
 					'dependent sources.')
+		else:
+			if self.has_source(name):
+				return
 
 		if name is None:
 			self.keys = None
