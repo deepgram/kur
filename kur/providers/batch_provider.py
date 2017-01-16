@@ -41,7 +41,8 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		return 'batch_provider'
 
 	###########################################################################
-	def __init__(self, batch_size=None, num_batches=None, *args, **kwargs):
+	def __init__(self, batch_size=None, num_batches=None,
+		force_batch_size=False, *args, **kwargs):
 		""" Creates a new batch provider.
 
 			# Arguments
@@ -62,6 +63,11 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 					self.entries,
 					self.num_batches * self.batch_size
 				)
+
+		self.force = force_batch_size
+		if self.force:
+			logger.info('Batch provider will force batches of exactly %d '
+				'samples.', self.batch_size)
 
 	###########################################################################
 	def add_source(self, source, name=None):
@@ -155,7 +161,10 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 
 			lens = {len(q) for q in result}
 			if len(lens) == 1:
-				if lens.pop():
+				the_size = lens.pop()
+				if self.force and the_size != self.batch_size:
+					break
+				elif the_size:
 					yield self.wrap(result)
 
 					batches_produced += 1
@@ -174,6 +183,8 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 
 				smallest = min(lens)
 				if smallest == 0:
+					break
+				if self.force and smallest != self.batch_size:
 					break
 				result = [x[:smallest] for x in result]
 				yield self.wrap(result)
