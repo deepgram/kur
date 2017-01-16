@@ -28,5 +28,6 @@ from .pooling import Pooling
 from .recurrent import Recurrent
 from .batchnorm import BatchNormalization
 from .output import Output
+from .transpose import Transpose
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
