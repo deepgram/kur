@@ -147,7 +147,22 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 							break
 
 						# Add the data to the queue.
-						queues[i] = numpy.concatenate([queues[i], x])
+						try:
+							if len(queues[i]) == 0:
+								queues[i] = x
+							else:
+								queues[i] = numpy.concatenate([queues[i], x])
+						except ValueError:
+							logger.exception('Failed to concatenate data for '
+								'source "%s". Queue had %d entries of shape '
+								'%s, and now we are trying to add %d entries '
+								'of shape %s. This is a bug.',
+								'unknown' if self.keys is None \
+									else self.keys[i],
+								len(queues[i]), queues[i].shape[1:] if isinstance(queues[i], numpy.ndarray) else 'unknown',
+								len(x), x.shape[1:] if isinstance(x, numpy.ndarray) else 'unknown',
+							)
+							raise
 
 					# Get the data ready.
 					result[i] = queues[i][:self.batch_size]
