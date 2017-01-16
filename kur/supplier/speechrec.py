@@ -396,7 +396,8 @@ class SpeechRecognitionSupplier(Supplier):
 		metadata_file = None
 		for filename in package_contents:
 			parts = os.path.splitext(filename)
-			if parts[1].lower() == '.jsonl':
+			if parts[1].lower() == '.jsonl' and \
+				not os.path.basename(filename).startswith('.'):
 				metadata_file = filename
 				source = os.path.join(os.path.dirname(metadata_file), 'audio')
 				break
@@ -424,11 +425,13 @@ class SpeechRecognitionSupplier(Supplier):
 				try:
 					entry = json.loads(line)
 				except json.decoder.JSONDecodeError:
-					raise IOError('Failed to parse valid JSON on line {}'
-						.format(line_number))
+					logger.warning('Failed to parse valid JSON on line %d of '
+						'file %s', line_number, metadata_file)
+					continue
 				if any(k not in entry for k in ('text', 'duration_s', 'uuid')):
-					raise IOError('Line {} in the metadata file is missing '
-						'one of its required keys.'.format(line_number))
+					logger.warning('Line %d is missing one of its required '
+						'keys in metadata file %s', line_number, metadata_file)
+					continue
 
 				duration = entry['duration_s']
 				if max_duration and duration > max_duration:
@@ -444,10 +447,11 @@ class SpeechRecognitionSupplier(Supplier):
 						data['audio'][entries] = candidate
 						break
 				else:
-					raise IOError('Line {} in the metadata file references '
-						'UUID {}, but we could not find a supported audio '
-						'file type: {}.*'.format(line_number, entry['uuid'],
-						audio))
+					logger.warning('Line %d in the metadata file (%s) '
+						'references UUID %s, but we could not find a '
+						'supported audio file type: %s.*', line_number,
+						metadata_file, entry['uuid'], audio)
+					continue
 
 				entries += 1
 
