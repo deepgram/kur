@@ -118,7 +118,7 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 			))
 
 	###########################################################################
-	def apply(self, data, truth=None):
+	def apply(self, data, truth=None, model=None):
 		""" Applies the hook to the data.
 
 			# Arguments

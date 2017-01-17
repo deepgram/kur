@@ -34,7 +34,7 @@ class MnistHook(EvaluationHook):
 		return 'mnist'
 
 	###########################################################################
-	def apply(self, data, truth=None):
+	def apply(self, data, truth=None, model=None):
 		""" Applies the hook to the data.
 		"""
 		if truth is None:

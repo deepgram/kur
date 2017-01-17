@@ -69,7 +69,7 @@ class OutputHook(EvaluationHook):
 				format))
 
 	###########################################################################
-	def apply(self, data, truth=None):
+	def apply(self, data, truth=None, model=None):
 		""" Applies the hook to the data.
 		"""
 		self.saver(
