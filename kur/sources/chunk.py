@@ -38,7 +38,8 @@ class ChunkSource(OriginalSource):			# pylint: disable=abstract-method
 		""" Creates a new ChunkSource.
 		"""
 		super().__init__(*args, **kwargs)
-		self.chunk_size = chunk_size or self.default_chunk_size()
+		self.requested_chunk_size = chunk_size or self.default_chunk_size()
+		self.chunk_size = self.requested_chunk_size
 
 	###########################################################################
 	def set_chunk_size(self, chunk_size):
