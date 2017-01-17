@@ -649,7 +649,12 @@ class Specification:
 		else:
 			loaded.add(file_id)
 
-		data = Reader.read_file(expanded)
+		try:
+			data = Reader.read_file(expanded)
+		except:
+			logger.exception('Failed to read file: %s. Check your syntax.',
+				expanded)
+			raise
 
 		new_sources = data.pop('include', [])
 		engine.evaluate(new_sources, recursive=True)
