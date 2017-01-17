@@ -22,7 +22,7 @@ from ..engine import ScopeStack
 from ..reader import Reader
 from ..containers import Container, ParsingError
 from ..containers.layers import Placeholder
-from ..model import Model, Trainer, Evaluator, EvaluationHook, OutputHook
+from ..model import Model, Executor, EvaluationHook, OutputHook
 from ..backend import Backend
 from ..optimizer import Optimizer, Adam
 from ..loss import Loss
@@ -374,7 +374,7 @@ class Specification:
 
 			Trainer instance.
 		"""
-		return Trainer(
+		return Executor(
 			model=self.get_model(),
 			loss=self.get_loss(),
 			optimizer=self.get_optimizer() if with_optimizer else None
@@ -525,7 +525,7 @@ class Specification:
 
 			Evaluator instance.
 		"""
-		return Evaluator(
+		return Executor(
 			model=self.get_model()
 		)
 

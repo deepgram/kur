@@ -16,35 +16,34 @@ limitations under the License.
 
 import logging
 import shutil
-import tqdm
+import tempfile
 import math
+import tqdm
 from ..utils import get_any_value, CriticalSection, parallelize
 
 logger = logging.getLogger(__name__)
 
 ###############################################################################
-class Trainer:
-	""" Class for training models.
+class Executor:
+	""" Class for using models.
 	"""
 
 	###########################################################################
-	def __init__(self, model, loss, optimizer=None):
-		""" Creates a new trainer.
+	def __init__(self, model, loss=None, optimizer=None):
+		""" Creates a new executor.
 
 			# Arguments
 
 			model: Model instance. The model to train.
-			loss: Loss instance. The loss function to use in training.
+			loss: Loss instance. The loss function to use in training/testing.
 			optimizer: Optimizer instance. The optimizer to use in training.
 		"""
 		self.model = model
 		self.loss = loss
 		self.optimizer = optimizer
 
-		self._compiled = None
-
 	###########################################################################
-	def compile(self, recompile=False, with_provider=None):
+	def compile(self, target, recompile=False, with_provider=None):
 		""" Compiles a model.
 
 			This generates a backend-specific representation of the model,
@@ -63,8 +62,10 @@ class Trainer:
 			None
 		"""
 
-		if self._compiled is not None and not recompile:
-			return
+		if not recompile:
+			if self.model.compiled is not None \
+				and target in self.model.compiled:
+				return
 
 		if not self.model.is_built():
 			logger.warning('This model has never been built before. We are '
@@ -76,33 +77,18 @@ class Trainer:
 			self.model.build()
 
 		logger.debug('Recompiling the model.')
-		self._compiled = self.model.backend.compile(
+		self.model.backend.compile(
 			model=self.model,
-			loss=self.loss,
-			optimizer=self.optimizer
+			loss=self.loss if target != 'evaluate' else None,
+			optimizer=None if target != 'train' else self.optimizer,
+			blocking=True
 		)
 
 		if with_provider is not None:
-			for name, source in self.model.get_data_sources():
-				with_provider.add_source(source, name=name)
+			self.model.supplement_provider(with_provider)
 
 	###########################################################################
-	@staticmethod
-	def source_shapes(provider):
-		""" Prints debug information about the sources in this provider.
-		"""
-		if logger.isEnabledFor(logging.DEBUG):
-			for i, source in enumerate(provider.sources):
-				if provider.keys is None:
-					name = "anonymous"
-				else:
-					name = provider.keys[i]
-
-				logger.debug('Data source "%s": entries=%s, shape=%s',
-					name, len(source), source.shape())
-
-	###########################################################################
-	def test(self, provider, validating=False):
+	def test(self, provider, validating=False, hooks=None):
 		""" Tests/validates the model on some data.
 
 			# Arguments
@@ -118,7 +104,7 @@ class Trainer:
 			The average loss across the validation set.
 		"""
 
-		self.compile(with_provider=provider)
+		self.compile('test', with_provider=provider)
 
 		if validating:
 			desc = ('Validating', 'Validation')
@@ -128,6 +114,7 @@ class Trainer:
 		# Create progress bar
 		test_loss = None
 		n_entries = 0
+		first_batch = None
 		with tqdm.tqdm(
 					total=len(provider),
 					unit='samples',
@@ -136,11 +123,13 @@ class Trainer:
 
 			# Present each batch to the network.
 			for batch in parallelize(provider):
-				batch_loss = self.model.backend.test(
+				prediction, batch_loss = self.model.backend.test(
 					model=self.model,
-					data=batch,
-					compiled=self._compiled
+					data=batch
 				)
+
+				if first_batch is None:
+					first_batch = (prediction, batch)
 
 				batch_size = len(get_any_value(batch))
 
@@ -174,6 +163,11 @@ class Trainer:
 
 		logger.info('%s loss: %.3f', desc[1], sum(test_loss.values()))
 
+		if hooks and first_batch is not None:
+			prediction, batch = first_batch
+			for hook in hooks:
+				prediction = hook.apply(prediction, batch, self.model)
+
 		return test_loss
 
 	###########################################################################
@@ -185,7 +179,11 @@ class Trainer:
 		"""
 
 		try:
-			result = self.wrapped_train(*args, log=log, **kwargs)
+			result = self.wrapped_train(
+				*args,
+				log=log,
+				**kwargs
+			)
 		except:
 			logger.exception('Exception raised during training.')
 			raise
@@ -201,7 +199,7 @@ class Trainer:
 
 	###########################################################################
 	def wrapped_train(self, provider, *, validation=None, epochs=None,
-		log=None, best_train=None, best_valid=None):
+		log=None, best_train=None, best_valid=None, validation_hooks=None):
 		""" Trains the model on some data.
 
 			# Arguments
@@ -220,9 +218,8 @@ class Trainer:
 			None
 		"""
 
-		Trainer.source_shapes(provider)
-
-		self.compile(with_provider=provider)
+		self.compile('train', with_provider=provider)
+		provider.source_shapes()
 
 		if log is None:
 			logger.info('No log specified, so no historical loss information '
@@ -273,12 +270,12 @@ class Trainer:
 
 				# Present each batch to the network.
 				for batch in parallelize(provider):
+
 					# The loss averaged over this batch.
 					logger.debug('Training on batch...')
-					batch_loss = self.model.backend.train(
+					_, batch_loss = self.model.backend.train(
 						model=self.model,
-						data=batch,
-						compiled=self._compiled
+						data=batch
 					)
 					logger.debug('Finished training on batch.')
 
@@ -315,8 +312,8 @@ class Trainer:
 
 					for k, v in batch_loss.items():
 						if math.isnan(v):
-							logger.error('Received NaN loss value for model '
-								'output "%s".', k)
+							logger.error('Received NaN loss value for '
+								'model output "%s".', k)
 							return
 
 			if not n_entries:
@@ -343,7 +340,8 @@ class Trainer:
 				# Continue with a validation run.
 				validation_loss = self.test(
 					provider=validation,
-					validating=True
+					validating=True,
+					hooks=validation_hooks
 				)
 				if validation_loss is None:
 					continue
@@ -372,5 +370,102 @@ class Trainer:
 
 				if log is not None:
 					log.log_validation(validation_loss, 'loss')
+
+	###########################################################################
+	def evaluate(self, provider, callback=None):
+		""" Evaluates the model on some data.
+
+			# Arguments
+
+			provider: Provider instance. The data provider which serves the
+				data to be evaluated.
+			callback: function or None. If not None, the callback is called
+				after each evaluation batch and is passed two parameters:
+				`predicted` and `truth`, where `predicted` is the model output
+				and `truth` is the ground truth data (if provided by
+				`provider`; otherwise, `truth` is set to `None`).
+
+			# Return value
+
+			If `callback` is None, then this returns a tuple `(predicted,
+			truth)`, where `predicted` is a dictionary whose keys are the names
+			of the output nodes of the model, and whose respective values are
+			arrays of predictions (one row per input sample). If the provider
+			provides ground truth information, then `truth` has a similar
+			structure to `predicted`; if ground truth information is not
+			available, then `truth` is None.
+
+			Otherwise, if `callback` is not None, this returns None.
+		"""
+
+		self.compile('evaluate', with_provider=provider)
+
+		result = None
+		truth = None
+		has_truth = None
+		total = len(provider)
+		n_entries = 0
+
+		with tqdm.tqdm(
+					total=total,
+					unit='samples',
+					desc='Evaluating'
+				) as pbar:
+
+			for batch in parallelize(provider):
+				evaluated, _ = self.model.backend.evaluate(
+					model=self.model,
+					data=batch
+				)
+				batch_size = len(get_any_value(batch))
+
+				if has_truth is None:
+					has_truth = all(k in batch for k in self.model.outputs)
+
+				if callback is None:
+					# There is no callback. We need to hang on to everything.
+					if total is None:
+						# We don't know how many entries there will be.
+						if result is None:
+							# This is our first batch.
+							result = {k : [] for k in self.model.outputs}
+						for k, v in evaluated.items():
+							result[k].extend(v)
+
+						if has_truth:
+							if truth is None:
+								truth = {k : [] for k in self.model.outputs}
+							for k in truth:
+								truth[k].extend(batch[k])
+					else:
+						# We know how many entries there will be.
+						if result is None:
+							# This is our first batch.
+							result = {k : [None]*total for k in evaluated}
+						for k, v in evaluated.items():
+							result[k][n_entries:(n_entries+batch_size)] = v[:]
+
+						if has_truth:
+							if truth is None:
+								truth = {k : [None]*total for k in evaluated}
+							for k in truth:
+								truth[k][n_entries:(n_entries+batch_size)] = \
+									batch[k][:]
+				else:
+					callback(evaluated, truth)
+
+				n_entries += batch_size
+				pbar.update(batch_size)
+
+		if callback is not None:
+			return
+
+		if total is None:
+			for k, v in result.items():
+				result[k] = numpy.concatenate(v)
+			for k, v in truth.items():
+				truth[k] = numpy.concatenate(v)
+
+		return result, truth
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

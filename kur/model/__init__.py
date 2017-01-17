@@ -15,8 +15,7 @@ limitations under the License.
 """
 
 from .model import Model
-from .train import Trainer
-from .evaluate import Evaluator
+from .executor import Executor
 from .evaluation_hooks import EvaluationHook, OutputHook
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
