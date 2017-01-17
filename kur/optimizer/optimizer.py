@@ -18,6 +18,9 @@ from ..utils import get_subclasses
 
 ###############################################################################
 def keras_clip(optimizer):
+	""" Convenience function for creating kwargs for setting Keras gradient
+		clipping.
+	"""
 	if optimizer.clip_type is None:
 		return {}
 	elif optimizer.clip_type == 'norm':
@@ -27,6 +30,22 @@ def keras_clip(optimizer):
 	else:
 		raise ValueError('Unhandled clip type: {}. This is a bug.'
 			.format(optimizer.clip_type))
+
+###############################################################################
+def keras_wrap(keras_optimizer):
+	""" Convenience function for wrapping up a Keras optimizer function for use
+		by Kur.
+	"""
+	def optimize(weights, loss):
+		""" Returns the update tensor.
+
+			# Arguments
+
+			weights: weight tensor
+			loss: loss tensor
+		"""
+		return keras_optimizer.get_updates(weights, [], loss)
+	return optimize
 
 ###############################################################################
 class Optimizer:

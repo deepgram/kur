@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . import Optimizer, keras_clip
+from . import Optimizer, keras_clip, keras_wrap
 
 ###############################################################################
 class SGD(Optimizer):
@@ -40,20 +40,22 @@ class SGD(Optimizer):
 		self.decay = decay or 0.0
 		self.nesterov = nesterov
 
+		self.optimizer = None
+
 	###########################################################################
 	def get_optimizer(self, backend):
 		""" Returns a backend-specific instantiation of the optimizer.
 		"""
 		if backend.get_name() == 'keras':
 			import keras.optimizers as O		# pylint: disable=import-error
-
-			return O.SGD(
+			self.optimizer = self.optimizer or O.SGD(
 				lr=self.learning_rate,
 				momentum=self.momentum,
 				decay=self.decay,
 				nesterov=self.nesterov,
 				**keras_clip(self)
 			)
+			return keras_wrap(self.optimizer)
 		else:
 			raise ValueError('Unsupported backend "{}" for optimizer "{}"'
 				.format(backend.get_name(), self.get_name()))

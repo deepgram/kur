@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . import Optimizer, keras_clip
+from . import Optimizer, keras_clip, keras_wrap
 
 ###############################################################################
 class Adam(Optimizer):
@@ -32,6 +32,7 @@ class Adam(Optimizer):
 		super().__init__(*args, **kwargs)
 
 		self.learning_rate = learning_rate or 0.001
+		self.optimizer = None
 
 	###########################################################################
 	def get_optimizer(self, backend):
@@ -39,10 +40,11 @@ class Adam(Optimizer):
 		"""
 		if backend.get_name() == 'keras':
 			import keras.optimizers as O		# pylint: disable=import-error
-			return O.Adam(
+			self.optimizer = self.optimizer or O.Adam(
 				lr=self.learning_rate,
 				**keras_clip(self)
 			)
+			return keras_wrap(self.optimizer)
 		else:
 			raise ValueError('Unsupported backend "{}" for optimizer "{}"'
 				.format(backend.get_name(), self.get_name()))
