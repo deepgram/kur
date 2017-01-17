@@ -43,7 +43,7 @@ class Executor:
 		self.optimizer = optimizer
 
 	###########################################################################
-	def compile(self, target, recompile=False, with_provider=None):
+	def compile(self, target=None, recompile=False, with_provider=None):
 		""" Compiles a model.
 
 			This generates a backend-specific representation of the model,
@@ -61,6 +61,14 @@ class Executor:
 
 			None
 		"""
+
+		if target is None:
+			if self.loss is None and self.optimizer is None:
+				target = 'evaluate'
+			elif self.optimizer is None:
+				target = 'test'
+			else:
+				target = 'train'
 
 		if not recompile:
 			if self.model.compiled is not None \
