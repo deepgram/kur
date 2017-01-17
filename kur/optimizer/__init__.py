@@ -17,5 +17,6 @@ limitations under the License.
 from .optimizer import Optimizer, keras_clip, keras_wrap
 from .sgd import SGD
 from .adam import Adam
+from .rmsprop import RMSProp
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
