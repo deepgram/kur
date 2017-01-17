@@ -264,6 +264,12 @@ class Specification:
 			raise ValueError('Unknown weight specification for training: {}'
 				.format(train_weights))
 
+		hooks = self.data['validate'].get('hooks', [])
+		if not isinstance(hooks, (list, tuple)):
+			raise ValueError('"hooks" (in the "validate" section) should be a '
+			   'list of hook specifications.')
+		hooks = [EvaluationHook.from_specification(spec) for spec in hooks]
+
 		expand = lambda x: os.path.expanduser(os.path.expandvars(x))
 		initial_weights, best_train, best_valid, last_weights = [
 			expand(x) if x is not None else x for x in
@@ -306,7 +312,8 @@ class Specification:
 				log=log,
 				best_train=best_train,
 				best_valid=best_valid,
-				last_weights=last_weights
+				last_weights=last_weights,
+				validation_hooks=hooks
 			)
 
 		return func
@@ -336,6 +343,12 @@ class Specification:
 			raise ValueError('Unknown weight specification for testing: {}'
 				.format(weights))
 
+		hooks = self.data['test'].get('hooks', [])
+		if not isinstance(hooks, (list, tuple)):
+			raise ValueError('"hooks" (in the "test" section) should be a '
+			   'list of hook specifications.')
+		hooks = [EvaluationHook.from_specification(spec) for spec in hooks]
+
 		expand = lambda x: os.path.expanduser(os.path.expandvars(x))
 		if initial_weights is not None:
 			initial_weights = expand(initial_weights)
@@ -361,7 +374,8 @@ class Specification:
 					'terrible.')
 			return trainer.test(
 				provider=provider,
-				validating=False
+				validating=False,
+				hooks=hooks
 			)
 
 		return func
