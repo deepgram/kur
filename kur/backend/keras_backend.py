@@ -218,6 +218,11 @@ class KerasBackend(Backend):
 					'directory. Kur expected a directory that it can work '
 					'with. Please move or delete the existing path: {}'
 					.format(path))
+
+			for dirpath, _, filenames in os.walk(path):
+				for this_file in filenames:
+					if this_file.endswith('.kur'):
+						os.unlink(os.path.join(dirpath, this_file))
 		else:
 			os.makedirs(path, exist_ok=True)
 
