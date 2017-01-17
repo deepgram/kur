@@ -101,6 +101,11 @@ class Model:
 		self.provider = provider
 
 	###########################################################################
+	def supplement_provider(self, provider):
+		for name, source in self.get_data_sources():
+			provider.add_source(source, name=name)
+
+	###########################################################################
 	def get_inferred_shape(self, name):
 		""" Tries to infer the shape of a container from the data.
 
