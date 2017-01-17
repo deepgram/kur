@@ -26,7 +26,6 @@ import numpy
 from . import Backend
 from ..loss import Loss
 from ..utils import can_import, EnvironmentalVariable, redirect_stderr, idx
-from ..model import ExtensionState
 
 logger = logging.getLogger(__name__)
 

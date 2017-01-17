@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from .model import Model, ExtensionState, Extension
+from .model import Model
 from .train import Trainer
 from .evaluate import Evaluator
 from .evaluation_hooks import EvaluationHook, OutputHook
