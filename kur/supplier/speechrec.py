@@ -314,7 +314,7 @@ class SpeechRecognitionSupplier(Supplier):
 	"""
 
 	DEFAULT_UNPACK = True
-	SUPPORTED_TYPES = ('flac', )
+	SUPPORTED_TYPES = ('wav', 'mp3', 'flac')
 
 	###########################################################################
 	@classmethod
