@@ -73,6 +73,8 @@ class Model:
 		self.provider = None
 		self.additional_sources = {}
 
+		self.compiled = None
+
 	###########################################################################
 	def has_data_source(self, name):
 		""" Checks if an auxiliary data source is present.
@@ -174,8 +176,6 @@ class Model:
 					key_cache[layer_name] = key
 					return key
 
-		logger.error('No such layer name found: "%s". Something will probably '
-			'break in a moment. This is probably a bug.', layer_name)
 		return layer_name
 
 	###########################################################################
@@ -290,6 +290,8 @@ class Model:
 		self.input_aliases = input_aliases
 		self.output_aliases = output_aliases
 		self.key_cache = {}
+
+		self.compiled = None
 
 	###########################################################################
 	def build_graph(self, input_nodes, output_nodes, network):

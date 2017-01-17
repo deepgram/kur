@@ -348,7 +348,7 @@ class Backend:
 		raise NotImplementedError
 
 	###########################################################################
-	def train(self, model, data, compiled):
+	def train(self, model, data):
 		""" Fits the given model on a batch of data.
 
 			# Arguments
@@ -367,7 +367,7 @@ class Backend:
 		raise NotImplementedError
 
 	###########################################################################
-	def test(self, model, data, compiled):
+	def test(self, model, data):
 		""" Calculates the model loss on a batch of data.
 
 			# Arguments
@@ -386,7 +386,7 @@ class Backend:
 		raise NotImplementedError
 
 	###########################################################################
-	def evaluate(self, model, data, compiled):
+	def evaluate(self, model, data):
 		""" Evaluates the model on a batch ofdata.
 		"""
 		raise NotImplementedError

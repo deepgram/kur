@@ -22,10 +22,13 @@ import sys
 import tempfile
 import shutil
 import logging
+import functools
+from collections import OrderedDict
 import numpy
 from . import Backend
 from ..loss import Loss
 from ..utils import can_import, EnvironmentalVariable, redirect_stderr, idx
+from ..providers import BatchProvider
 
 logger = logging.getLogger(__name__)
 
@@ -360,113 +363,234 @@ class KerasBackend(Backend):
 		return result
 
 	###########################################################################
+	@staticmethod
+	def find_compiled_layer_by_name(model, layer_name):
+		""" Returns the Keras tensor associated with a given name.
+
+			# Arguments
+
+			model: Model instance. The Kur model. It must be compiled.
+			layer_name: str. The name of the layer to find, or one of its
+				aliases.
+
+			# Return value
+
+			The Keras tensor
+		"""
+		if model.compiled is None or 'raw' not in model.compiled:
+			raise ValueError('The model must be compiled first.')
+		if layer_name in model.output_aliases:
+			target = model.output_aliases[layer_name]
+		elif layer_name in model.input_aliases:
+			target = model.input_aliases[layer_name]
+		else:
+			raise ValueError('Failed to find a layer named "{}"'
+				.format(layer_name))
+		for keras_layer, kur_layer in zip(model.compiled['raw'].outputs, model.outputs):
+			if kur_layer == target:
+				return keras_layer
+		raise ValueError('Did not find expected layer. This is a bug.')
+
+	###########################################################################
+	def process_loss(self, model, loss):
+		""" Process the loss functions.
+
+			# Arguments
+
+			model: The Kur model. It must be compiled.
+			loss: Loss instance, list/tuple of Loss instances, or a dictionary
+				of model layer names mapped to Loss instances.
+		"""
+		import keras.backend as K
+
+		if isinstance(loss, Loss):
+			loss = [loss]
+
+		if len(loss) != len(model.outputs):
+			raise ValueError('Model has {} outputs, but only {} loss '
+				'functions were specified.'
+				.format(len(model.outputs), len(loss)))
+
+		if isinstance(loss, (list, tuple)):
+			loss = dict(zip(model.outputs, loss))
+
+		if not isinstance(loss, (dict, OrderedDict)):
+			raise ValueError('Loss functions given to "compile" should be '
+				'a list/tuple, a dictionary, or a single Loss instance. '
+				'Instead we received this: {} (type={})'
+				.format(loss, type(loss)))
+
+		loss_inputs = OrderedDict()
+		loss_outputs = OrderedDict()
+		for target, this_loss in loss.items():
+			ins, out = this_loss.get_loss(
+				model,
+				target,
+				self.find_compiled_layer_by_name(model, target)
+			)
+			# FIXME: Re-using a network output in different loss functions will
+			# probably break, since each loss function is creating its own
+			# placeholder inputs, but then we are throwing some away using
+			# 'update'.
+			loss_inputs.update(ins)
+			loss_outputs[target] = K.mean(out)
+			logger.debug('Adding additional inputs: %s',
+				', '.join(x[0] for x in ins))
+
+		total_loss = functools.reduce(
+			lambda x, y: x + y,
+			loss_outputs.values()
+		)
+		return loss_inputs, loss_outputs, total_loss
+
+	###########################################################################
 	def compile(self, model, loss=None, optimizer=None, blocking=True):
 		""" Returns the Keras model instance.
 		"""
+		if model.compiled is None:
+			model.compiled = {}
 
-		with ExtensionState(model):
-
-			if loss is not None:
-				loss, alias = self._apply_loss(model, loss)
-				rev = {v : k for k, v in alias.items()}
-			else:
-				loss, alias, rev = None, {}, {}
-
+		if 'raw' not in model.compiled:
 			import keras.models as M			# pylint: disable=import-error
 			logger.debug('Instantiating a Keras model.')
-			result = M.Model(
+			compiled = M.Model(
 				input=[node.value for node in model.inputs.values()],
 				output=[node.value for node in model.outputs.values()]
 			)
 
-			keras_names = {}
-			for kur_name, keras_name in zip(model.inputs, result.input_names):
-				keras_names[kur_name] = keras_name
-			for kur_name, keras_name in zip(model.outputs, result.output_names):
-				keras_names[kur_name] = keras_name
-
 			if logger.isEnabledFor(logging.DEBUG):
 				x = io.StringIO()
 				with contextlib.redirect_stdout(x):
-					result.summary()
+					compiled.summary()
 				for line in x.getvalue().split('\n'):
 					logger.debug(line)
 
-			if loss is not None:# and optimizer is not None:
-				logger.debug('Starting to compile the Keras model.')
-				result.compile(
-					loss={keras_names[alias[name]] : func.get_loss(self)
-						for name, func in loss.items()},
-					optimizer=optimizer.get_optimizer(self) \
-						if optimizer is not None else None,
-					loss_weights={keras_names[alias[name]] : func.get_weight()
-						for name, func in loss.items()}
-				)
+			model.compiled['raw'] = compiled
 
-			if blocking:
-				self.wait_for_compile(
-					mode=(
-						'train' if optimizer is not None else \
-						'test' if loss is not None else\
-						'evaluate'
-					),
-					keras_model=result
-				)
+		else:
+			logger.debug('Reusing an existing model.')
+			compiled = model.compiled['raw']
 
-			return {
-				'model' : result,
-				'alias' : alias,
-				'rev_alias' : rev,
-				'keras_names' : keras_names,
-				'model_aliases' : (model.input_aliases, model.output_aliases),
-				'model_key_cache' : model.key_cache,
-				'io_names' : {
-					'input' : list(model.inputs.keys()),
-					'output' : list(model.outputs.keys())
-				}
+		import keras.backend as K				# pylint: disable=import-error
+		if loss is None and optimizer is None:
+			logger.debug('Assembling an evaluation function from the model.')
+
+			loss_inputs = loss_outputs = {}
+			func = K.function(
+				compiled.inputs + \
+					[K.learning_phase()],
+				compiled.outputs
+			)
+			key = 'evaluate'
+
+		elif optimizer is None:
+			logger.debug('Assembling a testing function from the model.')
+
+			loss_inputs, loss_outputs, _ = \
+				self.process_loss(model, loss)
+
+			func = K.function(
+				compiled.inputs + \
+					list(loss_inputs.values()) + \
+					[K.learning_phase()],
+				compiled.outputs + \
+					list(loss_outputs.values())
+			)
+			key = 'test'
+
+		else:
+			logger.debug('Assembling a training function from the model.')
+
+			# Loss inputs: additional inputs needed by the loss function.
+			# Loss outputs: output of the loss function
+			loss_inputs, loss_outputs, total_loss = \
+				self.process_loss(model, loss)
+
+			updates = optimizer.get_optimizer(self)(
+				compiled.trainable_weights, total_loss
+			)
+
+			func = K.function(
+				compiled.inputs + \
+					list(loss_inputs.values()) + \
+					[K.learning_phase()],
+				compiled.outputs + \
+					list(loss_outputs.values()),
+				updates=updates
+			)
+			key = 'train'
+
+		logger.debug('Additional inputs for log functions: %s',
+			', '.join(loss_inputs.keys()))
+
+		input_names = compiled.input_names + \
+			list(loss_inputs.keys())
+		output_names = compiled.output_names + \
+			list(loss_outputs.keys())
+
+		input_shapes = [
+			layer._keras_shape
+			for layer in compiled.inputs
+		] + [
+			layer._keras_shape
+			for layer in loss_inputs.values()
+		]
+
+		logger.debug('Expected input shapes: %s',
+			', '.join('{}={}'.format(k, v) for k, v in \
+				zip(input_names, input_shapes)
+			))
+
+		model.compiled[key] = {
+			'func' : func,
+			'names' : {
+				'input' : input_names,
+				'output' : output_names
+			},
+			'shapes' : {
+				'input' : input_shapes
 			}
+		}
+
+		if logger.isEnabledFor(logging.DEBUG):
+			logger.debug('Compiled model: %s', model.compiled[key])
+
+		if blocking:
+			self.wait_for_compile(model, key)
+
+		return model.compiled[key]
 
 	###########################################################################
-	def wait_for_compile(self, mode, keras_model):
+	def wait_for_compile(self, model, key):
 		""" Waits for the model to finish compiling.
 		"""
-		logger.info('Waiting for model to finish compiling...')
-		num_samples = 2
+		if model.provider is None:
+			logger.warning('No data provider available, so we cannot reliably '
+				'wait for compiling to finish.')
+			return
 
-		def happy_shape(shape):
-			return tuple(x or 100 for x in shape)
+		provider = BatchProvider(
+			sources=dict(zip(model.provider.keys, model.provider.sources)),
+			batch_size=2,
+			num_batches=1,
+			randomize=False
+		)
+		model.supplement_provider(provider)
 
 		weight_path = None
 		tempdir = tempfile.mkdtemp()
 		try:
 			weight_path = os.path.join(tempdir, 'weights')
-			self._save_keras(keras_model, weight_path)
+			self._save_keras(model.compiled['raw'], weight_path)
 
-			inputs = {}
-			for i in range(len(keras_model.inputs)):
-				inputs[keras_model.input_names[i]] = numpy.ones(
-					shape=happy_shape((num_samples,) + keras_model.internal_input_shapes[i][1:])
-				)
-
-			if mode != 'evaluate':
-				outputs = {}
-				for i in range(len(keras_model.outputs)):
-					outputs[keras_model.output_names[i]] = numpy.ones(
-						shape=happy_shape((num_samples,) + keras_model.internal_output_shapes[i][1:])
-					)
-
-				if mode == 'train':
-					keras_model.train_on_batch(inputs, outputs)
-				else:
-					keras_model.test_on_batch(inputs, outputs)
-
-			else:
-				keras_model.predict_on_batch(inputs)
+			logger.info('Waiting for model to finish compiling...')
+			for batch in provider:
+				self.run_batch(model, batch, key)
 
 		finally:
 			if weight_path and os.path.isdir(weight_path):
 				try:
-					self._restore_keras(keras_model, weight_path)
+					self._restore_keras(model.compiled['raw'], weight_path)
 				except:
 					logger.error('We were waiting for the model to finish '
 						'compiling, but failed to restore the model weights. '
@@ -476,191 +600,58 @@ class KerasBackend(Backend):
 			shutil.rmtree(tempdir, ignore_errors=True)
 
 	###########################################################################
-	def _apply_loss(self, model, loss=None):	# pylint: disable=no-self-use
-		""" Applies the loss functions to the model.
+	def run_batch(self, model, batch, key):
+		if model.compiled is None or key not in model.compiled:
+			raise ValueError('A model has not been compiled to: {}'
+				.format(key))
 
-			# Arguments
+		compiled = model.compiled[key]
+		raw = model.compiled['raw']
 
-			# Return value
-		"""
-		# How many outputs are in this model?
-		num_outputs = len(model.outputs)
+		def coerce_shape(data, shape, name):
+			if data.ndim < len(shape):
+				return numpy.expand_dims(data, -1)
+			else:
+				return data
 
-		if isinstance(loss, Loss):
-			loss = [loss]
-
-		if isinstance(loss, (list, tuple)):
-			if len(loss) == 1:
-				while len(loss) < num_outputs:
-					loss.append(loss[0])
-			elif len(loss) != num_outputs:
-				raise ValueError('Wrong number of loss functions specified. '
-					'There must be as many loss functions as model outputs, '
-					'or a single loss function that can be replicated for '
-					'each model output. In this case, there were {} loss '
-					'functions given, but the model has {} outputs.'
-						.format(len(loss), num_outputs))
-
-			temp = {}
-			for name, output_loss in zip(model.outputs, loss):
-				temp[name] = output_loss
-			loss = temp				# pylint: disable=redefined-variable-type
-
-		elif not isinstance(loss, dict):
-			raise ValueError('Unexpected form for the loss function. Expected '
-				'a single loss function, a list of loss functions, or a '
-				'dictionary mapping model outputs to loss functions. Instead '
-				'we received this: {}'.format(loss))
-
-		supplied_loss = set(loss.keys())
-		required_loss = set(model.outputs.keys())
-
-		for name in supplied_loss - required_loss:
-			logger.warning('Loss function was supplied for "%s", but no such '
-				'output exists in the model. Maybe you meant one of these: '
-				'%s. Supplied loss functions: %s. Required loss functions: '
-				'%s.', name,
-				', '.join(x for x in required_loss - supplied_loss),
-				', '.join(supplied_loss),
-				', '.join(required_loss)
+		inputs = [
+			coerce_shape(
+				batch[model.get_data_name_by_layer_name(batch, name)],
+				shape, name
 			)
-		missing_loss = False
-		for name in required_loss - supplied_loss:
-			logger.error('Loss function is needed for model output "%s", but '
-				'no such loss function was supplied. Maybe you meant one of '
-				'these: %s. Supplied loss functions: %s. Required loss '
-				'functions: %s.',
-				name,
-				', '.join(x for x in supplied_loss - required_loss),
-				', '.join(supplied_loss),
-				', '.join(required_loss)
+			for shape, name in zip(
+				compiled['shapes']['input'],
+				compiled['names']['input']
 			)
-			missing_loss = True
-		if missing_loss:
-			raise ValueError('One or more model outputs did not have loss '
-				'functions supplied. Loss functions are needed for these '
-				'model outputs: {}'.format(
-					', '.join(name for name in required_loss - supplied_loss)
-			))
+		] + [True]
 
-		# Once the model extension retracts, the alias keys still exist as the
-		# Model inputs/outputs, and they will match data source names.
-		# But the Keras model has inputs/outputs named after `alias[name]`.
-		alias = {name : func.modify(model, name)
-			for name, func in loss.items()}
-		logger.debug('Loss function aliases: %s', alias)
-
-		return loss, alias
+		outputs = compiled['func'](inputs)
+		num_outputs = len(raw.outputs)
+		metrics = {
+			k : v for k, v in zip(
+				compiled['names']['output'][num_outputs:],
+				outputs[num_outputs:]
+			)
+		}
+		predictions = {name : data for name, data in zip(model.outputs, outputs[:num_outputs])}
+		return predictions, metrics
 
 	###########################################################################
-	def train(self, model, data, compiled):
+	def train(self, model, data):
 		""" Fits the given model on a batch of data.
 		"""
-		metrics = compiled['model'].train_on_batch(
-			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
-				data[model.get_data_name_by_layer_name(
-					data,
-					name,
-					aliases=compiled['model_aliases'],
-					key_cache=compiled['model_key_cache']
-				)]
-				for name in compiled['io_names']['input']
-			},
-			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
-				data[model.get_data_name_by_layer_name(
-					data,
-					name,
-					aliases=compiled['model_aliases'],
-					key_cache=compiled['model_key_cache']
-				)]
-				for name in compiled['io_names']['output']
-			}
-		)
-
-		return KerasBackend._convert_metrics(
-			metrics,
-			compiled['model'].metrics_names,
-			compiled['rev_alias'],
-			compiled['io_names']['output']
-		)
+		return self.run_batch(model, data, 'train')
 
 	###########################################################################
-	def test(self, model, data, compiled):
+	def test(self, model, data):
 		""" Calculates the model loss on a batch of data.
 		"""
-		metrics = compiled['model'].test_on_batch(
-			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
-				data[model.get_data_name_by_layer_name(
-					data,
-					name,
-					aliases=compiled['model_aliases'],
-					key_cache=compiled['model_key_cache']
-				)]
-				for name in compiled['io_names']['input']
-			},
-			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
-				data[model.get_data_name_by_layer_name(
-					data,
-					name,
-					aliases=compiled['model_aliases'],
-					key_cache=compiled['model_key_cache']
-				)]
-				for name in compiled['io_names']['output']
-			}
-		)
-
-		return KerasBackend._convert_metrics(
-			metrics,
-			compiled['model'].metrics_names,
-			compiled['rev_alias'],
-			compiled['io_names']['output']
-		)
+		return self.run_batch(model, data, 'test')
 
 	###########################################################################
-	@staticmethod
-	def _convert_metrics(metrics, metrics_names, rev_alias, outputs):
-		""" Formats the Keras metrics properly for use by Kur.
-		"""
-		if not isinstance(metrics, list):
-			metrics = [metrics]
-		un_numpy = lambda x: x.tolist() if isinstance(x, numpy.ndarray) else x
-		metrics = {k : un_numpy(v) for k, v in zip(metrics_names, metrics)}
-
-		loss = {}
-		for k, v in metrics.items():
-			match = re.match(r'^(.*)_loss$', k)
-			if match:
-				k = match.group(1)
-				k = rev_alias.get(k, k)
-				loss[k] = float(v)
-		if not loss:
-			for k in outputs:
-				break
-			loss[k] = metrics['loss']
-
-		return loss
-
-	###########################################################################
-	def evaluate(self, model, data, compiled):
+	def evaluate(self, model, data):
 		""" Evaluates the model on a batch of data.
 		"""
-		# Returns an array of model outputs, with one entry per branch.
-		results = compiled['model'].predict_on_batch(
-			{compiled['keras_names'].get(compiled['alias'].get(name, name)) :
-				data[model.get_data_name_by_layer_name(
-					data,
-					name,
-					aliases=compiled['model_aliases'],
-					key_cache=compiled['model_key_cache']
-				)]
-				for name in compiled['io_names']['input']
-			}
-		)
-
-		if len(model.outputs) == 1:
-			results = [results]
-
-		return {name : result for name, result in \
-			zip(compiled['io_names']['output'], results)}
+		return self.run_batch(model, data, 'evaluate')
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
