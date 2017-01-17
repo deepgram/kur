@@ -18,7 +18,17 @@ import pytest
 
 from kur.loss import MeanSquaredError, Ctc
 from kur.optimizer import Adam
-from kur.model import Trainer
+from kur.model import Executor
+from kur.providers import BatchProvider
+
+###############################################################################
+@pytest.fixture
+def ctc_eval_data(ctc_data):
+	""" Provides CTC data with only the evaluation-time input data available.
+	"""
+	for key, source in zip(ctc_data.keys, ctc_data.sources):
+		if key == 'TEST_input':
+			return BatchProvider(sources={key : source})
 
 @pytest.fixture
 def loss():
@@ -37,17 +47,17 @@ def optimizer():
 	return Adam()
 
 ###############################################################################
-class TestTrain:
-	""" Tests for the Trainer
+class TestExecutor:
+	""" Tests for the Executor (training/validation/testing).
 	"""
 
 	###########################################################################
 	def test_trainer_with_optimizer(self, simple_model, loss, optimizer):
-		""" Tests if we can compile a Trainer instance with an optimizer.
+		""" Tests if we can compile a Executor instance with an optimizer.
 		"""
 		simple_model.parse(None)
 		simple_model.build()
-		trainer = Trainer(
+		trainer = Executor(
 			model=simple_model,
 			loss=loss,
 			optimizer=optimizer
@@ -56,11 +66,11 @@ class TestTrain:
 
 	###########################################################################
 	def test_trainer_without_optimizer(self, simple_model, loss):
-		""" Tests if we can compile a Trainer instance without an optimizer.
+		""" Tests if we can compile a Executor instance without an optimizer.
 		"""
 		simple_model.parse(None)
 		simple_model.build()
-		trainer = Trainer(
+		trainer = Executor(
 			model=simple_model,
 			loss=loss
 		)
@@ -72,7 +82,7 @@ class TestTrain:
 		"""
 		simple_model.parse(None)
 		simple_model.build()
-		trainer = Trainer(
+		trainer = Executor(
 			model=simple_model,
 			loss=loss,
 			optimizer=optimizer
@@ -85,11 +95,33 @@ class TestTrain:
 		"""
 		simple_model.parse(None)
 		simple_model.build()
-		trainer = Trainer(
+		trainer = Executor(
 			model=simple_model,
 			loss=loss
 		)
 		trainer.test(provider=simple_data)
+
+	###########################################################################
+	def test_evaluator(self, simple_model):
+		""" Tests if we can compile an Executor instance.
+		"""
+		simple_model.parse(None)
+		simple_model.build()
+		evaluator = Executor(
+			model=simple_model
+		)
+		evaluator.compile()
+
+	###########################################################################
+	def test_evaluating(self, simple_model, simple_data):
+		""" Tests that an evaluation run can succeed.
+		"""
+		simple_model.parse(None)
+		simple_model.build()
+		evaluator = Executor(
+			model=simple_model
+		)
+		evaluator.evaluate(provider=simple_data)
 
 	###########################################################################
 	def test_ctc_train(self, ctc_model, ctc_data, ctc_loss, optimizer):
@@ -99,7 +131,7 @@ class TestTrain:
 		ctc_model.parse(None)
 		ctc_model.register_provider(ctc_data)
 		ctc_model.build()
-		trainer = Trainer(
+		trainer = Executor(
 			model=ctc_model,
 			loss=ctc_loss,
 			optimizer=optimizer
@@ -114,11 +146,23 @@ class TestTrain:
 		ctc_model.parse(None)
 		ctc_model.register_provider(ctc_data)
 		ctc_model.build()
-		trainer = Trainer(
+		trainer = Executor(
 			model=ctc_model,
 			loss=ctc_loss
 		)
 		trainer.test(provider=ctc_data)
+
+	###########################################################################
+	def test_ctc_evaluating(self, ctc_model, ctc_eval_data):
+		""" Tests that we can evaluate a model that was trained with CTC loss.
+		"""
+		ctc_model.parse(None)
+		ctc_model.register_provider(ctc_eval_data)
+		ctc_model.build()
+		evaluator = Executor(
+			model=ctc_model
+		)
+		evaluator.evaluate(provider=ctc_eval_data)
 
 	###########################################################################
 	def test_uber_train(self, uber_model, uber_data, jinja_engine, loss,
@@ -128,7 +172,7 @@ class TestTrain:
 		uber_model.parse(jinja_engine)
 		uber_model.register_provider(uber_data)
 		uber_model.build()
-		trainer = Trainer(
+		trainer = Executor(
 			model=uber_model,
 			loss=loss,
 			optimizer=optimizer
@@ -143,11 +187,23 @@ class TestTrain:
 		uber_model.parse(jinja_engine)
 		uber_model.register_provider(uber_data)
 		uber_model.build()
-		trainer = Trainer(
+		trainer = Executor(
 			model=uber_model,
 			loss=loss
 		)
 		trainer.compile()
 		trainer.test(provider=uber_data)
+
+	###########################################################################
+	def test_uber_evaluating(self, uber_model, uber_data, jinja_engine):
+		""" Tests that we can evaluate a very diverse model.
+		"""
+		uber_model.parse(jinja_engine)
+		uber_model.register_provider(uber_data)
+		uber_model.build()
+		evaluator = Executor(
+			model=uber_model
+		)
+		evaluator.evaluate(provider=uber_data)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
