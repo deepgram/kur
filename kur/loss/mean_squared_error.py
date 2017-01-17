@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . import Loss
+from . import Loss, keras_wrap
 
 ###############################################################################
 class MeanSquaredError(Loss):
@@ -30,10 +30,11 @@ class MeanSquaredError(Loss):
 		return 'mean_squared_error'
 
 	###########################################################################
-	def get_loss(self, backend):
+	def get_loss(self, model, target, output):
+		backend = model.get_backend()
 
 		if backend.get_name() == 'keras':
-			return 'mean_squared_error'
+			return keras_wrap(model, target, output, 'mean_squared_error')
 		else:
 			raise ValueError('Unsupported backend "{}" for loss function "{}"'
 				.format(backend.get_name(), self.get_name()))

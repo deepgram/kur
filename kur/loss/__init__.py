@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from .loss import Loss
+from .loss import Loss, keras_wrap
 from .categorical_crossentropy import CategoricalCrossentropy
 from .mean_squared_error import MeanSquaredError
 from .ctc import Ctc

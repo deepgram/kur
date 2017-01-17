@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . import Loss
+from . import Loss, keras_wrap
 
 ###############################################################################
 class CategoricalCrossentropy(Loss):
@@ -29,10 +29,11 @@ class CategoricalCrossentropy(Loss):
 		return 'categorical_crossentropy'
 
 	###########################################################################
-	def get_loss(self, backend):
+	def get_loss(self, model, target, output):
+		backend = model.get_backend()
 
 		if backend.get_name() == 'keras':
-			return 'categorical_crossentropy'
+			return keras_wrap(model, target, output, 'categorical_crossentropy')
 		else:
 			raise ValueError('Unsupported backend "{}" for loss function "{}"'
 				.format(backend.get_name(), self.get_name()))

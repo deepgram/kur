@@ -17,6 +17,27 @@ limitations under the License.
 from ..utils import get_subclasses
 
 ###############################################################################
+def keras_wrap(model, target, output, loss):
+	""" Convenience function for wrapping a Keras loss function.
+	"""
+	# pylint: disable=import-error
+	import keras.objectives as O
+	import keras.backend as K
+	# pylint: enable=import-error
+	if isinstance(loss, str):
+		loss = O.get(loss)
+	shape = model.outputs[target].value._keras_shape # pylint: disable=protected-access
+	ins = [
+		(target, K.placeholder(
+			ndim=len(shape),
+			dtype=K.dtype(model.outputs[target].value),
+			name=target
+		))
+	]
+	out = loss(ins[0][1], output)
+	return ins, out
+
+###############################################################################
 class Loss:
 	""" Base class for all loss functions (also called objective functions).
 	"""
@@ -61,6 +82,9 @@ class Loss:
 				This is only meaningful in models which have multiple loss
 				functions.
 		"""
+		if weight is not None:
+			raise ValueError('Loss function weights have not been implemented '
+				'yet.')
 		self.weight = 1.0 if weight is None else weight
 
 	###########################################################################
@@ -70,35 +94,38 @@ class Loss:
 		return self.weight
 
 	###########################################################################
-	def get_loss(self, backend):
-		""" Returns the loss function that can be used by the implementation-
-			specific model.
-		"""
-		raise NotImplementedError
-
-	###########################################################################
-	def modify(self, model, name): \
-		# pylint: disable=unused-argument,no-self-use
-		""" Modify/extend the model to fit this loss function.
-
-			Some loss functions will want to modify the model in some way in
-			order to properly instrument the model. For example, CTC loss is a
-			little different in the sense that it wants additional inputs at
-			training and evaluation time. Many loss functions, however, will
-			not need this functionality.
+	def get_loss(self, model, target, output):
+		""" Returns the loss tensor for this output.
 
 			# Arguments
 
-			model: Model instance. The model to modify.
-			name: str. The output of the model to modify.
+			model: Model instance.
+			target: str. The name of the output layer to apply the loss
+				function to.
+			output: tensor (implemented-specific). The symbolic tensor for this
+				output layer.
 
 			# Return value
 
-			The name of the model output to apply this loss function to.
-			Normally, this is the same as `name`, but if the loss function
-			modifies the model, then it may need to act on a different layer
-			instead.
+			A tuple of the form:
+
+			```python
+			(
+				# Input tensors
+				[
+					(input_name, placeholder),
+					(input_name, placeholder),
+					...
+				],
+
+				# Output value
+				loss_value
+			)
+			```
+
+			The derived class is required to return all required input
+			placeholder, including placeholders for the target model outputs.
 		"""
-		return name
+		raise NotImplementedError
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
