@@ -20,14 +20,6 @@ import os
 
 import numpy
 
-# NOTE: These are special requirements needed for processing audio data.
-# pylint: disable=import-error
-import magic						# python-magic
-import scipy.io.wavfile as wav		# scipy
-from pydub import AudioSegment		# pydub
-import python_speech_features		# python_speech_features
-# pylint: enable=import-error
-
 from .. import __homepage__
 
 logger = logging.getLogger(__name__)
@@ -42,6 +34,7 @@ class DependencyError(Exception):
 def load_wav(filename):
 	""" Loads a WAV file.
 	"""
+	import scipy.io.wavfile as wav				# pylint: disable=import-error
 	rate, sig = wav.read(filename)
 
 	# Flatten stereo to mono
@@ -60,7 +53,12 @@ def load_pydub(filename):
 	""" Loads an MP3 or FLAC file.
 	"""
 	try:
+		from pydub import AudioSegment
 		data = AudioSegment.from_file(filename)
+	except ImportError:
+		logger.exception('"pydub" is a required Python dependency for '
+			'handling this audio file: %s.', filename)
+		raise
 	except FileNotFoundError:
 		if os.path.isfile(filename):
 			raise DependencyError()
@@ -90,6 +88,35 @@ def scale_signal(audio):
 	return audio['signal'] / 2**(audio['sample_width'] - 1)
 
 ###############################################################################
+def get_mime_type(filename):
+	""" Returns the MIME type associated with a particular audio file.
+	"""
+	try:
+		import magic
+	except ImportError:
+		if get_mime_type.warn:
+			logger.warning('Python package "magic" could not be loaded, '
+				'possibly because system library "libmagic" could not be '
+				'found. We are falling back on our own heuristics.')
+			get_mime_type.warn = False
+
+		ext = os.path.splitext(filename)[1].lower()
+		return {
+			'.wav' : 'audio/x-wav',
+			'.mp3' : 'audio/mpeg',
+			'.flac' : 'audio/x-flac'
+		}.get(ext, 'unknown')
+	else:
+		# Read off magic numbers and return MIME types
+		mime_magic = magic.Magic(mime=True)
+		ftype = mime_magic.from_file(filename)
+		if isinstance(ftype, bytes):
+			ftype = ftype.decode('utf-8')
+		return ftype
+
+get_mime_type.warn = True
+
+###############################################################################
 def load_audio(filename):
 	""" Loads an audio file.
 
@@ -110,11 +137,7 @@ def load_audio(filename):
 		The returned audio data is mono. If the source file was stereo, it is
 		downmixed to mono before being returned.
 	"""
-	# Read off magic numbers and return MIME types
-	mime_magic = magic.Magic(mime=True)
-	ftype = mime_magic.from_file(filename)
-	if isinstance(ftype, bytes):
-		ftype = ftype.decode('utf-8')
+	ftype = get_mime_type(filename)
 
 	# Define the loaders for each supported file type.
 	loaders = {
@@ -180,6 +203,13 @@ def get_audio_features(audio, feature_type, **kwargs):
 		return audio['signal']
 
 	elif feature_type == 'mfcc':
+		try:
+			import python_speech_features
+		except ImportError:
+			logger.exception('"python_speech_features" is a required Python '
+				'dependency for calculating MFCC features.')
+			raise
+
 		num_features = kwargs.get('features') or 13
 		return python_speech_features.mfcc(
 			audio['signal'],
