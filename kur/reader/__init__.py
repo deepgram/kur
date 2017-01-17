@@ -16,5 +16,6 @@ limitations under the License.
 
 from .reader import Reader
 from .yaml_reader import YamlReader
+from .json_reader import JsonReader
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
