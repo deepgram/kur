@@ -130,6 +130,20 @@ class Provider:						# pylint: disable=too-few-public-methods
 		return key in self.keys
 
 	###########################################################################
+	def source_shapes(self):
+		""" Prints debug information about the sources in this provider.
+		"""
+		if logger.isEnabledFor(logging.DEBUG):
+			for i, source in enumerate(self.sources):
+				if self.keys is None:
+					name = "anonymous"
+				else:
+					name = self.keys[i]
+
+				logger.debug('Data source "%s": entries=%s, shape=%s',
+					name, len(source), source.shape())
+
+	###########################################################################
 	def _calculate_sizes(self):
 		""" Calculates the sizes of each of the sources.
 		"""

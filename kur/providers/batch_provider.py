@@ -96,7 +96,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 
 		for source in self.sources:
 			if isinstance(source, ChunkSource):
-				if source.chunk_size is ChunkSource.USE_BATCH_SIZE:
+				if source.requested_chunk_size is ChunkSource.USE_BATCH_SIZE:
 					source.set_chunk_size(self.batch_size)
 
 		logger.debug('Preparing next batch of data...')
@@ -151,6 +151,10 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 							if len(queues[i]) == 0:
 								queues[i] = x
 							else:
+								# FIXME: For variable-length data sources,
+								# this can cause problems unless the data
+								# source is a ChunkSource with batch size
+								# set to DEFAULT_CHUNK_SIZE.
 								queues[i] = numpy.concatenate([queues[i], x])
 						except ValueError:
 							logger.exception('Failed to concatenate data for '
@@ -159,8 +163,14 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 								'of shape %s. This is a bug.',
 								'unknown' if self.keys is None \
 									else self.keys[i],
-								len(queues[i]), queues[i].shape[1:] if isinstance(queues[i], numpy.ndarray) else 'unknown',
-								len(x), x.shape[1:] if isinstance(x, numpy.ndarray) else 'unknown',
+								len(queues[i]),
+								queues[i].shape[1:] \
+									if isinstance(queues[i], numpy.ndarray) \
+									else 'unknown',
+								len(x),
+								x.shape[1:] \
+									if isinstance(x, numpy.ndarray) \
+									else 'unknown'
 							)
 							raise
 
