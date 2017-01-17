@@ -69,7 +69,33 @@ def build(args):
 	""" Builds a model.
 	"""
 	spec = parse_specification(args.specification, args.engine)
-	spec.get_model()
+
+	if args.compile == 'auto':
+		result = []
+		for section in ('train', 'test', 'evaluate'):
+			if section in spec.data:
+				result.append((section, 'data' in spec.data[section]))
+		if not result:
+			logger.info('Trying to build a bare model.')
+			args.compile = 'none'
+		else:
+			args.compile, has_data = sorted(result, key=lambda x: not x[1])[0]
+			logger.info('Trying to build a "%s" model.', args.compile)
+			if not has_data:
+				logger.info('There is not data defined for this model, '
+					'though, so we will be running as if --bare was '
+					'specified.')
+	elif args.compile == 'none':
+		logger.info('Trying to build a bare model.')
+	else:
+		logger.info('Trying to build a "%s" model.', args.compile)
+
+	if args.bare or args.compile == 'none':
+		provider = None
+	else:
+		provider = spec.get_provider(args.compile)
+
+	spec.get_model(provider)
 
 	if args.compile == 'none':
 		return
@@ -78,7 +104,7 @@ def build(args):
 	elif args.compile == 'test':
 		target = spec.get_trainer(with_optimizer=False)
 	elif args.compile == 'evaluate':
-		target = spec.get_evaluator() # pylint: disable=redefined-variable-type
+		target = spec.get_evaluator()
 	else:
 		logger.error('Unhandled compilation target: %s. This is a bug.',
 			args.compile)
@@ -130,8 +156,14 @@ def parse_args():
 	subparser.add_argument('specification', nargs='?',
 		help='The specification file to use.')
 	subparser.add_argument('-c', '--compile',
-		choices=['none', 'train', 'test', 'evaluate'], default='none',
-		help='Also try to compile the specified variation of the model.')
+		choices=['none', 'train', 'test', 'evaluate', 'auto'], default='auto',
+		help='Try to compile the specified variation of the model. If '
+			'--compile=none, then it only tries to assemble the model, not '
+			'compile anything. --compile=none implies --bare')
+	subparser.add_argument('-b', '--bare', action='store_true',
+		help='Do not attempt to load the data providers. In order for your '
+			'model to build correctly with this option, you will need to '
+			'specify shapes for all of your inputs.')
 	subparser.set_defaults(func=build)
 
 	return parser.parse_args()
