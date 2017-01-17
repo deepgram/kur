@@ -23,7 +23,7 @@ class SGD(Optimizer):
 
 	###########################################################################
 	def __init__(self, learning_rate=None, momentum=None, decay=None,
-		nesterov=False, *args, **kwargs):
+		nesterov=None, *args, **kwargs):
 		""" Create a new Adam optimizer.
 
 			# Arguments
@@ -38,7 +38,7 @@ class SGD(Optimizer):
 		self.learning_rate = learning_rate or 0.01
 		self.momentum = momentum or 0.0
 		self.decay = decay or 0.0
-		self.nesterov = nesterov
+		self.nesterov = nesterov or False
 
 		self.optimizer = None
 
