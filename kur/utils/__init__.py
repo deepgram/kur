@@ -18,14 +18,14 @@ from .subclass import get_subclasses
 from .flatiter import flatten, concatenate
 from .iterhelp import get_any_value, merge_dict, parallelize
 from .importhelp import can_import
-from .network import download_file, get_hash, do_download
+from .network import download, get_hash
 from .timer import Timer
 from .critical import CriticalSection
 from . import idx
 from . import mergetools
 from .environtools import EnvironmentalVariable
 from .contexttools import redirect_stderr
-from .package import unpack, canonicalize
+from .package import unpack, canonicalize, install
 from .filetools import count_lines
 from .shuffleable import Shuffleable
 from .audiotools import load_audio, get_audio_features

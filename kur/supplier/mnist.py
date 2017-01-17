@@ -16,7 +16,7 @@ limitations under the License.
 
 import numpy
 
-from ..utils import download_file, idx
+from ..utils import idx, package
 from . import Supplier
 from ..sources import VanillaSource
 
@@ -43,13 +43,12 @@ class MnistSupplier(Supplier):
 				the image labels. If a dict, it should follow one of these
 				formats:
 
-				1. {"url" : URL, "sha256" : SHA256, "path" : PATH}, where URL
+				1. {"url" : URL, "checksum" : SHA256, "path" : PATH}, where URL
 				   is the source URL (if the image file needs downloading),
 				   SHA256 is the SHA-256 hash of the file (optional, and can be
 				   missing or None to skip the verification), and PATH is the
-				   directory to store the file in (if missing or None it
-				   defaults to the system temporary directory).
-				2. {"local" : FILE}, where FILE is the path to the IDX file.
+				   path to save the file in (if missing or None it defaults to
+				   the system temporary directory).
 
 			images: str or dict. Specifies where the MNIST images can be found.
 				Accepts the same values as `labels`.
@@ -109,24 +108,13 @@ class MnistSupplier(Supplier):
 		"""
 
 		if isinstance(target, str):
-			return target
-		elif isinstance(target, dict):
-			if 'url' in target:
-				return download_file(
-					url=target['url'],
-					sha256=target.get('sha256'),
-					target_dir=target.get('path')
-				)
-			elif 'local' in target:
-				return target['local']
-			else:
-				raise ValueError('Expected either "url" (for downloading data '
-					'sources) or "local" (for locally-stored sources), but '
-					'neither key was found in the MNIST specification: {}'
-					.format(target))
-		else:
-			raise ValueError('Unexpected data type for MNIST target: {}'
-				.format(target))
+			target = {'path' : target}
+		path, _ = package.install(
+			url=target.get('url'),
+			path=target.get('path'),
+			checksum=target.get('checksum')
+		)
+		return path
 
 	###########################################################################
 	def get_sources(self, sources=None):

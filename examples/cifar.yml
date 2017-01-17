@@ -5,7 +5,8 @@ settings:
   # Where to get the data
   cifar: &cifar
     url: "https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
-    sha256: "6d958be074577803d12ecdefd02955f39262c83c16fe9348329d7fe0b5c001ce"
+    checksum: "6d958be074577803d12ecdefd02955f39262c83c16fe9348329d7fe0b5c001ce"
+    path: "~/kur"
 
   # Backend to use
   backend:

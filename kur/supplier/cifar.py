@@ -21,7 +21,7 @@ import pickle
 
 import numpy
 
-from ..utils import download_file
+from ..utils import package
 from . import Supplier
 from ..sources import VanillaSource
 
@@ -39,7 +39,7 @@ class CifarSupplier(Supplier):
 		return 'cifar'
 
 	###########################################################################
-	def __init__(self, url=None, sha256=None, local=None, parts=None,
+	def __init__(self, url=None, checksum=None, path=None, parts=None,
 		*args, **kwargs):
 		""" Creates a new CIFAR supplier.
 
@@ -48,11 +48,11 @@ class CifarSupplier(Supplier):
 		"""
 		super().__init__(*args, **kwargs)
 
-		path = CifarSupplier._get_filename({
-			'url' : url,
-			'sha256' : sha256,
-			'local' : local
-		})
+		path, _ = package.install(
+			url=url,
+			checksum=checksum,
+			path=path
+		)
 		images, labels = CifarSupplier._load_parts(path, parts)
 
 		self.data = {
@@ -132,45 +132,6 @@ class CifarSupplier(Supplier):
 		data = data.reshape((-1, 3, 32, 32))
 		data = numpy.transpose(data, axes=(0, 2, 3, 1))
 		return data
-
-	###########################################################################
-	@staticmethod
-	def _get_filename(target):
-		""" Returns the filename associated with a particular target.
-
-			# Arguments
-
-			target: str or dict. The target specification. For locally-stored
-				files, it can be a string (path to file) or a dictionary with
-				key 'local' that contains the file path. For network files,
-				it is a dictionary with 'url' (source URL); it may also
-				optionally contain 'sha256' (SHA256 checksum) and 'local'
-				(local storage directory for the file).
-
-			# Return value
-
-			String to the file's locally stored path. May not exist.
-		"""
-
-		if isinstance(target, str):
-			return target
-		elif isinstance(target, dict):
-			if 'url' in target:
-				return download_file(
-					url=target['url'],
-					sha256=target.get('sha256'),
-					target_dir=target.get('path')
-				)
-			elif 'local' in target:
-				return target['path']
-			else:
-				raise ValueError('Expected either "url" (for downloading data '
-					'sources) or "local" (for locally-stored sources), but '
-					'neither key was found in the CIFAR specification: {}'
-					.format(target))
-		else:
-			raise ValueError('Unexpected data type for CIFAR target: {}'
-				.format(target))
 
 	###########################################################################
 	def get_sources(self, sources=None):

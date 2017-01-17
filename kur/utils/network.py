@@ -18,9 +18,9 @@ import os
 import hashlib
 import tempfile
 import logging
+import urllib.request
 
 import tqdm
-import urllib.request
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ def get_hash(path):
 	return sha.hexdigest()
 
 ###############################################################################
-def do_download(url, target):
+def download(url, target):
 	""" Downloads a URL.
 	"""
 	response = urllib.request.urlopen(url)
@@ -63,61 +63,5 @@ def do_download(url, target):
 				pbar.update(len(chunk))
 
 	logger.info('File downloaded: %s', target)
-
-###############################################################################
-def download_file(url, sha256=None, target_dir=None):
-	""" Downloads a URL to the system temporary directory.
-
-		# Arguments
-
-		url: str. The URL of the resource to download.
-		sha256: str or None (default: None). The SHA256 hash of the resource
-			content, or None to skip verification.
-		target_dir: str or None (default: None). The target directory to store
-			the file in. If it is None, it defaults to the system temp
-			directory.
-
-		# Return value
-
-		The path of the file on the local system.
-
-		# Notes
-
-		This will only download the file if it doesn't already exist or if its
-		checksum fails. If the checksum fails after a download, an exception is
-		raised.
-	"""
-
-	if target_dir is None:
-		target_dir = tempfile.gettempdir()
-
-	if sha256 is not None:
-		sha256 = sha256.lower()
-
-	_, filename = os.path.split(url)
-	target = os.path.join(target_dir, filename)
-
-	# If the file already exists locally, verify its contents.
-	if os.path.isfile(target):
-		if sha256 is not None:
-			if get_hash(target) == sha256:
-				logger.info('File already present (checksum passed): %s',
-					target)
-				return target
-
-			logger.info('Corrupt file present. Re-downloading: %s', url)
-		else:
-			logger.info('File already present (skipping checksum): %s', target)
-			return target
-	else:
-		logger.info('File does not exist. Downloading: %s', url)
-
-	do_download(url, target)
-
-	if sha256 is not None:
-		if get_hash(target) != sha256:
-			raise ValueError('Failed integrity check.')
-
-	return target
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -18,6 +18,9 @@ import os
 import gzip
 import tarfile
 import logging
+import tempfile
+
+from .network import get_hash, download
 
 logger = logging.getLogger(__name__)
 
@@ -173,4 +176,84 @@ def unpack(path, dest=None, recursive=False, ignore_error=False):
 
 	return extracted
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+###############################################################################
+def install(url=None, path=None, checksum=None):
+	""" Ensure that the data source exists locally.
+
+		# Return value
+
+		A tuple `(path, is_packed)`, where `path` is the path to the target on
+		the local machine, and `is_packed` is a boolean which indicates
+		whether or not `path` appears to be a single file (packed) or a
+		directory (unpacked, as if it were a tar archive that was already
+		extracted).
+	"""
+	if url is None:
+		# Expect a path to an existing source
+		if path is None:
+			raise ValueError('Either "url" or "path" needs to be '
+				'specified in the data supplier.')
+		path = os.path.expanduser(os.path.expandvars(path))
+		if os.path.isfile(path):
+			# Perfect. Checksum it.
+			if checksum is not None:
+				actual = get_hash(path)
+				if actual.lower() != checksum.lower():
+					raise ValueError('Input file "{}" failed its '
+						'checksum.'.format(path))
+			return path, True
+		elif os.path.isdir(path):
+			return path, False
+		else:
+			raise ValueError('"path" was specified in a data supplier, but '
+				'the path does not exist. Check that the path is correct, or '
+				'specify a URL to download data.')
+	else:
+		if path is None:
+			# URL, but no path: use temporary directory as path.
+			path = tempfile.gettempdir()
+		else:
+			path = os.path.expanduser(os.path.expandvars(path))
+
+		if not os.path.exists(path):
+			# Create the necessary directories and download the file.
+			os.makedirs(path, exist_ok=True)
+
+		if os.path.isdir(path):
+			# It's a directory that exists. Let's look for the would-be
+			# downloaded file.
+			_, filename = os.path.split(url)
+			path = os.path.join(path, filename)
+
+		if os.path.isfile(path):
+			# File already exists. Checksum it.
+			if checksum is not None:
+				if get_hash(path).lower() == checksum.lower():
+					logger.debug('File exists and passed checksum: %s',
+						path)
+					return path, True
+				else:
+					# Checksum fails -> redownload
+					logger.warning('Input file "%s" failed its checksum. '
+						'Redownloading...', path)
+			else:
+				logger.debug('File exists, but there is not checksum: %s',
+					path)
+				return path, True
+
+		# Need to download the file.
+		download(url, path)
+		if checksum is not None:
+			if get_hash(path).lower() != checksum.lower():
+				raise ValueError('Failed to download URL: {}. The '
+					'integrity check failed.'.format(url))
+			else:
+				logger.debug('Downloaded file passed checksum: %s', path)
+		else:
+			logger.debug('Downloaded file, but there is not checksum: %s',
+				path)
+		return path, True
+
+	raise ValueError('Unhandled download path. This is a bug.')
+
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

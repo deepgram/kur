@@ -17,7 +17,6 @@ limitations under the License.
 import json
 import os
 import logging
-import tempfile
 import random
 
 import numpy
@@ -25,7 +24,6 @@ import numpy
 from ..sources import DerivedSource, VanillaSource, ChunkSource
 from ..utils import Shuffleable
 from . import Supplier
-from ..utils.network import get_hash, do_download
 from ..utils import package
 from ..utils import count_lines
 from ..utils import get_audio_features
@@ -358,7 +356,7 @@ class SpeechRecognitionSupplier(Supplier):
 		max_duration=None):
 		""" Loads the data for this supplier.
 		"""
-		local_path, is_packed = self.download_data(
+		local_path, is_packed = package.install(
 			url=url,
 			path=path,
 			checksum=checksum
@@ -466,80 +464,6 @@ class SpeechRecognitionSupplier(Supplier):
 		}
 
 		return metadata, data
-
-	###########################################################################
-	@staticmethod
-	def download_data(url=None, path=None, checksum=None):
-		""" Ensure that the data source exists locally.
-		"""
-		if url is None:
-			# Expect a path to an existing source
-			if path is None:
-				raise ValueError('Either "url" or "path" needs to be '
-					'specified in the speech recognition supplier.')
-			path = os.path.expanduser(os.path.expandvars(path))
-			if os.path.isfile(path):
-				# Perfect. Checksum it.
-				if checksum is not None:
-					actual = get_hash(path)
-					if actual.lower() != checksum.lower():
-						raise ValueError('Input file "{}" failed its '
-							'checksum.'.format(path))
-				return path, True
-			elif os.path.isdir(path):
-				return path, False
-			else:
-				raise ValueError('"path" was specified in a speech '
-					'recognition supplier, but the path does not exist. Check '
-					'that the path is correct, or specify a URL to download '
-					'data.')
-		else:
-			if path is None:
-				# URL, but no path: use temporary directory as path.
-				path = tempfile.gettempdir()
-			else:
-				path = os.path.expanduser(os.path.expandvars(path))
-
-			if not os.path.exists(path):
-				# Create the necessary directories and download the file.
-				os.makedirs(path, exist_ok=True)
-
-			if os.path.isdir(path):
-				# It's a directory that exists. Let's look for the would-be
-				# downloaded file.
-				_, filename = os.path.split(url)
-				path = os.path.join(path, filename)
-
-			if os.path.isfile(path):
-				# File already exists. Checksum it.
-				if checksum is not None:
-					if get_hash(path).lower() == checksum.lower():
-						logger.debug('File exists and passed checksum: %s',
-							path)
-						return path, True
-					else:
-						# Checksum fails -> redownload
-						logger.warning('Input file "%s" failed its checksum. '
-							'Redownloading...', path)
-				else:
-					logger.debug('File exists, but there is not checksum: %s',
-						path)
-					return path, True
-
-			# Need to download the file.
-			do_download(url, path)
-			if checksum is not None:
-				if get_hash(path).lower() != checksum.lower():
-					raise ValueError('Failed to download URL: {}. The '
-						'integrity check failed.'.format(url))
-				else:
-					logger.debug('Downloaded file passed checksum: %s', path)
-			else:
-				logger.debug('Downloaded file, but there is not checksum: %s',
-					path)
-			return path, True
-
-		raise ValueError('Unhandled download path. This is a bug.')
 
 	###########################################################################
 	def get_data(self, start, end):
