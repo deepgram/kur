@@ -321,7 +321,12 @@ class Executor:
 					for k, v in batch_loss.items():
 						if math.isnan(v):
 							logger.error('Received NaN loss value for '
-								'model output "%s".', k)
+								'model output "%s". Make sure that your '
+								'inputs are all normalized and that the '
+								'learning rate is not too high. Sometimes '
+								'different algorithms/implementations '
+								'work better than others, so you can try '
+								'switching optimizers or backend.', k)
 							return
 
 			if not n_entries:
