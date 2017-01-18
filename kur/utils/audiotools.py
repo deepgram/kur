@@ -276,7 +276,7 @@ def get_audio_features(audio, feature_type, **kwargs):
 			get_bin = lambda f, alt: \
 				(
 					min(
-						max(int(f / delta_freq + 0.5), 0), num_bins
+						max(int(f / delta_freq + 0.5), 0) + 1, num_bins
 					)
 					if f else alt
 				)
