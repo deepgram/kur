@@ -17,12 +17,12 @@ limitations under the License.
 from . import Operator
 
 ###############################################################################
-class ContainerGroup(Operator):			# pylint: disable=too-few-public-methods
+class ContainerGroup(Operator):		# pylint: disable=too-few-public-methods
 	""" A pseudo-container for holding other containers.
 
-		The primary purpose for this container is to provide a unified namespace
-		for all containers. This way, even if the model specification is split
-		over multiple Containers, this ContainerGroup will still allow
+		The primary purpose for this container is to provide a unified
+		namespace for all containers. This way, even if the model is specified
+		over over multiple Containers, this ContainerGroup will still allow
 		containers to "find" other containers.
 	"""
 
@@ -36,8 +36,8 @@ class ContainerGroup(Operator):			# pylint: disable=too-few-public-methods
 
 			# Notes
 
-			None of the child containers should already have a parent; if any of
-			them do, a ParsingError is raised.
+			None of the child containers should already have a parent; if any
+			of them do, a ParsingError is raised.
 		"""
 		super().__init__(data=None)
 

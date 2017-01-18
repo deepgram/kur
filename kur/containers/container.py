@@ -43,7 +43,7 @@ class Container:
 
 			This is the name used to determine which container needs to be
 			instantiated. It can be overriden in derived classes if the name of
-			the class isn't the same as the key used in the specification.
+			the class isn't the same as the key used in the Kurfile.
 
 			# Return value
 
@@ -299,7 +299,7 @@ class Container:
 
 			The primary purpose of this is to register the container with the
 			templating engine so that it can be referenced by other containers
-			or specification sections.
+			or Kurfile sections.
 		"""
 		engine.register(self)
 

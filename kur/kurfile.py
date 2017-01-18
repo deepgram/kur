@@ -18,24 +18,23 @@ import os
 import copy
 import warnings
 import logging
-from ..engine import ScopeStack
-from ..reader import Reader
-from ..containers import Container, ParsingError
-from ..containers.layers import Placeholder
-from ..model import Model, Executor, EvaluationHook, OutputHook
-from ..backend import Backend
-from ..optimizer import Optimizer, Adam
-from ..loss import Loss
-from ..providers import Provider, BatchProvider, ShuffleProvider
-from ..supplier import Supplier
-from ..utils import merge_dict, mergetools
-from ..loggers import Logger
+from .engine import ScopeStack
+from .reader import Reader
+from .containers import Container, ParsingError
+from .model import Model, Executor, EvaluationHook, OutputHook
+from .backend import Backend
+from .optimizer import Optimizer, Adam
+from .loss import Loss
+from .providers import Provider, BatchProvider, ShuffleProvider
+from .supplier import Supplier
+from .utils import merge_dict, mergetools
+from .loggers import Logger
 
 logger = logging.getLogger(__name__)
 
 ###############################################################################
-class Specification:
-	""" Class for loading and parsing specification files.
+class Kurfile:
+	""" Class for loading and parsing Kurfiles.
 	"""
 
 	DEFAULT_OPTIMIZER = Adam
@@ -43,14 +42,13 @@ class Specification:
 
 	###########################################################################
 	def __init__(self, source, engine):
-		""" Creates a new specification.
+		""" Creates a new Kurfile.
 
 			# Arguments
 
 			source: str or dict. If it is a string, it is interpretted as a
-				filename to an on-disk specification file. Otherwise, it is
-				interpretted as an already-loaded, but unparsed, specification
-				file.
+				filename to an on-disk Kurfile. Otherwise, it is
+				interpretted as an already-loaded, but unparsed, Kurfile.
 			engine: Engine instance. The templating engine to use in parsing.
 		"""
 		if isinstance(source, str):
@@ -75,14 +73,14 @@ class Specification:
 
 	###########################################################################
 	def parse(self):
-		""" Parses the specification.
+		""" Parses the Kurfile.
 		"""
 
-		logger.info('Parsing specification...')
+		logger.info('Parsing Kurfile...')
 
 		# These are reserved section names.
 		# The first name in each tuple is the one that we should rely on
-		# internally when we reference `self.data` in Specification.
+		# internally when we reference `self.data` in Kurfile.
 		builtin = {
 			'settings' : ('settings', ),
 			'train' : ('train', 'training'),
@@ -131,7 +129,7 @@ class Specification:
 				if key in section:
 					break
 			else:
-				warnings.warn('Unexpected section in specification: "{}". '
+				warnings.warn('Unexpected section in Kurfile: "{}". '
 					'This section will be ignored.', SyntaxWarning)
 
 	###########################################################################
@@ -152,7 +150,7 @@ class Specification:
 
 	###########################################################################
 	def get_backend(self):
-		""" Creates a new backend from the specification.
+		""" Creates a new backend from the Kurfile.
 
 			# Return value
 
@@ -175,7 +173,7 @@ class Specification:
 
 	###########################################################################
 	def get_provider(self, section):
-		""" Creates the provider corresponding to a part of the specification.
+		""" Creates the provider corresponding to a part of the Kurfile.
 
 			# Arguments
 
@@ -203,7 +201,7 @@ class Specification:
 		if 'name' in provider_spec:
 			provider = Provider.get_provider_by_name(provider_spec.pop('name'))
 		else:
-			provider = Specification.DEFAULT_PROVIDER
+			provider = Kurfile.DEFAULT_PROVIDER
 
 		# TODO: merge_dict is good for different columns, but we may need to
 		#   concatenate columns with the same names. Need ConcatenateSource.
@@ -382,7 +380,7 @@ class Specification:
 
 	###########################################################################
 	def get_trainer(self, with_optimizer=True):
-		""" Creates a new Trainer from the specification.
+		""" Creates a new Trainer from the Kurfile.
 
 			# Return value
 
@@ -396,7 +394,7 @@ class Specification:
 
 	###########################################################################
 	def get_optimizer(self):
-		""" Creates a new Optimizer from the specification.
+		""" Creates a new Optimizer from the Kurfile.
 
 			# Return value
 
@@ -410,13 +408,13 @@ class Specification:
 		if 'name' in spec:
 			optimizer = Optimizer.get_optimizer_by_name(spec.pop('name'))
 		else:
-			optimizer = Specification.DEFAULT_OPTIMIZER
+			optimizer = Kurfile.DEFAULT_OPTIMIZER
 
 		return optimizer(**spec)
 
 	###########################################################################
 	def get_loss(self):
-		""" Creates a new Loss from the specification.
+		""" Creates a new Loss from the Kurfile.
 
 			# Return value
 
@@ -533,7 +531,7 @@ class Specification:
 
 	###########################################################################
 	def get_evaluator(self):
-		""" Creates a new Evaluator from the specification.
+		""" Creates a new Evaluator from the Kurfile.
 
 			# Return value
 
@@ -556,7 +554,7 @@ class Specification:
 				allows for multiple aliases to the same section.
 			stack: list. The list of scope dictionaries to use in evaluation.
 			required: bool (default: True). If True, an exception is raised if
-				the key is not present in the specification.
+				the key is not present in the Kurfile.
 
 			# Return value
 
@@ -643,7 +641,7 @@ class Specification:
 			logger.warning('Skipping an already included source file: %s. '
 				'This may have unintended consequences, since the merge '
 				'order may result in different final results. You should '
-				'refactor your specification to avoid circular includes.',
+				'refactor your Kurfile to avoid circular includes.',
 				expanded)
 			return {}
 		else:
@@ -683,7 +681,7 @@ class Specification:
 	###########################################################################
 	def _parse_section(self, engine, section, stack, *,
 		required=False, include_key=True):
-		""" Parses a single top-level entry in the specification.
+		""" Parses a single top-level entry in the Kurfile.
 
 			# Arguments
 
@@ -694,7 +692,7 @@ class Specification:
 				allows for multiple aliases to the same section.
 			stack: list. The list of scope dictionaries to use in evaluation.
 			required: bool (default: False). If True, an exception is raised if
-				the key is not present in the specification.
+				the key is not present in the Kurfile.
 			include_key: bool (default: False). If True, the parsed section is
 				added to the scope stack as a dictionary with a single item,
 				whose key is the name of the parsed section, and whose value is
@@ -714,7 +712,7 @@ class Specification:
 		if isinstance(section, str):
 			section = (section, )
 
-		logger.debug('Parsing specification section: %s', section[0])
+		logger.debug('Parsing Kurfile section: %s', section[0])
 
 		key = None		# Not required, but shuts pylint up.
 		for key in section:

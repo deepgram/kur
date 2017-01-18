@@ -53,10 +53,10 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 
 			if not candidates:
 				raise ValueError('No valid evaluation hook found in '
-					'specification: {}'.format(spec))
+					'Kurfile: {}'.format(spec))
 			elif len(candidates) > 1:
 				raise ValueError('Too many possible evaluation hooks found in '
-					'specification: {}'.format(spec))
+					'Kurfile: {}'.format(spec))
 			else:
 				name, target = candidates.popitem()
 				meta = dict(spec)
@@ -64,9 +64,8 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 				params = spec[name] or {}
 
 		else:
-			raise ValueError('Expected the evaluation hooks specification to '
-				'be a string or dictionary. We got this instead: {}'.format(
-				spec))
+			raise ValueError('Expected the evaluation hooks to be a string or '
+				'dictionary. We got this instead: {}'.format(spec))
 
 		# At this point:
 		# - name: the name of the evaluation hook, as specified in the spec.

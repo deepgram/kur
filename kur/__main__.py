@@ -19,24 +19,24 @@ import argparse
 import logging
 from . import __version__, __homepage__
 from .utils import logcolor
-from .parsing import Specification
+from . import Kurfile
 from .engine import JinjaEngine
 
 logger = logging.getLogger(__name__)
 
 ###############################################################################
-def parse_specification(filename, engine):
-	""" Parses a specification file.
+def parse_kurfile(filename, engine):
+	""" Parses a Kurfile.
 
 		# Arguments
 
-		filename: str. The path to the specification file to load.
+		filename: str. The path to the Kurfile to load.
 
 		# Return value
 
-		Specification instance
+		Kurfile instance
 	"""
-	spec = Specification(filename, engine)
+	spec = Kurfile(filename, engine)
 	spec.parse()
 	return spec
 
@@ -44,7 +44,7 @@ def parse_specification(filename, engine):
 def train(args):
 	""" Trains a model.
 	"""
-	spec = parse_specification(args.specification, args.engine)
+	spec = parse_kurfile(args.kurfile, args.engine)
 	func = spec.get_training_function()
 	func()
 
@@ -52,7 +52,7 @@ def train(args):
 def test(args):
 	""" Tests a model.
 	"""
-	spec = parse_specification(args.specification, args.engine)
+	spec = parse_kurfile(args.kurfile, args.engine)
 	func = spec.get_testing_function()
 	func()
 
@@ -60,7 +60,7 @@ def test(args):
 def evaluate(args):
 	""" Evaluates a model.
 	"""
-	spec = parse_specification(args.specification, args.engine)
+	spec = parse_kurfile(args.kurfile, args.engine)
 	func = spec.get_evaluation_function()
 	func()
 
@@ -68,7 +68,7 @@ def evaluate(args):
 def build(args):
 	""" Builds a model.
 	"""
-	spec = parse_specification(args.specification, args.engine)
+	spec = parse_kurfile(args.kurfile, args.engine)
 
 	if args.compile == 'auto':
 		result = []
@@ -137,24 +137,24 @@ def parse_args():
 	subparsers = parser.add_subparsers(dest='cmd', help='Sub-command help.')
 
 	subparser = subparsers.add_parser('train', help='Trains a model.')
-	subparser.add_argument('specification', nargs='?',
-		help='The specification file to use.')
+	subparser.add_argument('kurfile', nargs='?',
+		help='The Kurfile to use.')
 	subparser.set_defaults(func=train)
 
 	subparser = subparsers.add_parser('test', help='Tests a model.')
-	subparser.add_argument('specification', nargs='?',
-		help='The specification file to use.')
+	subparser.add_argument('kurfile', nargs='?',
+		help='The Kurfile to use.')
 	subparser.set_defaults(func=test)
 
 	subparser = subparsers.add_parser('evaluate', help='Evaluates a model.')
-	subparser.add_argument('specification', nargs='?',
-		help='The specification file to use.')
+	subparser.add_argument('kurfile', nargs='?',
+		help='The Kurfile to use.')
 	subparser.set_defaults(func=evaluate)
 
 	subparser = subparsers.add_parser('build',
 		help='Tries to build a model. This is useful for debugging a model.')
-	subparser.add_argument('specification', nargs='?',
-		help='The specification file to use.')
+	subparser.add_argument('kurfile', nargs='?',
+		help='The Kurfile to use.')
 	subparser.add_argument('-c', '--compile',
 		choices=['none', 'train', 'test', 'evaluate', 'auto'], default='auto',
 		help='Try to compile the specified variation of the model. If '

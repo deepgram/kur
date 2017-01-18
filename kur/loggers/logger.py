@@ -54,8 +54,8 @@ class Logger:
 				cls = Logger.get_logger_by_name(name)
 			params = spec
 		else:
-			raise ValueError('Expected the logger specification to be a string '
-				'or dictionary. We got this instead: {}'.format(spec))
+			raise ValueError('Expected the logger to be a string or '
+				'dictionary. We got this instead: {}'.format(spec))
 
 		return cls(**params)
 

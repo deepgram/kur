@@ -28,7 +28,7 @@ from . import sources
 from . import providers
 from . import model
 from . import supplier
-from . import parsing
 from . import loggers
+from .kurfile import Kurfile
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
