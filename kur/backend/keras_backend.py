@@ -26,6 +26,7 @@ import functools
 from collections import OrderedDict
 import numpy
 from . import Backend
+from .. import __homepage__
 from ..loss import Loss
 from ..utils import can_import, EnvironmentalVariable, redirect_stderr, idx
 from ..providers import BatchProvider
@@ -90,8 +91,30 @@ class KerasBackend(Backend):
 						'backend. In the future, try to let Kur manage '
 						'importing Keras.', backend, K.backend())
 
-			for dep in {'theano' : ['theano'], 'tensorflow' : ['tensorflow']}[backend]:
-				if not can_import(dep):
+			deps = {
+				'theano' : ['theano'],
+				'tensorflow' : ['tensorflow']
+			}[backend]
+			for dep in deps:
+				if can_import(dep):
+					continue
+				if backend == 'tensorflow':
+					logger.error('Your Kurfile is trying to use TensorFlow.')
+					logger.error('However, we cannot find TensorFlow '
+						'installed.')
+					logger.error('It is easy to install, but you need to make '
+						'sure you are using Python 3.4 or 3.5 (3.6 does not '
+						'work).')
+					logger.error('To install TensorFlow for CPU: pip install '
+						'tensorflow')
+					logger.error('To install TensorFlow for GPU: pip install '
+						'tensorflow-gpu')
+					logger.error('See our troubleshooting page for more '
+						'information: %s', os.path.join(__homepage__,
+						'troubleshooting.html'))
+					raise ValueError('Need to install TensorFlow with Python '
+						'3.4 or Python 3.5 for this Kurfile to work.')
+				else:
 					logger.warning('The Keras backend was asked to use the %s '
 						'backend, but %s does not appear to be installed. You '
 						'will likely get an error about this soon.',
