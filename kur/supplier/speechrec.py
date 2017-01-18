@@ -86,7 +86,7 @@ class RawUtterance(ChunkSource, Shuffleable):
 
 	###########################################################################
 	def __init__(self, audio_paths, feature_type=None,
-		normalization=None, *args, **kwargs):
+		normalization=None, max_frequency=None, *args, **kwargs):
 		""" Creates a new raw utterance source.
 		"""
 
@@ -95,6 +95,7 @@ class RawUtterance(ChunkSource, Shuffleable):
 		self.indices = numpy.arange(len(self))
 		self.feature_type = feature_type
 		self.features = None
+		self.max_frequency = max_frequency
 
 		self._init_normalizer(normalization)
 
@@ -132,7 +133,8 @@ class RawUtterance(ChunkSource, Shuffleable):
 		return [
 			get_audio_features(
 				path,
-				feature_type=self.feature_type
+				feature_type=self.feature_type,
+				high_freq=self.max_frequency
 			)
 			for path in paths
 		]
@@ -323,7 +325,8 @@ class SpeechRecognitionSupplier(Supplier):
 
 	###########################################################################
 	def __init__(self, url=None, path=None, checksum=None, unpack=None, 
-		type=None, normalization=None, max_duration=None, *args, **kwargs):
+		type=None, normalization=None, max_duration=None, max_frequency=None,
+		*args, **kwargs):
 		""" Creates a new speech recognition supplier.
 
 			# Arguments
@@ -339,7 +342,8 @@ class SpeechRecognitionSupplier(Supplier):
 		utterance_raw = RawUtterance(
 			self.data['audio'],
 			feature_type=type or 'mfcc',
-			normalization=normalization
+			normalization=normalization,
+			max_frequency=max_frequency
 		)
 		self.sources = {
 			'transcript_raw' : RawTranscript(self.data['transcript']),
