@@ -53,7 +53,8 @@ class KerasBackend(Backend):
 		)
 
 	###########################################################################
-	def __init__(self, backend=None, optimizer=None, *args, **kwargs):
+	def __init__(self, backend=None, optimizer=None, theano_flags=None,
+		*args, **kwargs):
 		""" Creates a new Keras backend.
 
 			As per the base class documentation, we should do all necessary
@@ -139,6 +140,11 @@ class KerasBackend(Backend):
 				logger.debug('Disabling the Theano optimizer.')
 				replace_theano_flag('optimizer', 'None')
 
+			if theano_flags is not None:
+				for k, v in theano_flags.items():
+					logger.debug('Setting Theano flag %s = %s', k, v)
+					replace_theano_flag(k, v)
+
 			if self.device is not None:
 				replace_theano_flag('force_device', 'true')
 				if self.device == 'cpu':
@@ -155,6 +161,7 @@ class KerasBackend(Backend):
 						env['CUDA_VISIBLE_DEVICES'] = str(self.device_number)
 						logger.info('Requesting GPU %d', self.device_number)
 
+			logger.debug('Overriding environmental variables: %s', env)
 			with EnvironmentalVariable(**env):
 				import keras	# pylint: disable=import-error,unused-variable
 				import keras.backend as K		# pylint: disable=import-error
