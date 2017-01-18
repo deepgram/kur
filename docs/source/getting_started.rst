@@ -1,22 +1,56 @@
-*********
-Using Kur
-*********
+******************
+Using Kur for Real
+******************
 
 Let's get started using Kur! There's two topics we need to cover: describing
 models in a specification file, and actually running Kur.
 
 .. note::
 
-	If you haven't already, make sure you work through the :ref:`the_examples`
+	If you haven't already, make sure you work through the :ref:`in_depth_examples`
 	first. Otherwise, this might feel a little overwhelming, and Kur shouldn't
 	make you feel like that.
 
-Specification Files
-===================
+Running Kur
+===========
 
-Kur uses "specification" files to describe the model, hyperparameters, data
-sets, training/evaluation options, and functional settings. This is a whirlwind
-tour of how Kur interprets the specification files. For more details, see
+Kur is pretty easy to run. It looks like this:
+
+.. code-block:: bash
+
+	# usage:
+	kur [-v] {train | test | evaluate | build} KURFILE.yml
+
+.. code-block:: bash
+	
+	# train the Kur MNIST example
+	kur train speech.yml
+
+	# test the Kur speech example while showing debug output
+	kur -vv test speech.yml
+
+You feed Kur a Kurfile, and tell it what to do with the file (e.g. ``kur train mnist.yml``, which is the first example in :ref:`in_depth_examples` ).
+Train, test, and evaluate will be explained in detail in the next section on Kurfile specification. The other command,
+``build`` is kind of like ``train``, but does not load the data set, and doesn't
+actually start training. Instead, ``build`` just assembles the model. This is useful
+for debugging the construction of models, looking for obvious problems, while not bothering with loading and training on data just yet.
+
+**Note:** Keep in mind the optional flags ``-v`` and ``-vv``. If you are curious about the lower-level details of what
+Kur is doing (like the nuts and bolts of how the network is being buit), then feel free to add ``-v`` to enable INFO-level output, or
+even ``-vv`` to enable DEBUG-level ouput (there's a lot). 
+
+By default, Kur tries not to be overly verbose in terminal output, so it only prints progress indicators, warnings and errors to the console while running. You should
+definitely pay attention to any warnings or errors: they are indicative of something
+unexpected or wrong. If Kur seems 'stuck', try enabling verbose output to see what it is up to.
+
+Kurfile Template & Info
+=======================
+
+Kur uses Kurfiles. These are "specification" files which describe the model, hyperparameters, data
+sets, training/evaluation options, and functional settings. This doc gives a quick, whirlwind
+tour of how Kur interprets the specification files. Kurfiles can be written in YAML or JSON. 
+
+For more details, see
 :doc:`specification`. 
 
 YAML Notes
@@ -35,16 +69,16 @@ Since YAML is the default supported Kur format, here are a couple pointers.
 For details of the YAML syntax, take a look at the `Ansible overview
 <https://docs.ansible.com/ansible/YAMLSyntax.html>`_
 
-Skeleton Outline of Simple Specification
+Skeleton Outline of a Simple Kurfile
 ----------------------------------------
 
-This is a simplied template you can use for writing simple Kur models.
+This is a simplied template you can use for writing Kur models.
 
 .. code-block:: yaml
 
 	---
 
-	# Other specification files to load (optional)
+	# Other kurfiles to load (optional)
 	include:
 
 	# Global variables go here (optional)
@@ -111,8 +145,8 @@ This is a simplied template you can use for writing simple Kur models.
 	evaluate:
 	  # The data to supply as input. Unlike the train/validate/test sections,
 	  # you do not need a corresponding `OUTPUT` key. But if you do supply one,
-	  # Kur can save it to the output file for you so it's easy to play with
-	  # during post-processing
+	  # Kur can save it to the output file for you so it's easy to use during
+	  # post-processing
 	  data:
 	    - pickle: NEW_DATA
 
@@ -143,7 +177,7 @@ We're going to cover the simplest details of these sections.
   a give the final layer a name, too (it's your output). The names need to
   correspond to the data that gets loaded during training, evaluation, etc.
   For a full list of "containers" (that's what Kur calls each entry in the model
-  section), see :doc:`containers`. The :ref:`the_examples` are also a good
+  section), see :doc:`containers`. The :ref:`in_depth_examples` are also a good
   place to start.
 - ``train``: Everything you want to tell Kur about the desired training
   process.
@@ -189,24 +223,3 @@ We're going to cover the simplest details of these sections.
 - ``loss``: Every model output needs a corresponding loss function. Make sure
   you have a ``target`` for each model output (it should have the same name,
   too, just like the data files).
-
-Running Kur
-===========
-
-Kur is pretty easy to run. It looks like this:
-
-.. code-block:: bash
-
-	kur [-v] {train | test | evaluate | build} SPECIFICATION.yml
-
-You give it your specification file, and you tell it what to do with the file.
-By this point, train, test, and evaluate should make sense. The other command,
-``build`` is kind of like ``train``, but does not load the data set, and doesn't
-actually start training. Instead, it just assembles the model, which is useful
-for checking for obvious problems.
-
-By default, Kur only prints out warnings and errors to the console. You should
-definitely pay attention to any warnings: they are indicative of something
-unexpected or wrong. If you are curious about the lower-level details of what
-Kur is doing, though, feel free to add ``-v`` to enable INFO-level output, or
-even ``-vv`` to enable DEBUG-level ouput (there's a lot).

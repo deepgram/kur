@@ -1,6 +1,6 @@
-********************
-Specification Format
-********************
+*********************
+Kurfile Specification
+*********************
 
 This is the more in-depth version of the :doc:`getting_started` page. It is
 meant to detail the more advanced use and features of Kur specification files.
@@ -98,7 +98,7 @@ There are many different kinds of containers, which we describe on the
 	interpretted, but do not produce underlying tensor operations themselves.
 	For example, a "for" loop is an operator because it can generate many other
 	layers, but by itself, a "for" loop is not a deep learning operation. If
-	you've looked through the :ref:`the_examples` page, then you know that
+	you've looked through the :ref:`in_depth_examples` page, then you know that
 	``convolution``, ``activation``, ``dense``, and ``input`` are all layers.
 	The ``for`` loop is an operator.
 
@@ -373,7 +373,7 @@ Global variables
 ----------------
 
 The ``settings`` section is also a good place to put global variables. The
-:ref:`CIFAR-10 example <cifar_10>` is a good example of this, where the dataset
+:ref:`CIFAR-10 example <in_depth_cifar_10>` is a good example of this, where the dataset
 is defined once, and then referenced by other sections. In that example, YAML
 language features (anchors and aliases) are used to reference the dataset.
 
@@ -397,7 +397,7 @@ Hyperparameters
 For the same reason that the ``settings`` section is a good place for global
 variables, it is also the best place for hyperparameters. Basically, treat your
 hyperparameters like global variables, and reference them in your model. See the
-:ref:`CIFAR-10 example <cifar_10>` for a good use of this.
+:ref:`CIFAR-10 example <in_depth_cifar_10>` for a good use of this.
 
 Include
 =======
@@ -830,7 +830,7 @@ When do you want hooks? Usually in two cases:
   manipulate the data right within Kur.
 - **Analysis**. Again, sometimes it's really convenient to be able to generate
   additional statistics right within Kur, as seen in the :ref:`MNIST example
-  <the_mnist_example>`. This is a nice place to do it.
+  <in_depth_mnist_example>`. This is a nice place to do it.
 
 Hooks can take parameters as well. An example of using hooks is:
 
@@ -1063,7 +1063,7 @@ names of the Kur suppliers.
 
 Valid suppliers are:
 
-- ``mnist``: This supplier provides MNIST data for the :ref:`the_mnist_example`
+- ``mnist``: This supplier provides MNIST data for the :ref:`in_depth_mnist_example`
   example. It takes two parameters: ``images`` and ``labels``, each of which, in
   turn, can be one of the following:
 
@@ -1081,7 +1081,7 @@ Valid suppliers are:
   labels as well as normalizing the images. The images are presented to the
   network as single channel images (i.e., they are 3D).
 
-- ``cifar``: This supplier provides CIFAR data for the :ref:`cifar_10` example.
+- ``cifar``: This supplier provides CIFAR data for the :ref:`in_depth_cifar_10` example.
   Supported parameters are:
 
 	- ``url``: The URL to download the data from (cannot be used with

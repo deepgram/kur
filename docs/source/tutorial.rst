@@ -1,9 +1,9 @@
-********
-Tutorial
-********
+*************************************
+Tutorial From Scratch: Data and Model
+*************************************
 
-Alright, you've seen some cool :ref:`the_examples` and now you are asking,
-"Okay, so how do I actually make Kur do all these awesome things with my data?"
+Alright, you've seen some great results in the :ref:`in_depth_examples` and now you are asking,
+"How do I actually make Kur do all these awesome things with MY data?"
 Let's take a look!
 
 We are going to work through a complete, top-to-bottom model for classifying

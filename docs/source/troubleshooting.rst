@@ -36,7 +36,7 @@ Kur only supports Python 3.4 or higher (our :ref:`reasoning is here
 :ref:`set up a virtual environment <virtualenv_setup>` to prevent your computer
 from getting confused about which version of Python it should use. If you
 create a ``virtualenv`` using the ``-p /usr/bin/python3`` option (as we show in
-our :doc:`installing` guide), then the virtual environment will automatically
+our :doc:`install` guide), then the virtual environment will automatically
 use Python 3. Of course, you need to make sure you remember to :ref:`activate
 the virtual environment <virtualenv_setup>` before running Kur!
 

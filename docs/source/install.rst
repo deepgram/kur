@@ -1,13 +1,112 @@
+.. _install_kur:
+
 **************
 Installing Kur
 **************
 
-Ready to install Kur? Let's get going!
+Kur Quick Install
+=================
+
+Kur is really easy to install! You can pick either one of these two options for
+installing Kur.
+
+.. note::
+
+	Kur requires **Python 3.4** or greater. Take a look at :ref:`detailed_install`
+	for step-by-step instructions for installing Kur and setting up a `virtual
+	environment <https://virtualenv.pypa.io/>`_.
+
+Latest Pip Release
+------------------
+
+If you know what you are doing, then this is easy:
+
+.. code-block:: bash
+
+	pip install kur
+
+Latest Development Release
+--------------------------
+
+Just check it out and run the setup script:
+
+.. code-block:: bash
+
+	git clone https://github.com/deepgram/kur
+	cd kur
+	pip install .
+
+**Quick Start**: Or, if you already have :ref:`Python 3 installed
+<detailed_install>`, then here's a few quick-start lines to get you training your
+first model:
+
+**Quick Start For Using pip:**
+
+.. code-block:: bash
+
+	pip install virtualenv                      # Make sure virtualenv is present
+	virtualenv -p $(which python3) ~/kur-env    # Create a Python 3 environment for Kur
+	. ~/kur-env/bin/activate                    # Activate the Kur environment
+	pip install kur                             # Install Kur
+	kur --version                               # Check that everything works
+	git clone https://github.com/deepgram/kur   # Get the examples
+	cd kur/examples                             # Change directories
+	kur -v train mnist.yml                     # Start training!
+
+**Quick Start For Using git:**
+
+.. code-block:: bash
+
+	pip install virtualenv                      # Make sure virtualenv is present
+	virtualenv -p $(which python3) ~/kur-env    # Create a Python 3 environment for Kur
+	. ~/kur-env/bin/activate                    # Activate the Kur environment
+	git clone https://github.com/deepgram/kur   # Check out the latest code
+	cd kur                                      # Change directories
+	pip install .                               # Install Kur
+	kur --version                               # Check that everything works
+	cd examples                                 # Change directories
+	kur -v train mnist.yml                     # Start training!
+
+Usage: Kur
+----------
+
+If everything has gone well, you shoud be able to use Kur:
+
+.. code-block:: bash
+
+	kur --version
+
+You'll typically be using Kur in commands like ``kur train model.yml`` or ``kur
+test model.yml``. You'll see these in the :ref:`in_depth_examples`, which is
+where you should head to next!
+
+Troubleshooting
+---------------
+
+If you run into any problems installing or using Kur, please check out our
+:doc:`troubleshooting` page for lots of useful help. And if you want more
+detailed installation instructions, with help on setting up your environment,
+before sure to follow along in the next :ref:`detailed_install` section.
+
+.. _detailed_install:
+
+Detailed Kur Install Guide
+==========================
+
+Ready to install Kur but need a little more help than the Quick Install provides? This is the place!
 
 .. note::
 
 	If you want to install Kur for the purpose of developing, modifying, or
 	contributing to Kur, then take a look at :doc:`contributing`.
+
+How The Following Guide Helps
+--------------------------------
+This detailed installation guive can tell you in detail how to set up your environment to have a long lasting and organized experience while deep learning with Kur. There are many helpful suggestions for both Linux and Mac OSX users.
+
+These docs won't be able to help with all possible problems that can arise while setting up a development environment. We strive to make these documents helpful to 95% of people, but it cannot cover all flavors of Linux and complicated constraints on your computers environment. 
+
+With that said, these docs should get the vast majority of normal users up and running with Kur and Deep Learning in no time. Try to be patient during this process. Grab a cup of coffee and really think out how you want things set up on your computer. You'll be using Kur for years to come, so (it's that good). One last thing. Be sure to inform us with GitHub issues if you notice anything off in the docs and feel free to improve them—Kur is open source afterall!
 
 Setting Up an Environment
 =========================
@@ -253,17 +352,17 @@ If everything has gone well, you shoud be able to use Kur:
 	kur --version
 
 If Kur prints out a version, everything is working great! Now move on to the
-:ref:`the_examples` or the :doc:`tutorial` and start building awesome models!
+:ref:`in_depth_examples` or the :doc:`tutorial` and start building awesome models!
 
 Usage
 -----
 
-You can look at Kur's usage like this:
+You can view Kur's usage like this:
 
 .. code-block:: bash
 
 	kur --help
 
 You'll typically be using Kur in commands like ``kur train model.yml`` or ``kur
-test model.yml``. You'll see these in the :ref:`the_examples`, which is where
+test model.yml``. You'll see these in the :ref:`in_depth_examples`, which is where
 you should head to next!

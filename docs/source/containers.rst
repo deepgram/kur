@@ -1,6 +1,6 @@
-**********
-Containers
-**********
+******************************
+Containers: Layers & Operators
+******************************
 
 Containers are the building blocks of Kur models. Each entry in a Kur model is
 a container, and containers may accept other containers as input. There are two
@@ -14,23 +14,35 @@ Layers
 
 Layers are your fundamental building blocks for complex deep learning models.
 
-Activation
-----------
+Dense
+-----
 
-**Description**. An activation layers applies a simple non-linearity to each
-element of the tensor.
+**Description**. A fully-connected layer of nodes (affine transformation), in
+which each node is connected to each node from the previous layer.
 
-**Purpose**. Activations are non-linear, so they are an important part of any
-deep learning model; without them, complex operations could be reduced to
-simple multiplications. You usually want them following your convolutions, and
-you typically want them as a final layer in your model.
+**Purpose**. Dense layers are very common for "mixing" information across the
+entire tensor. So in image classification, you usually want one or more dense
+layers following your convolutions. They are also the building blocks of
+multi-layer perceptrons.
+
+**Note**. Dense layers do not include activations. If you want a non-linearity
+between successive dense layers, you must explicitly insert them.
 
 **Usage**::
 
-	activation: {softmax | relu | tanh | sigmoid | none}
+	dense: SIZE
 
-Convolution
------------
+or::
+
+	dense:
+	  size: SIZE
+
+- ``SIZE``: an integer or list of integers. If a single integer, it indicates
+  the number of nodes in this dense layer. If a list, it is treated as a series
+  of dense layers, one for each entry in ``SIZE``.
+
+Convolution (CNN)
+-----------------
 
 **Description**. A convolution is a locally-connected layer (as opposed to a
 dense / fully-connected layer).
@@ -62,6 +74,76 @@ produce some "high-level" meaning, which in turn is fed into deeper layers.
   by an activation layer is equivalent to a single convolution layer with an
   ``activation`` specified.
 
+Recurrent (RNN)
+---------------
+
+**Description**. A recurrent layer for learning sequences of data.
+
+**Purpose**. Recurrent layers are used to learn sequences.
+
+**Usage**::
+
+	recurrent:
+	  size: SIZE
+	  type: {lstm | gru}
+	  sequence: SEQUENCE
+	  bidirectional: BIDIRECTIONAL
+	  merge: {multiply | add | average | concat}
+
+- ``SIZE``: the number of recurrent nodes in the layer. This is the number of
+  features that are kept *per timestep*. If ``SEQUENCE`` is true, then there
+  are as many outputs as inputs (because the number of timesteps doesn't
+  change), and at each timestep, the feature vector has length ``SIZE``. If
+  ``SEQUENCE`` is false, then the output of the RNN is length ``SIZE`` (because
+  only the last timestep is kept).
+- ``TYPE``: the type of the recurrent cells (defaults to ``gru``).
+- ``SEQUENCE``: boolean. If true, returns the entire sequences of RNN outputs.
+  If false, only the last element of the sequence is returned. Defaults to
+  True.
+- ``BIDIRECTIONAL``: boolean. If true, a bidirectional RNN is constructed (one
+  which learns both the forward and backward sequences of data).
+- ``MERGE``: if ``BIDIRECTIONAL`` is true, then this determines how the outputs
+  of the forward and backward RNNs is merged. If bidirectional is not set, then
+  "merge" cannot be used. The default value is ``average``.
+
+Activation
+----------
+
+**Description**. An activation layers applies a simple non-linearity to each
+element of the tensor.
+
+**Purpose**. Activations are non-linear, so they are an important part of any
+deep learning model; without them, complex operations could be reduced to
+simple multiplications. You usually want them following your convolutions, and
+you typically want them as a final layer in your model.
+
+**Usage**::
+
+	activation: {softmax | relu | tanh | sigmoid | none}
+
+Output
+------
+
+**Description**. A convenience layer for explicitly marking a point in the model
+as an output.
+
+**Purpose**. Any layer can be marked as an output using the ``sink: True``
+value. But this is often awkward, especially if preceding layers are nested
+deeply within a ``for`` or ``parallel`` block. This can be used to resolve
+those ambiguities, as well as make your model easier to read.
+
+**Usage**::
+
+	output: NAME
+
+or::
+
+	output:
+	  name: NAME
+
+- ``NAME``: the name of the output layer. It will be associated with the
+  tensors produced by the most recent layers.
+
 Pooling
 -------
 
@@ -90,32 +172,22 @@ local information. This reduces training time and overfitting.
   dimension; if it is a list, it indicates the stride in each dimension.  This
   is optional; its default value is `1`.
 
-Dense
------
+Batch Normalization
+-------------------
 
-**Description**. A fully-connected layer of nodes (affine transformation), in
-which each node is connected to each node from the previous layer.
+**Description**. A layer which directs Kur to normalize activations across the
+previous layer.
 
-**Purpose**. Dense layers are very common for "mixing" information across the
-entire tensor. So in image classification, you usually want one or more dense
-layers following your convolutions. They are also the building blocks of
-multi-layer perceptrons.
-
-**Note**. Dense layers do not include activations. If you want a non-linearity
-between successive dense layers, you must explicitly insert them.
+**Purpose**. Batch normalization is useful to help prevent bad initializations
+and improve convergence.
 
 **Usage**::
 
-	dense: SIZE
+	batch_normalization
 
 or::
 
-	dense:
-	  size: SIZE
-
-- ``SIZE``: an integer or list of integers. If a single integer, it indicates
-  the number of nodes in this dense layer. If a list, it is treated as a series
-  of dense layers, one for each entry in ``SIZE``.
+	batch_normalization:
 
 Expand
 ------
@@ -199,6 +271,27 @@ The ``apply`` key is a list of layers (or operations) that define the
 "parallel" / "sub-model" / "time-distributed" operation. Each container in the
 ``apply`` list is applied, in turn, to each element of the input data.
 
+Reuse
+-----
+
+**Description**. A reuse layer is a weight-sharing layer; it simply re-applies
+another layer in the model without declaring new weights.
+
+**Purpose**. A reuse layer is useful when you want to have a single tensor
+operation (with learnable weights) that you apply in multiple places in your
+model (as opposed to multiple tensor operations in multiple places).
+
+**Usage**::
+
+	reuse:
+	  target: TARGET
+
+or::
+
+	reuse: TARGET
+
+- ``TARGET``: the name of the layer to re-apply.
+
 Placeholder
 -----------
 
@@ -235,99 +328,6 @@ or::
   ``kur build`` command to test that your model "fits together" if the shapes
   of all inputs are specified. However, the shape is optional; if omitted, it
   will be inferred from the data source.
-
-Reuse
------
-
-**Description**. A reuse layer is a weight-sharing layer; it simply re-applies
-another layer in the model without declaring new weights.
-
-**Purpose**. A reuse layer is useful when you want to have a single tensor
-operation (with learnable weights) that you apply in multiple places in your
-model (as opposed to multiple tensor operations in multiple places).
-
-**Usage**::
-
-	reuse:
-	  target: TARGET
-
-or::
-
-	reuse: TARGET
-
-- ``TARGET``: the name of the layer to re-apply.
-
-Recurrent
----------
-
-**Description**. A recurrent layer for learning sequences of data.
-
-**Purpose**. Recurrent layers are used to learn sequences.
-
-**Usage**::
-
-	recurrent:
-	  size: SIZE
-	  type: {lstm | gru}
-	  sequence: SEQUENCE
-	  bidirectional: BIDIRECTIONAL
-	  merge: {multiply | add | average | concat}
-
-- ``SIZE``: the number of recurrent nodes in the layer. This is the number of
-  features that are kept *per timestep*. If ``SEQUENCE`` is true, then there
-  are as many outputs as inputs (because the number of timesteps doesn't
-  change), and at each timestep, the feature vector has length ``SIZE``. If
-  ``SEQUENCE`` is false, then the output of the RNN is length ``SIZE`` (because
-  only the last timestep is kept).
-- ``TYPE``: the type of the recurrent cells (defaults to ``gru``).
-- ``SEQUENCE``: boolean. If true, returns the entire sequences of RNN outputs.
-  If false, only the last element of the sequence is returned. Defaults to
-  True.
-- ``BIDIRECTIONAL``: boolean. If true, a bidirectional RNN is constructed (one
-  which learns both the forward and backward sequences of data).
-- ``MERGE``: if ``BIDIRECTIONAL`` is true, then this determines how the outputs
-  of the forward and backward RNNs is merged. If bidirectional is not set, then
-  "merge" cannot be used. The default value is ``average``.
-
-Batch Normalization
--------------------
-
-**Description**. A layer which directs Kur to normalize activations across the
-previous layer.
-
-**Purpose**. Batch normalization is useful to help prevent bad initializations
-and improve convergence.
-
-**Usage**::
-
-	batch_normalization
-
-or::
-
-	batch_normalization:
-
-Output
-------
-
-**Description**. A convenience layer for explicitly marking a point in the model
-as an output.
-
-**Purpose**. Any layer can be marked as an output using the ``sink: True``
-value. But this is often awkward, especially if preceding layers are nested
-deeply within a ``for`` or ``parallel`` block. This can be used to resolve
-those ambiguities, as well as make your model easier to read.
-
-**Usage**::
-
-	output: NAME
-
-or::
-
-	output:
-	  name: NAME
-
-- ``NAME``: the name of the output layer. It will be associated with the
-  tensors produced by the most recent layers.
 
 Operators
 =========
@@ -388,7 +388,7 @@ Assert
 **Purpose**. The assert layer does not affect the model in any way, but simply
 provides a debug-style "assert" condition that will immediately raise an
 AssertionError if the condition evaluates to False. This can be useful for
-checking that your model is not being constructed incorrectly and that is shape
+checking that your model is not being constructed incorrectly and that it's shape
 is correct.
 
 **Usage**::
