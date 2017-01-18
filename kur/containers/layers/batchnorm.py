@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from . import Layer
+from . import Layer, ParsingError
 
 ###############################################################################
 class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
@@ -58,7 +58,8 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 			import keras.layers as L			# pylint: disable=import-error
 			yield L.BatchNormalization(
 				mode=2,
-				axis=-1 if self.axis is None else self.axis
+				axis=-1 if self.axis is None else self.axis,
+				name=self.name
 			)
 
 		else:
