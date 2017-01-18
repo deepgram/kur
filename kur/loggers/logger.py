@@ -53,6 +53,8 @@ class Logger:
 			else:
 				cls = Logger.get_logger_by_name(name)
 			params = spec
+		elif spec is None:
+			return None
 		else:
 			raise ValueError('Expected the logger to be a string or '
 				'dictionary. We got this instead: {}'.format(spec))
