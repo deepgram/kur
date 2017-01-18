@@ -273,15 +273,43 @@ class RawTranscript(ChunkSource, Shuffleable):
 		""" Loads or infers a vocabulary.
 		"""
 		if vocab is None:
-			flat = set(x for transcript in self.transcripts \
+			logger.info('Inferring vocabulary from data set.')
+			data = set(x for transcript in self.transcripts \
 				for x in transcript.lower())
-		else:
-			with open(vocab) as fh:
-				data = json.loads(fh.read())
-			flat = set(x.lower() for x in data)
+			data = sorted(data)
 
-		logger.info('Loaded a %d-word vocabulary.', len(flat))
-		return {x : i for i, x in enumerate(sorted(flat))}
+		elif isinstance(vocab, str):
+			logger.info('Load vocabulary from a JSON file: %s', vocab)
+			with open(vocab) as fh:
+				json_data = json.loads(fh.read())
+			try:
+				data = [x.lower() for x in json_data]
+			except:
+				logger.exception('Expected the JSON to contain a single list '
+					'of strings. Instead, we got: %s', json_data)
+				raise
+
+		elif isinstance(vocab, (tuple, list)):
+			logger.info('Using a hard-coded vocabulary.')
+			try:
+				data = [x.lower() for x in vocab]
+			except:
+				logger.exception('Expected the vocabulary to be a list of '
+					'strings. Instead, we got: %s', vocab)
+				raise
+
+		else:
+			raise ValueError('Unknown vocabulary format: {}'.format(vocab))
+
+		if len(set(data)) != len(data):
+			raise ValueError('The vocabulary must contain unique entries, but '
+				'we found duplicates. Make sure that all entries are unique, '
+				'ignoring capitalization. That means you should not have both '
+				'"x" and "X" in your vocabulary. For reference, this is the '
+				'vocabulary we ended up with: {}'.format(data))
+
+		logger.info('Loaded a %d-word vocabulary.', len(data))
+		return {x : i for i, x in enumerate(data)}
 
 	###########################################################################
 	def word_to_integer(self, data):
@@ -349,7 +377,7 @@ class SpeechRecognitionSupplier(Supplier):
 	###########################################################################
 	def __init__(self, url=None, path=None, checksum=None, unpack=None, 
 		type=None, normalization=None, max_duration=None, max_frequency=None,
-		*args, **kwargs):
+		vocab=None, *args, **kwargs):
 		""" Creates a new speech recognition supplier.
 
 			# Arguments
@@ -369,7 +397,10 @@ class SpeechRecognitionSupplier(Supplier):
 			max_frequency=max_frequency
 		)
 		self.sources = {
-			'transcript_raw' : RawTranscript(self.data['transcript']),
+			'transcript_raw' : RawTranscript(
+				self.data['transcript'],
+				vocab=vocab
+			),
 			'transcript_length' : TranscriptLength('transcript_raw'),
 			'transcript' : Transcript('transcript_raw'),
 			'utterance_raw' : utterance_raw,
