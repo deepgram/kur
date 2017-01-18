@@ -75,7 +75,7 @@ class RawUtterance(ChunkSource, Shuffleable):
 	""" Data source for audio samples
 	"""
 
-	NORMALIZATION_DEPTH = 100
+	DEFAULT_NORMALIZATION_DEPTH = 100
 
 	###########################################################################
 	@classmethod
@@ -100,28 +100,54 @@ class RawUtterance(ChunkSource, Shuffleable):
 		self._init_normalizer(normalization)
 
 	###########################################################################
-	def _init_normalizer(self, normalization):
-		norm = Normalize()
-		if normalization is not None:
-			normalization = os.path.expanduser(os.path.expandvars(
-				normalization))
-			if os.path.exists(normalization):
-				if not os.path.isfile(normalization):
-					raise ValueError('Normalization data must be a regular '
-						'file. This is not: {}'.format(normalization))
-				logger.info('Restoring normalization statistics: %s',
-					normalization)
-				norm.restore(normalization)
-				self.features = norm.get_state()['mean'].shape[0]
-			else:
-				self.train_normalizer(norm)
-				norm.save(normalization)
-		else:
+	def _init_normalizer(self, params):
+
+		# Parse the specification.
+		if isinstance(params, str):
+			params = {'path' : params}
+		elif params is None:
+			params = {'path' : None}
+		elif not isinstance(params, dict):
+			raise ValueError('Unknown normalization value: {}'.format(params))
+
+		# Merge in the defaults.
+		defaults = {
+			'path' : None,
+			'center' : True,
+			'scale' : True,
+			'rotate' : True,
+			'depth' : RawUtterance.DEFAULT_NORMALIZATION_DEPTH
+		}
+		defaults.update(params)
+		params = defaults
+
+		# Create the normalizer.
+		norm = Normalize(
+			center=params['center'],
+			scale=params['scale'],
+			rotate=params['rotate']
+		)
+
+		path = params['path']
+		if path is None:
 			logger.info('No normalization data available. We will use '
 				'on-the-fly (non-persistent) normalization. In the future, '
 				'you probably want to give a filename to the "normalization" '
 				'key in the speech recognition supplier.')
-			self.train_normalizer(norm)
+			self.train_normalizer(norm, depth=params['depth'])
+		else:
+			path = os.path.expanduser(os.path.expandvars(path))
+			if os.path.exists(path):
+				if not os.path.isfile(path):
+					raise ValueError('Normalization data must be a regular '
+						'file. This is not: {}'.format(path))
+				logger.info('Restoring normalization statistics: %s', path)
+				norm.restore(path)
+				self.features = norm.get_dimensionality()
+			else:
+				logger.info('Training new normalization statistics: %s', path)
+				self.train_normalizer(norm, depth=params['depth'])
+				norm.save(path)
 
 		# Register the normalizer
 		self.norm = norm
@@ -140,7 +166,7 @@ class RawUtterance(ChunkSource, Shuffleable):
 		]
 
 	###########################################################################
-	def train_normalizer(self, norm):
+	def train_normalizer(self, norm, depth):
 		""" Trains the normalizer on the data.
 
 			# Arguments
@@ -148,10 +174,7 @@ class RawUtterance(ChunkSource, Shuffleable):
 			norm: Normalize instance. The normalization transform to train.
 		"""
 		logger.info('Training normalization transform.')
-		num_entries = min(
-			RawUtterance.NORMALIZATION_DEPTH,
-			len(self.audio_paths)
-		)
+		num_entries = min(depth, len(self.audio_paths))
 		paths = random.sample(self.audio_paths, num_entries)
 		data = self.load_audio(paths)
 		self.features = data[0].shape[-1]

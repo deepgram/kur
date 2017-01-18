@@ -39,7 +39,7 @@ class Normalize:
 			raise ValueError('Invalid whitening transformation: {}'
 				.format(rotate))
 
-		if rotate is 'zca' and not scale:
+		if rotate == 'zca' and not scale:
 			warnings.warn('"zca" without scaling is an identity transform. '
 				'Only "center" will have any effect.', UserWarning)
 
@@ -65,6 +65,12 @@ class Normalize:
 		""" Returns True if we have a normalization transform available.
 		"""
 		return self.state is not None
+
+	###########################################################################
+	def get_dimensionality(self):
+		""" Returns the dimensionality of the normalization.
+		"""
+		return self.state['mean'].shape[0]
 
 	###########################################################################
 	def learn(self, data):
