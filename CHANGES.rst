@@ -4,6 +4,26 @@ CHANGES
 master (unreleased)
 -------------------
 
+0.2.0 (2017.01.18)
+
+- Massive overhaul of the Keras backend, moving away from the model extension
+  pattern and toward low-level functions for implementing the training/testing/
+  evaluation loops.
+- Rewrote the model assembly code to be more flexible.
+- Added new loss functions: CTC
+- Added new optimizer: RMSProp
+- Added new derived sources
+- Added several new layers: recurrent, pooling, assertion, output, batch
+  normalization, transpose.
+- Better packaging for remote datasets.
+- Added audio processing tools and a speech recognition example.
+- By default, models block while compiling, so the user doesn't see a hanging
+  "Epoch 1/X" prompt.
+- Added support for shape tracking in the model.
+- Updating documentation.
+- Eliminated several dependencies.
+- Improved unit tests and coverage.
+
 0.1.2 (2016.12.05)
 ------------------
 
