@@ -114,7 +114,7 @@ Excited yet? Read on!
 
 	Clever readers will notice that each training epoch only used 480 training
 	samples. But MNIST provides 60,000 training samples total, so what gives?
-	Simple: lots of us are running this code on consumer hardware; In fact, I'm
+	Simple: lots of us are running this code on consumer hardware; in fact, I'm
 	running this example on my tiny ultrabook on an Intel Core m7 CPU. As
 	you'll see in :ref:`Under the Hood <sect_under_the_hood>`, I truncate the
 	training process to only train on 10 batches of 32 samples each, just to
