@@ -135,22 +135,22 @@ specification file:
 
 	train:
 	  data:
-		- mnist:
-			images:
-			  url: "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz"
-			labels:
-			  url: "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz"
+	    - mnist:
+	        images:
+	          url: "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz"
+	        labels:
+	          url: "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz"
 
 	model:
 	  - input: images
 	  - convolution:
-		  kernels: 64
-		  size: [2, 2]
+	      kernels: 64
+	      size: [2, 2]
 	  - activation: relu
 	  - flatten:
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 	include: mnist-defaults.yml
 
@@ -165,11 +165,11 @@ There's a section to put the data. That's this:
 
 	train:
 	  data:
-		- mnist:
-			images:
-			  url: "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz"
-			labels:
-			  url: "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz"
+	    - mnist:
+	        images:
+	          url: "http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz"
+	        labels:
+	          url: "http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz"
 
 And then there's a spot to define your model:
 
@@ -178,13 +178,13 @@ And then there's a spot to define your model:
 	model:
 	  - input: images
 	  - convolution:
-		  kernels: 64
-		  size: [2, 2]
+	      kernels: 64
+	      size: [2, 2]
 	  - activation: relu
 	  - flatten:
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 And there is an "include" part that just contains some default settings
 (advanced users might want to tweak these---don't worry, it's still simple):
@@ -222,17 +222,17 @@ the two convolutions.
 	model:
 	  - input: images
 	  - convolution:
-		  kernels: 64
-		  size: [2, 2]
+	      kernels: 64
+	      size: [2, 2]
 	  - activation: relu
 	  - convolution:
-		  kernels: 64
-		  size: [2, 2]
+	      kernels: 64
+	      size: [2, 2]
 	  - activation: relu
 	  - flatten:
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 We can also add more dense (fully-connected) layers. You probably want them
 separated by activation layers, too. So if we add a 32-node fully-connected
@@ -243,19 +243,19 @@ layer to our model, it now looks like this:
 	model:
 	  - input: images
 	  - convolution:
-		  kernels: 64
-		  size: [2, 2]
+	      kernels: 64
+	      size: [2, 2]
 	  - activation: relu
 	  - convolution:
-		  kernels: 64
-		  size: [2, 2]
+	      kernels: 64
+	      size: [2, 2]
 	  - activation: relu
 	  - flatten:
 	  - dense: 32
 	  - activation: relu
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 Let's give it a try! Save your changes, a just run the same ``kur train
 mnist.yml`` and ``kur evaluate mnist.yml`` commands from before.
@@ -297,27 +297,27 @@ convolutional layers, with occassional pooling layers.
 	  - input: images
 
 	  - convolution:
-		  kernels: 64
-		  size: [2, 2]
+	      kernels: 64
+	      size: [2, 2]
 	  - activation: relu
 
 	  - convolution:
-		  kernels: 96
-		  size: [2, 2]
+	      kernels: 96
+	      size: [2, 2]
 	  - activation: relu
 
 	  - pool: [3, 3]
 
 	  - convolution:
-		  kernels: 96
-		  size: [2, 2]
+	      kernels: 96
+	      size: [2, 2]
 	  - activation: relu
 
 	  - flatten:
 	  - dense: [64, 10]
 
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 So we have three convolutions with a 3-by-3 pooling layer in the middle, and
 two fully-connected layers.  Try training this model: ``kur train mnist.yml``.
@@ -368,13 +368,13 @@ similar model to the MNIST example:
 	model:
 	  - input: images
 	  - convolution:
-		  kernels: 64
-		  size: [2, 2]
+	      kernels: 64
+	      size: [2, 2]
 	  - activation: relu
 	  - flatten:
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 We will start with a simple modification: let's make the convolution `size` a
 variable, so we can easily change it later. We can do it like this:
@@ -389,13 +389,13 @@ variable, so we can easily change it later. We can do it like this:
 	model:
 	  - input: images
 	  - convolution:
-		  kernels: 64
-		  size: "{{ cnn.size }}"
+	      kernels: 64
+	      size: "{{ cnn.size }}"
 	  - activation: relu
 	  - flatten:
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 Okay, what just happened? First, we added a ``settings:`` section. This section
 is the appropriate place to declare variables, settings, and hyperparameters
@@ -426,17 +426,17 @@ layer, too). So this would look like:
 	model:
 	  - input: images
 	  - convolution:
-		  kernels: 64
-		  size: "{{ cnn.size }}"
+	      kernels: 64
+	      size: "{{ cnn.size }}"
 	  - activation: relu
 	  - convolution:
-		  kernels: 64
-		  size: "{{ cnn.size }}"
+	      kernels: 64
+	      size: "{{ cnn.size }}"
 	  - activation: relu
 	  - flatten:
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 Ah! So now we can see why variablizing the convolution size was nice: if we
 want to play with a model that uses different size kernels, we only need to
@@ -479,7 +479,7 @@ convolution + activation layers at once. It looks like this:
 	  - flatten:
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 This is equivalent to the version without the "for" loop. The ``for:`` loop
 tells us to do everything in the ``iterate:`` section twice. (Why twice?
@@ -506,7 +506,7 @@ iterations like this:
 	  - flatten:
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 Think about this for a minute. Does it make sense? It should. The model looks
 like this:
@@ -549,7 +549,7 @@ each convolution, we can do this:
 	  - flatten:
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 Again, this is just Jinja2 substitution: we are asking for the ``index``-th
 element of the ``cnn.kernels`` list. Each iteration of the ``for:`` loop
@@ -593,7 +593,7 @@ like this:
 	  - flatten:
 	  - dense: 10
 	  - activation: softmax
-		name: labels
+	    name: labels
 
 You'll notice that the ``layers`` variable is gone, and we have this funky
 ``|length`` thing in the "for" loop's ``range``. This is standard Jinja2: the
@@ -697,7 +697,7 @@ loss on the *validation* set) to ``cifar.best.valid.w``. Similarly, in the
 
 .. code-block:: yaml
 
-  	weights:
+	  weights:
 	  initial: cifar.best.valid.w
 	  save_best: cifar.best.train.w
 	  last: cifar.last.w

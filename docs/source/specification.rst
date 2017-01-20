@@ -43,7 +43,7 @@ All Kur specifications support these top-level sections:
 	test:
 	evaluate:
 
-	# Required for training, validation and testing
+	# Required for training, validation, and testing
 	loss:
 
 	...
@@ -74,7 +74,7 @@ container looks like this:
 	
 	    # Parameters that are given to the container.
 	    param1: value1
-		param2: value2
+	    param2: value2
 
 	  # Optional information about this container.
 	  name: NAME
@@ -334,11 +334,11 @@ The Kur backend can be chosen like this:
 
 	  backend:
 	    name: NAME
-		variant: VARIANT
-		device: DEVICE
-		PARAM_KEY: PARAM_VALUE
-		PARAM_KEY: PARAM_VALUE
-		...
+	    variant: VARIANT
+	    device: DEVICE
+	    PARAM_KEY: PARAM_VALUE
+	    PARAM_KEY: PARAM_VALUE
+	    ...
 
 The ``NAME``, ``VARIANT``, ``DEVICE``, and ``PARAM_`` fields are all optional.
 
@@ -839,7 +839,7 @@ Hooks can take parameters as well. An example of using hooks is:
 	hooks:
 	  - output:
 	      path: /path/to/output.pkl
-		  format: pickle
+	      format: pickle
 	  - custom_function:
 	      param: value
 
@@ -893,9 +893,9 @@ model output needs a corresponding loss function defined. It looks like this:
 
 	  - target: MODEL_OUTPUT_1
 	    name: LOSS_FUNCTION
-		weight: WEIGHT
-		param_1: value_1
-		param_2: value_2
+	    weight: WEIGHT
+	    param_1: value_1
+	    param_2: value_2
 
 	  - target: MODEL_OUTPUT_2
 	    # ... etc

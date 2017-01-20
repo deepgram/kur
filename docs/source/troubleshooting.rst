@@ -82,21 +82,21 @@ There are a number of ways to solve this.
 
 	  .. code-block:: yaml
 
-	  	settings:
-		  backend:
-			name: keras
-			backend: tensorflow
+	      settings:
+	        backend:
+	          name: keras
+	          backend: tensorflow
 
 	- If you want to use the Keras backend with Theano, then you can add the
 	  ``optimizer: no`` setting to your specification file:
 
 	  .. code-block:: yaml
 
-		settings:
-		  backend:
-			name: keras
-			backend: theano
-			optimizer: no
+	    settings:
+	      backend:
+	        name: keras
+	        backend: theano
+	        optimizer: no
 
 	- If you are using the Keras backend with Theano programmatically through
 	  the Python API, you can pass the Keras backend constructor an additional
@@ -104,7 +104,7 @@ There are a number of ways to solve this.
 
 	  .. code-block:: python
 
-		backend = KerasBacked(optimizer=False)
+	    backend = KerasBacked(optimizer=False)
 
 	- Install a linear algebra library. This depends a little on your platform.
 	  For Ubuntu, you can do this:
@@ -142,8 +142,8 @@ this in your specification:
 
 	settings:
 	  backend:
-		name: keras
-		backend: theano
+	    name: keras
+	    backend: theano
 
 Couldn't find ffmpeg or avconv
 ------------------------------

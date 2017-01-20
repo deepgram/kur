@@ -104,7 +104,7 @@ This is a simplied template you can use for writing Kur models.
 	  #       `OUTPUT`, corresponding to the `INPUT` and `OUTPUT` names in the
 	  #       model section above.
 	  data:
-		- pickle: TRAIN_DATA
+	    - pickle: TRAIN_DATA
 
 	  # Try playing with the batch size and watching accuracy and speed.
 	  provider:
@@ -116,13 +116,13 @@ This is a simplied template you can use for writing Kur models.
 	  # Where to load and save weights.
 	  weights:
 	    initial: INITIAL_WEIGHTS
-		best: BEST_TRAINING_LOSS_WEIGHTS
-		last: MOST_RECENT_WEIGHTS
+	    best: BEST_TRAINING_LOSS_WEIGHTS
+	    last: MOST_RECENT_WEIGHTS
 
 	  # The optimizer to use. Try doubling or halving the learning rate.
 	  optimizer:
 	    name: adam
-		learning_rate: 0.001
+	    learning_rate: 0.001
 
 	# You need this section if you want to run validation checks during
 	# training.
@@ -161,7 +161,7 @@ This is a simplied template you can use for writing Kur models.
 	  # You need an entry whose target is `OUTPUT` from the model section above.
 	  - target: OUTPUT
 	    
-		# The name of the loss function. Change it if appropriate
+	    # The name of the loss function. Change it if appropriate
 	    name: categorical_crossentropy
 	...
 

@@ -26,7 +26,6 @@ Let's generate 2-dimensional points, where *x* is in [-pi, pi] and *y* is in
 of points to generate, and the file to save them to. Here's the script:
 
 .. code-block:: python
-
 	:caption: make_points.py
 
 	import sys
@@ -34,23 +33,23 @@ of points to generate, and the file to save them to. Here's the script:
 	import numpy
 
 	if len(sys.argv) != 3:
-		print(
-			'Usage: {} NUM-SAMPLES OUTPUT-FILE'.format(sys.argv[0]),
-			file=sys.stderr
-		)
-		sys.exit(1)
+	    print(
+	        'Usage: {} NUM-SAMPLES OUTPUT-FILE'.format(sys.argv[0]),
+	        file=sys.stderr
+	    )
+	    sys.exit(1)
 
 	_, num_samples, output_file = sys.argv
 	num_samples = int(num_samples)
 
 	x = numpy.array([
-		numpy.random.uniform(-numpy.pi, numpy.pi, num_samples),
-		numpy.random.uniform(-1, 1, num_samples)
+	    numpy.random.uniform(-numpy.pi, numpy.pi, num_samples),
+	    numpy.random.uniform(-1, 1, num_samples)
 	]).T
 	y = (numpy.sin(x[:,0]) < x[:,1]).astype(numpy.float32) * 2 - 1
 
 	with open(output_file, 'wb') as fh:
-		fh.write(pickle.dumps({'point' : x, 'above' : y}))
+	    fh.write(pickle.dumps({'point' : x, 'above' : y}))
 
 Alright. Let's make some data!
 

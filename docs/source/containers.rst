@@ -264,8 +264,8 @@ top-level element of your data. This is like a `map function
 	parallel:
 	  apply:
 	    - CONTAINER_1
-		- CONTAINER_2
-		...
+	    - CONTAINER_2
+	    ...
 
 The ``apply`` key is a list of layers (or operations) that define the
 "parallel" / "sub-model" / "time-distributed" operation. Each container in the
@@ -353,8 +353,8 @@ over and over again).
 	  with_index: INDEX
 	  iterate:
 	    - CONTAINER_1
-		- CONTAINER_2
-		...
+	    - CONTAINER_2
+	    ...
 
 - ``RANGE``: the number of times to iterate.
 - ``INDEX``: the name of the local variable to create. This is optional and
