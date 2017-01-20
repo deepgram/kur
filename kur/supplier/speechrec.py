@@ -365,6 +365,7 @@ class SpeechRecognitionSupplier(Supplier):
 	"""
 
 	DEFAULT_UNPACK = True
+	DEFAULT_TYPE = 'spec'
 	SUPPORTED_TYPES = ('wav', 'mp3', 'flac')
 
 	###########################################################################
@@ -392,7 +393,7 @@ class SpeechRecognitionSupplier(Supplier):
 		logger.debug('Creating sources.')
 		utterance_raw = RawUtterance(
 			self.data['audio'],
-			feature_type=type or 'mfcc',
+			feature_type=type or SpeechRecognitionSupplier.DEFAULT_TYPE,
 			normalization=normalization,
 			max_frequency=max_frequency
 		)

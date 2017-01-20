@@ -289,10 +289,10 @@ Sink
 ----
 
 Normally, a model's output containers are the last, unconnected containers in
-the specification. But just like with ``inputs``, sometimes you want to mark a
-container explicitly as an output container. You can do this by setting the
-``sink`` field to a boolean true value (in YAML you can do this with ``sink:
-[yes | true]``).
+the Kurfile, or standalone ``output`` layers. But Kur also allows you to
+quickly tag a layer as an output layer without creating another layer entry.
+You can do this by setting the ``sink`` field to a boolean true value (in YAML
+you can do this with ``sink: [yes | true]``).
 
 For example, consider this:
 
@@ -517,8 +517,12 @@ existing model. It looks like this:
 	  # What optimizer to use (optional)
 	  optimizer: OPTIMIZER
 
+	  # Callbacks to be executed after each epoch (optional)
+	  hooks: HOOKS
+
 The ``data`` and ``provider`` fields are discussed in the :ref:`data_spec`
-section. The other fields we discuss below.
+section, and the ``hooks`` field is discussed in :ref:`hooks_spec`. The other
+fields we discuss below.
 
 .. _log_spec:
 
@@ -605,7 +609,39 @@ Available optimizers:
 - ``adam``: The `Adam optimizer <arxiv.org/abs/1412.6980>`_. It takes these
   parameters:
 
-    - ``learning_rate`` (default: 0.001): the learning rate for the optimizer.
+    - ``learning_rate`` (default: 0.001). The learning rate for the optimizer.
+
+- ``sgd``. Stochastic gradient descent. It takes these parameters:
+
+	- ``learning_rate`` (default: 0.01). The learning rate for the optimizer.
+	- ``momentum`` (default: 0)
+	- ``decay`` (default: 0)
+	- ``nesterov`` (default: ``no``). If True, Nesterov momentum calculations
+	  are used.
+
+- ``rmsprop``. RMSProp. It takes these parameters:
+
+	- ``learning_rate`` (default: 0.001). The learning rate for the optimizer.
+	- ``rho`` (default: 0.9)
+	- ``epsilon`` (default: ``1e-8``)
+	- ``decay`` (default: 0)
+
+Additionally, all of these optimizers support these paramters:
+
+- ``clip`` (default: ``null``). Scale or clip gradients. To scale the gradients
+  so that their L2 norm never exceeds some value ``X``, use:
+
+	.. code-block:: yaml
+
+	    clip:
+	      norm: X
+
+  To clip gradients so that none of their absolute values exceeds ``X``, use:
+
+	.. code-block:: yaml
+
+	    clip:
+	      abs: X
 
 If no optimizer is specified, or if the name is mising, the ``adam`` optimizer
 is used.
@@ -694,8 +730,13 @@ like this:
 	  # Where to store weights (optional)
 	  weights: WEIGHTS
 
+	  # Hooks for running some quick analysis on validation data between
+	  # epochs (optional).
+	  hooks: HOOKS
+
 The ``data`` and ``provider`` fields are discussed in the :ref:`data_spec`
-section. The other fields we discuss below.
+section, and the ``hooks`` field is discussed in :ref:`hooks_spec`. The other
+fields we discuss below.
 
 Weights
 -------
@@ -746,8 +787,11 @@ test``. Unsurprisingly, the ``test`` section just needs data:
 	  data: DATA
 	  provider: PROVIDER
 
+	  # Hooks for running some quick analysis on the model outputs (optional).
+	  hooks: HOOKS
+
 The ``data`` and ``provider`` fields are discussed in the :ref:`data_spec`
-section.
+section, and the ``hooks`` field is discussed in :ref:`hooks_spec`.
 
 Evaluate
 ========
@@ -785,7 +829,8 @@ The evaluation section looks like this:
 	  destination: DESTINATION
 
 The ``data`` and ``provider`` fields are discussed in the :ref:`data_spec`
-section. The other fields we discuss below.
+section, and the ``hooks`` field is discussed in :ref:`hooks_spec`. The other
+fields we discuss below.
 
 Weights
 -------
@@ -812,53 +857,6 @@ These are all valid:
 	weights:
 	  initial: PATH
 
-.. _hooks_spec:
-
-Hooks
------
-
-Evaluation hooks are an opportunity to apply transformations to the model's
-output before saving it. The ``hooks`` section is a list of hooks. Each hook is
-a function that is applied, in order, to the model output. So if you have two
-hooks ``F`` and ``G``, and the model output is ``x``, then the final result
-that will be produced is ``F(G(x))``, so to speak.
-
-When do you want hooks? Usually in two cases:
-
-- **Decoding**. Sometimes the model output is not in the format that is most
-  usable to the rest of your system. You can use a hook to post-process /
-  manipulate the data right within Kur.
-- **Analysis**. Again, sometimes it's really convenient to be able to generate
-  additional statistics right within Kur, as seen in the :ref:`MNIST example
-  <in_depth_mnist_example>`. This is a nice place to do it.
-
-Hooks can take parameters as well. An example of using hooks is:
-
-.. code-block:: yaml
-
-	hooks:
-	  - output:
-	      path: /path/to/output.pkl
-	      format: pickle
-	  - custom_function:
-	      param: value
-
-Many of these hooks will be application specific, but these hooks are available
-as part of Kur:
-
-- ``mnist``: This is a analysis hook used in the MNIST example, and is not
-  appropriate for use outside of that example.
-- ``output``: This is used for saving intermediate data products. This is done
-  by the :ref:`destination_spec`, but can also be done as a hook, which is nice
-  when you want to save the model output, apply some other hooks, and then let
-  ``destination`` save the final product as well. It takes two parameters:
-
-    - ``path``: the path to save the data to.
-	- ``format``: the data format to save the data as. Supported formats are:
-
-	  - ``pkl`` or ``pickle``: Python 3 pickle. This is the default if
-	    ``format`` is not specified.
-
 .. _destination_spec:
 
 Destination
@@ -866,8 +864,8 @@ Destination
 
 The ``destination`` field is basically just a special hook. It is an ``output``
 hook that will always be executed last. Since it is just an ``output`` hook, it
-accepts the same arguments as an ``output`` hook. See :ref:`hooks_spec` for more
-details.
+accepts the same arguments as an ``output`` hook. See :ref:`hooks_spec` for
+more details.
 
 .. note::
 
@@ -933,6 +931,7 @@ and ``output``. Your specification should look like this:
 	  output: TRUE_TRANSCRIPTION
 	  input_length: LENGTH_OF_PREDICTED_TRANSCRIPTION
 	  output_length: LENGTH_OF_TRUE_TRANSCRIPTION
+	  relative_to: AUTOSCALE_TARGET
 
 Here is description of all these pieces:
 
@@ -949,16 +948,20 @@ Here is description of all these pieces:
   which contains the number of timesteps in the model's output to consider
   during loss function calculations. It should be a tensor of shape
   ``(NUMBER_OF_SAMPLES, 1)``, where each value is an integer indicating the
-  length. If all of your model's input samples span the entire duration of the
-  input timesteps, then this length is just a constant value, equal to the
-  number of timesteps outputted in the *output layer*. If your data samples are
-  of difference sizes, try zero-padding them and providing the appropriately
-  scaled number of timesteps as the length. For example, let's say you have a
-  maximum of 200 frames of audio per input sample, which you then pass through
-  a network that ultimately shapes the output into 32-length outputs. If you
-  have an audio sample of length 140 frames, then you should set the
-  ``LENGTH_OF_PREDICTED_TRANSCRIPTION`` length to ``ceil((140 / 200) * 32) =
-  23`` for that sample.
+  length of the data in the ``AUTOSCALE_TARGET`` data source. By default,
+  ``AUTOSCALE_TARGET`` is set to the ``PREDICTED_TRANSCRIPTION`` (output)
+  layer. In this case, if all of your model's input samples span the entire
+  duration of the input timesteps, then this length is just a constant value,
+  equal to the number of timesteps outputted in the *output layer*. If your
+  data samples are of difference sizes, try zero-padding them and providing the
+  appropriately scaled number of timesteps as the length. For example, let's
+  say you have a maximum of 200 frames of audio per input sample, which you
+  then pass through a network that ultimately shapes the output into 32-length
+  outputs. If you have an audio sample of length 140 frames, then you should
+  set the ``LENGTH_OF_PREDICTED_TRANSCRIPTION`` length to ``ceil((140 / 200) *
+  32) = 23`` for that sample. For complex models, it can be non-trivial to
+  calculate this scaled value. In that case, it is easier to use
+  ``relative_to`` (see ``AUTOSCALE_TARGET`` below).
 - ``LENGTH_OF_TRUE_TRANSCRIPTION``. This is the name of the *data source* which
   indicates the number of "words" in each ground-truth transcription. It should
   be a tensor of shape ``(NUMBER_OF_SAMPLES, 1)``, where each value is an
@@ -977,6 +980,20 @@ Here is description of all these pieces:
   Note that you need to pad it out (here, with ``0``'s) so that the total
   length is the maximum transcript length you are training on. The CTC blank
   character will automatically be inserted as ``number_of_words``.
+- ``AUTOSCALE_TARGET``. Frankly, it can be a pain to need to determine your
+  ``LENGTH_OF_PREDICTED_TRANSCRIPTION`` values. Moreover, as you start
+  prototyping new models, the last thing you want to deal with is updating your
+  dataset to reflect how the shape of the output layer depends on the shape of
+  the input layer. So Kur can do this for you! To do this, set
+  ``LENGTH_OF_PREDICTED_TRANSCRIPTION`` to a dataset containing the lengths of
+  each *input sample* (e.g., audio utterance), then set ``AUTOSCALE_TARGET`` to
+  the name of the *input layer*. Kur will then determine the appropriately
+  scaled length of the predicted transcriptions by calculating how the shape
+  of the input samples changes between the ``AUTOSCALE_TARGET`` layer and the
+  ``PREDICTED_TRANSCRIPTION`` layer, and transform the lengths of the
+  ``LENGTH_OF_PREDICTED_TRANSCRIPTION`` values appropriately. If
+  ``AUTOSCALE_TARGET`` is not specified, it is equivalent to setting
+  ``AUTOSCALE_TARGET`` to the output layer (``PREDICTED_TRANSCRIPTION``).
 
 Overall, you should make sure these constraints are satisfied:
 
@@ -987,7 +1004,9 @@ Overall, you should make sure these constraints are satisfied:
   trying to predict.
 - The maximum value of ``LENGTH_OF_PREDICTED_TRANSCRIPTION`` is the number of
   timesteps in your model's output (again, often this is larger than the length
-  of the transcription you are trying to predict).
+  of the transcription you are trying to predict). If you use
+  ``AUTOSCALE_TARGET``, then the maximum value should be the number of
+  timesteps in the layer pointed to by the ``AUTOSCALE_TARGET``.
 - The maximum value of ``LENGTH_OF_TRUE_TRANSCRIPTION`` is less than or equal
   to the number of timesteps in your model's output.
 
@@ -1027,6 +1046,21 @@ Your CTC loss function would be:
 	  output_length: transcription_length
 	  output: transcription
 
+Alternatively, you could use ``AUTOSCALE_TARGET`` (the value of ``relative_to``)
+in order to simplify your calculations. In this case, your ``input_length``
+data source would be the lengths of the input audio (in our example, 200, so
+the ``input_length`` data source would be: ``[ [200], [200], [200], ... ]``)
+and your CTC loss function would look like:
+
+.. code-block:: yaml
+
+	- name: ctc
+	  target: output
+	  input_length: input_length
+	  relative_to: input
+	  output_length: transcription_length
+	  output: transcription
+
 .. _data_spec:
 
 Data Specification
@@ -1063,31 +1097,18 @@ names of the Kur suppliers.
 
 Valid suppliers are:
 
-- ``mnist``: This supplier provides MNIST data for the :ref:`in_depth_mnist_example`
-  example. It takes two parameters: ``images`` and ``labels``, each of which, in
-  turn, can be one of the following:
-
-    - A filename pointing to the location of the MNIST data.
-	- A dictionary with ``local`` key whose value is the filename of the MNIST
-	  data.
-	- A dictionary with ``url`` key, whose value is the URL to download the
-	  MNIST from. It can also have a ``sha256`` key for verifying the file
-	  integrity with a SHA-256 hash (by default, no integrity check is
-	  performend). It can also have a ``path`` pointing to a directory on the
-	  machine to store the MNIST data (by default, it is the system temp
-	  directory).
+- ``mnist``: This supplier provides MNIST data for the
+  :ref:`in_depth_mnist_example` example. It takes two parameters: ``images``
+  and ``labels``, each of which, in turn, is a :ref:`package_specification`.
 
   The MNIST supplier also takes care of creating a one-hot representation of the
   labels as well as normalizing the images. The images are presented to the
   network as single channel images (i.e., they are 3D).
 
-- ``cifar``: This supplier provides CIFAR data for the :ref:`in_depth_cifar_10` example.
-  Supported parameters are:
+- ``cifar``: This supplier provides CIFAR data for the :ref:`in_depth_cifar_10`
+  example. In addition to standard :ref:`package_specification`, you can also
+  specify:
 
-	- ``url``: The URL to download the data from (cannot be used with
-	  ``local``).
-	- ``sha256``: The SHA-256 checksum for integrity checking.
-	- ``local``: A path to a local file to load (cannot be used with ``url``).
 	- ``parts``: Which parts of the data set to load. CIFAR-10 splits the data
 	  sets into 6 pieces, named: 1, 2, 3, 4, 5, and "test". If ``parts`` is not
 	  specified, all six pieces are loaded by the supplier; otherwise, ``parts``
@@ -1103,6 +1124,83 @@ Valid suppliers are:
   values are numpy arrays, and saving the dictionary with ``numpy.save``. The
   name of the file is expected as the only argument: ``numpy_dict: PATH``.
 
+- ``csv``: This supplier loads CSV data. If you only give it a filename, then
+  it will try to load a local file, and it assumes that the first row of the
+  file is a header row. Alternatively, you can given it a dictionary of
+  arguments. In addition to the standard :ref:`package_specification`, you
+  can also use these parameters (all of which are optional):
+
+  .. code-block:: yaml
+
+	csv:
+	  format:
+	    delimiter: DELIMITER
+		quote: QUOTE_CHARACTER
+	  header: HEADER
+	  # ... also uses standard packaging
+
+  ``DELIMITER`` is the delimiter character. Normally, it is autodetected, but
+  you can override it here. Similarly, the ``QUOTE_CHARACTER`` indicates the
+  character that begins/ends quoted strings, and is usually autodetected. The
+  ``HEADER`` value is a boolean (``yes`` / ``no``) which indicates whether or
+  not the first row of the file is a header row. If true, the names of the
+  columns are used as the names of the data sources (e.g., you can use them in
+  your model). If false, the first row is treated like data, and corresponding
+  data sources of the form ``column_X`` are generated (``X`` is zero-based).
+  By default, ``HEADER`` is true.
+
+  .. note::
+
+	At the moment, all CSV data will be cast to floating-point numbers. This
+	means that if strings are encountered, you will get errors.
+
+- ``speech_recognition``. This supplier loads data appropriate for automatic
+  speech recognition (ASR, also known as transcription). It takes the standard
+  :ref:`package_specification`, in addition to these other optional parameters:
+
+	- ``unpack``: bool (default: True). If set, and if the source file is
+	  compressed (e.g., ``.tar.gz``), then Kur will first unpack the file
+	  before using the dataset.
+	- ``type``: str, either ``spec`` or ``mfcc`` (default: ``spec``).
+	  Determines the type of audio features to present to the model, either
+	  spectrograms (for ``spec``) or Mel-frequency cepstral coefficients
+	  (``mfcc``).
+	- ``max_duration``: float (default: None). Only keeps audio utterances that
+	  are shorter than ``max_duration`` seconds; if unspecified or ``null``, it
+	  keeps all utterances.
+	- ``max_frequency``: float (default: None). Only keep frequency components
+	  that are less than ``max_frequency`` Hertz; if unspecified or ``null``,
+	  it keeps all frequencies.
+	- ``vocab``: str, list, or None (default: None). The vocabulary to use in
+	  preparing transcripts. If None, it auto-detects the vocabulary from the
+	  dataset (**note**: this is *only* recommended for testing). If a string,
+	  it is a JSON file containing a single JSON list; each element in the list
+	  is treated as a case-insensitive vocabulary word. If a list, each element
+	  of the list is treated as a case-insensitive word.
+
+  The speech recognition supplier will produce the following data sources that
+  you can use in your model:
+
+	- ``utterance``. The audio signal itself.
+	- ``utterance_length``. The number of frames in the audio signal.
+	- ``transcript``. An integer-encoded transcript.
+	- ``transcript_length``. The length of the corresponding transcript.
+	- ``duration``. The length of the audio utterance, in seconds.
+
+  The input file can be a file (which is extracted) or a directory. Kur will
+  search for a JSON-Lines (JSONL) file, each line of which should be a JSON
+  directionary with the following keys:
+
+	- ``text``: the transcription.
+	- ``duration_s``: the duration of the audio, in seconds.
+	- ``uuid``: a unique value used to identify the audio.
+
+  Next to the JSONL file should be a directory named ``audio`` where all of the
+  audio sources are stored. Each filename should be of the form ``UUID.EXT``,
+  where ``UUID`` is the corresponding UUID in the JSONL file, and ``EXT``
+  should be an extension identifying the format of the audio. Kur currently
+  accepts the following formats: ``wav``, ``mp3``, and ``flac``.
+
 The most important thing to realize about data suppliers is that the name of
 the data sources must correspond to the inputs and, for training and testing,
 the outputs of the model. For example, MNIST has an explicit ``images`` and
@@ -1111,6 +1209,26 @@ has implicit ``images`` and ``labels`` keys that it creates internally.
 Similarly, if you create a Python pickle, then the keys in the pickled
 dictionary must correspond to the names of the input and output containers in
 the model.
+
+.. _package_specification:
+
+Standard Packaging
+``````````````````
+
+Many of the data suppliers accept a standard set of parameters to make things
+convenient for you. These parameters are: ``url``, ``checksum``, and ``path``,
+and are interpreted like this:
+
+- If ``path`` is given but ``url`` is not, then Kur will use a local file or
+  directory (whether or not directories are allowed depends on the data
+  supplier). If ``checksum`` is given, Kur will check that the file's SHA-256
+  hash matches.
+- If ``url`` is given but ``path`` is not, then Kur will download the URL to
+  the system's temporary directory. If ``checksum`` is specified, Kur will
+  check that the file's SHA-256 hash matches.
+- If both ``url`` and ``path`` are specified, then Kur will only download the
+  file if it doesn't already exist at ``path`` (``path`` can be a file or
+  directory) or if its checksum fails (if specified).
 
 Provider
 --------
@@ -1153,6 +1271,98 @@ given to the provider as parameters. Valid provider names are:
 	  shuffled from across the entire dataset if ``randomize`` is True (i.e.,
 	  you will get ``num_batches`` of randomly chosen samples, not simply the
 	  first *N* batches repeatedly).
+	- ``sortagrad``: A string specifying a data source. As Baidu noted in their
+	  `DeepSpeech paper <https://arxiv.org/abs/1512.02595>`_, models can train
+	  better and more stably if, during the first epoch, training samples are
+	  presented in order of increasing duration. If a data source is specified
+	  here, then for the first epoch, data will be sorted by this data source.
+	  Setting ``sortagrad: X`` is equivalent to ``sort_by: X`` with
+	  ``shuffle_after: 1``.
+	- ``sort_by``: A string specifying a data source. If specified, all data is
+	  sorted by this data source before the first epoch. By default, no sorting
+	  is done.
+	- ``shuffle_after``: An integer indicating how many epochs to wait before
+	  randomizing the dataset. By default, this is zero.
+	- ``force_batch_size``: A boolean indicating whether or not the
+	  ``batch_size`` should be strictly adhered to. If this is True, then any
+	  data samples that do not fit cleanly into fixed-sized batches are simply
+	  dropped for that epoch (if shuffling is enabled, then you will still see
+	  all your data samples at some point). If this is False, then Kur will try
+	  its best to use fixed-sized batches, but may occassionally return smaller
+	  batches (particularly at the end of the epoch if the length of the
+	  training set is not evenly divisible by the batch size).
 
 If the ``provider`` section is not given, or if ``name`` is not specified, then
 a ``batch_provider`` is created as a default provider.
+
+.. _hooks_spec:
+
+Hooks
+-----
+
+Hooks are an opportunity to filter, transform, print, and/or save the model's
+output. They do something a little different depending on which section in
+your Kurfile you add them to:
+
+- ``train``: the hooks are called between each epoch and are given the current
+  epoch just completed and the current loss. This is useful for hooking into
+  callbacks that notify you of your model's training progress.
+- ``validate``: the hooks are passed a single batch of model output after each
+  validation run. This is useful for printing out some examples of your model's
+  progress.
+- ``test``: the hooks are passed a single batch of model output once the
+  testing run is complete. Like the ``validate`` hooks, they are useful for
+  printing out some examples of your model's progress.
+- ``evaluate``: the hooks are passed *all* the data generated during the
+  evaluation run. This is useful for printing examples of model output, but
+  also for transforming your data into more useful on-disk formats (e.g, taking
+  the ``argmax`` of one-hot outputs, so you don't need to do it later).
+
+In all cases, the ``hooks`` section is a list of hooks. Each hook is
+a function that is applied, in order, to the model output. So if you have two
+hooks ``F`` and ``G``, and the model output is ``x``, then the final result
+that will be produced is ``G(F(x))``, so to speak. The exception is for
+``train`` hooks, where each hook is simply run in sequence with epoch number
+and the current loss value: ``F(epoch, loss)``, ``G(epoch, loss)``.
+
+When do you want hooks? Usually in two cases:
+
+- **Decoding**. Sometimes the model output is not in the format that is most
+  usable to the rest of your system. You can use a hook to post-process /
+  manipulate the data right within Kur.
+- **Analysis**. Again, sometimes it's really convenient to be able to generate
+  additional statistics right within Kur, as seen in the :ref:`MNIST example
+  <in_depth_mnist_example>`. This is a nice place to do it.
+
+Hooks can take parameters as well. An example of using hooks is:
+
+.. code-block:: yaml
+
+	hooks:
+	  - output:
+	      path: /path/to/output.pkl
+	      format: pickle
+	  - custom_function:
+	      param: value
+
+Many of these hooks will be application specific, but these hooks are available
+as part of Kur:
+
+- ``mnist``: This is a analysis hook used in the MNIST example, and is not
+  appropriate for use outside of that example. It is intended as an
+  ``evaluate`` hook.
+- ``output``: This is used for saving intermediate data products. This is done
+  by the :ref:`destination_spec`, but can also be done as a hook, which is nice
+  when you want to save the model output, apply some other hooks, and then let
+  ``destination`` save the final product as well. It takes two parameters:
+
+    - ``path``: the path to save the data to.
+	- ``format``: the data format to save the data as. Supported formats are:
+
+	  - ``pkl`` or ``pickle``: Python 3 pickle. This is the default if
+	    ``format`` is not specified.
+
+  This hook is primarily an ``evaluate`` hook.
+- ``transcript``: This is useful for performing argmax-decoding of the ASR
+  pipeline, effectively turning your model outputs into true transcriptions.
+  This is intended as a ``test``/``validate`` hook.
