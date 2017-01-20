@@ -32,8 +32,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 			must be the same length as `size` and specify the stride in each
 			respective dimension. If a single number, it is used as the stride
 			in each dimension.
-		activation: one of (relu) or None (optional; default; relu). The
-			activation to apply after the convolution.
+		border: "valid" or "same" (default: "same").
 
 		# Example
 
@@ -42,7 +41,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		  kernels: 64
 		  size: [2, 2]
 		  strides: 1
-		  activation: relu
+		  border: relu
 		```
 	"""
 

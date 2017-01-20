@@ -58,7 +58,7 @@ produce some "high-level" meaning, which in turn is fed into deeper layers.
 	  kernels: KERNELS
 	  size: SIZE
 	  strides: STRIDES
-	  activation: ACTIVATION
+	  border: BORDER
 
 - ``KERNELS``: the number of convolutional filters to apply.
 - ``SIZE``: an integer (for 1-D convolutions) or a list of integers which
@@ -69,10 +69,8 @@ produce some "high-level" meaning, which in turn is fed into deeper layers.
   size) of the convolution. If this is an integer, the stride is applied in
   each dimension; if it is a list, it indicates the stride in each dimension.
   This is optional; its default value is `1`.
-- ``ACTIVATION``: the activation function to apply after the convolution. This
-  is optional; it defaults to ``none``. Note that a convolution layer followed
-  by an activation layer is equivalent to a single convolution layer with an
-  ``activation`` specified.
+- ``BORDER``: one of "valid" or "same", which tells Kur how to treat the edges
+  of the input. Its default value is "same".
 
 Recurrent (RNN)
 ---------------
@@ -89,6 +87,7 @@ Recurrent (RNN)
 	  sequence: SEQUENCE
 	  bidirectional: BIDIRECTIONAL
 	  merge: {multiply | add | average | concat}
+	  outer_activation: ACTIVATION
 
 - ``SIZE``: the number of recurrent nodes in the layer. This is the number of
   features that are kept *per timestep*. If ``SEQUENCE`` is true, then there
@@ -105,6 +104,9 @@ Recurrent (RNN)
 - ``MERGE``: if ``BIDIRECTIONAL`` is true, then this determines how the outputs
   of the forward and backward RNNs is merged. If bidirectional is not set, then
   "merge" cannot be used. The default value is ``average``.
+- ``ACTIVATION``: an activation to apply within the RNN (it is not equivalent
+  to simply following the RNN layer with an Activation layer). Defaults to
+  "relu".
 
 Activation
 ----------
@@ -188,6 +190,10 @@ and improve convergence.
 or::
 
 	batch_normalization:
+	  axis: AXIS
+
+- ``AXIS``: an integer indicating which axis to apply the normalization to.
+  Defaults to -1 (the last axis).
 
 Expand
 ------
@@ -291,6 +297,36 @@ or::
 	reuse: TARGET
 
 - ``TARGET``: the name of the layer to re-apply.
+
+Tranpose
+--------
+
+**Description**. A transpose layer shuffles the dimensions of the data tensor.
+
+**Purpose**. Sometimes you need to reorder your dimensions so that downstream
+layers can act on your data in different ways. The Transpose layer helps you do
+this.
+
+**Usage**::
+
+	transpose: PERMUTATION
+
+or::
+
+	transpose:
+	  axes: PERMUTATION
+	  include_batch: INCLUDE_BATCH
+
+- ``PERMUTATION``: a list of axes which specifies the permutation to apply to
+  the data tensor. You must specify the complete permutation (one entry for
+  each dimension in the data tensor). If ``INCLUDE_BATCH`` is False (the
+  default), then the axes are zero-based, starting with the first dimension
+  after the batch. If ``INCLUDE_BATCH`` is True, then the axes are zero-based,
+  but start with the batch dimension itself.
+- ``INCLUDE_BATCH``: a boolean which indicates whether or not to include the
+  batch dimension in the permutation. By default, it is False. This should
+  almost certainly remain False for most applications, since you probably don't
+  want your layers to act differently depending on batch size!
 
 Placeholder
 -----------
