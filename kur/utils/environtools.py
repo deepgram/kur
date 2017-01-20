@@ -31,12 +31,21 @@ class EnvironmentalVariable:		# pylint: disable=too-few-public-methods
 				inside the context.
 		"""
 		self.vars = kwargs
-		self.old_vars = {}
+		self.old_vars = None
 
 	###########################################################################
 	def __enter__(self):
 		""" Enters the context, setting the temporary environmental variables.
 		"""
+		self.push()
+
+	###########################################################################
+	def push(self):
+		""" Sets the environmental variables. Idempotent.
+		"""
+		if self.old_vars is not None:
+			return
+
 		self.old_vars = {}
 		for k, v in self.vars.items():
 			self.old_vars[k] = os.environ.get(k)
@@ -50,11 +59,22 @@ class EnvironmentalVariable:		# pylint: disable=too-few-public-methods
 	def __exit__(self, exc_type, exc_value, traceback):
 		""" Exists the context, restoring the original environmental variables.
 		"""
+		self.pop()
+
+	###########################################################################
+	def pop(self):
+		""" Reets the environmental variables. Idempotent.
+		"""
+		if self.old_vars is None:
+			return
+
 		for k, v in self.old_vars.items():
 			if v is None:
 				if k in os.environ:
 					del os.environ[k]
 			else:
 				os.environ[k] = v
+
+		self.old_vars = None
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

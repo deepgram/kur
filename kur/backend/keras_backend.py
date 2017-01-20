@@ -185,12 +185,13 @@ class KerasBackend(Backend):
 						logger.info('Requesting GPU %d', self.device_number)
 
 			logger.debug('Overriding environmental variables: %s', env)
-			with EnvironmentalVariable(**env):
-				import keras	# pylint: disable=import-error,unused-variable
-				import keras.backend as K		# pylint: disable=import-error
-				logger.info('Keras is loaded. The backend is: %s',
-					K.backend())
-				self.toolchain = K.backend()
+			EnvironmentalVariable(**env).push()
+
+			import keras	# pylint: disable=import-error,unused-variable
+			import keras.backend as K		# pylint: disable=import-error
+			logger.info('Keras is loaded. The backend is: %s',
+				K.backend())
+			self.toolchain = K.backend()
 
 		# And now we can set the dimension ordering.
 		keras.backend.set_image_dim_ordering('tf')
