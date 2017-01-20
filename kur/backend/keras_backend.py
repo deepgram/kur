@@ -196,20 +196,19 @@ class KerasBackend(Backend):
 		# And now we can set the dimension ordering.
 		keras.backend.set_image_dim_ordering('tf')
 
-		if self.get_toolchain() == 'theano':
-			# The Keras `Wrapper` class accesses `Layer`'s `regularizers`
-			# property (see `Wrapper.build()`), which triggers Keras' own
-			# deprecation warning. Let's suppress this for now so that we don't
-			# confuse our users.
-			logging.getLogger('py.warnings').addFilter(
-				type('theano_filter', (), {
-					'filter' : lambda record: not (
-						record.module == 'topology' and
-						record.levelname == 'WARNING' and
-						record.funcName == 'regularizers'
-					)
-				})
-			)
+		# The Keras `Wrapper` class accesses `Layer`'s `regularizers`
+		# property (see `Wrapper.build()`), which triggers Keras' own
+		# deprecation warning. Let's suppress this for now so that we don't
+		# confuse our users.
+		logging.getLogger('py.warnings').addFilter(
+			type('theano_filter', (), {
+				'filter' : lambda record: not (
+					record.module == 'topology' and
+					record.levelname == 'WARNING' and
+					record.funcName == 'regularizers'
+				)
+			})
+		)
 
 	###########################################################################
 	def get_toolchain(self):
