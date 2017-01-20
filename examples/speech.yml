@@ -101,6 +101,10 @@ settings:
 ###############################################################################
 model:
 
+  # This is Baidu's DeepSpeech model:
+  #   https://arxiv.org/abs/1412.5567
+  # Kur makes prototyping different versions of it incredibly easy.
+
   # The model input is audio data (called utterances).
   - input: utterance
 
