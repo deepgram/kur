@@ -73,15 +73,19 @@ class TranscriptHook(EvaluationHook):
 		blank = len(vocab) if not self.warp else 0
 		prediction = data['asr'][0]
 
-		print('Prediction: "{}"'.format(
-			self.argmax_decode(
+		result = {
+			'prediction' : self.argmax_decode(
 				prediction,
 				rev,
 				blank
+			),
+			'truth' : ''.join(
+				rev.get(i, '') for i in truth['transcript_raw'][0]
 			)
-		))
-		print('Truth: "{}"'.format(''.join(
-			rev.get(i, '') for i in truth['transcript_raw'][0]
-		)))
+		}
+		print('Prediction: "{}"'.format(result['prediction']))
+		print('Truth: "{}"'.format(result['truth']))
+
+		return result
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
