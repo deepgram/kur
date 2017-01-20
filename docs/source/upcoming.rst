@@ -6,24 +6,20 @@ Documentation and Support Features
 ==================================
 
 - "Python API" overview of all components of the system
-- Additional examples: speech recognition
 - Improve CIFAR-10 example with a custom evaluation hook.
 
 Model Features
 ==============
 
-- Rewrite the model construction to allow layers to have better context for
-  what layers come before/after them. This will also allow layers to do shape
-  inference.
+- More intuitive error messages when trying to assemble models.
 - Add "flatten" layers automatically before Dense layers.
 - Add "activation" layers automatically between layers.
-- New "output" layer that simply is used for tagging a layer.
 
-Containers Features
+Container Features
 -------------------
 
-- Transpose
 - Repeat
+- Additional activation functions
 
 Templating Features
 -------------------
@@ -34,6 +30,7 @@ Loss/Optimizer Features
 -----------------------
 
 - New optimizers
+- New loss functions
 
 Data Features
 =============
@@ -56,7 +53,6 @@ Usage Features
 - Allow command-line arguments to override the specification file.
 - Better detecting and handling unused keywords (which may have been typos).
 - Standalone "validate" command.
-- The "build" command should optionally use/not use the data set.
 
 Internal Features
 =================
