@@ -51,7 +51,7 @@ first model:
 	kur --version                               # Check that everything works
 	git clone https://github.com/deepgram/kur   # Get the examples
 	cd kur/examples                             # Change directories
-	kur -v train mnist.yml                     # Start training!
+	kur -v train mnist.yml                      # Start training!
 
 **Quick Start For Using git:**
 
@@ -65,7 +65,7 @@ first model:
 	pip install .                               # Install Kur
 	kur --version                               # Check that everything works
 	cd examples                                 # Change directories
-	kur -v train mnist.yml                     # Start training!
+	kur -v train mnist.yml                      # Start training!
 
 Usage: Kur
 ----------
