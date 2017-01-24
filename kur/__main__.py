@@ -193,24 +193,20 @@ def parse_args():
 	subparsers = parser.add_subparsers(dest='cmd', help='Sub-command help.')
 
 	subparser = subparsers.add_parser('train', help='Trains a model.')
-	subparser.add_argument('kurfile', nargs='?',
-		help='The Kurfile to use.')
+	subparser.add_argument('kurfile', help='The Kurfile to use.')
 	subparser.set_defaults(func=train)
 
 	subparser = subparsers.add_parser('test', help='Tests a model.')
-	subparser.add_argument('kurfile', nargs='?',
-		help='The Kurfile to use.')
+	subparser.add_argument('kurfile', help='The Kurfile to use.')
 	subparser.set_defaults(func=test)
 
 	subparser = subparsers.add_parser('evaluate', help='Evaluates a model.')
-	subparser.add_argument('kurfile', nargs='?',
-		help='The Kurfile to use.')
+	subparser.add_argument('kurfile', help='The Kurfile to use.')
 	subparser.set_defaults(func=evaluate)
 
 	subparser = subparsers.add_parser('build',
 		help='Tries to build a model. This is useful for debugging a model.')
-	subparser.add_argument('kurfile', nargs='?',
-		help='The Kurfile to use.')
+	subparser.add_argument('kurfile', help='The Kurfile to use.')
 	subparser.add_argument('-c', '--compile',
 		choices=['none', 'train', 'test', 'evaluate', 'auto'], default='auto',
 		help='Try to compile the specified variation of the model. If '
