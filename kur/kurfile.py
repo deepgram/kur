@@ -167,7 +167,7 @@ class Kurfile:
 		"""
 		if self.backend is None:
 			self.backend = Backend.from_specification(
-				self.data.get('settings', {}).get('backend')
+				(self.data.get('settings') or {}).get('backend')
 			)
 		return self.backend
 
