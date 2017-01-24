@@ -108,7 +108,7 @@ def build(args):
 	else:
 		logger.error('Unhandled compilation target: %s. This is a bug.',
 			args.compile)
-		return
+		return 1
 
 	target.compile()
 
