@@ -156,6 +156,10 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 							self._shape)
 						self._shape = merged_shape
 
+			if self._shape == ():
+				logger.debug('Promoting an empty shape to a scalar.')
+				self._shape = (1,)
+
 			import keras.layers as L			# pylint: disable=import-error
 			yield L.Input(
 				shape=self._shape,
