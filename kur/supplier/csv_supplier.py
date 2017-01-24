@@ -38,7 +38,8 @@ class CsvSupplier(Supplier):
 		return 'csv'
 
 	###########################################################################
-	def __init__(self, source, *args, **kwargs):
+	def __init__(self, path=None, url=None, checksum=None, format=None,
+		header=None, *args, **kwargs):
 		""" Creates a new Pickle supplier.
 
 			# Arguments
@@ -47,7 +48,14 @@ class CsvSupplier(Supplier):
 		"""
 		super().__init__(*args, **kwargs)
 
-		self.parse_source(source)
+		target = {
+			'path' : path,
+			'url' : url,
+			'checksum' : checksum,
+			'header' : header,
+			'format' : format
+		}
+		self.parse_source({k : v for k, v in target.items() if v is not None})
 		self.data = None
 
 	###########################################################################
@@ -84,9 +92,15 @@ class CsvSupplier(Supplier):
 		with open(self.source, newline='') as fh:
 			kwargs = {}
 
-			# Deduce the file format.
-			kwargs['dialect'] = csv.Sniffer().sniff(fh.read(1024))
-			fh.seek(0)
+			try:
+				# Deduce the file format.
+				kwargs['dialect'] = csv.Sniffer().sniff(fh.read(1024))
+			except csv.Error:
+				logger.warning('Failed to sniff data format for file: %s. You '
+					'might need to manually choose delimiters, quote '
+					'characters, etc.', self.source)
+			finally:
+				fh.seek(0)
 
 			# Override the format, if necessary.
 			if 'delimiter' in self.format:
