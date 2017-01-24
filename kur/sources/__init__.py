@@ -18,5 +18,6 @@ from .source import Source, DerivedSource, OriginalSource
 from .chunk import ChunkSource
 from .vanilla import VanillaSource
 from .repeat import RepeatSource
+from .stack_source import StackSource
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

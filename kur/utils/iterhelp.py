@@ -78,6 +78,24 @@ def merge_dict(*args):
 	return result
 
 ###############################################################################
+def partial_sum(x):
+	""" Returns an iterator over the partial sums in a given iterable.
+
+		# Arguments
+
+		x: iterable. The iterable to return partial sums for.
+
+		# Return value
+
+		At each iteration, yields the most recent partial sum, beginning with
+		`x[0]`.
+	"""
+	result = 0
+	for i in x:
+		result += i
+		yield result
+
+###############################################################################
 class parallelize:
 
 	def __init__(self, it):
