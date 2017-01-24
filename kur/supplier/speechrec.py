@@ -155,14 +155,32 @@ class RawUtterance(ChunkSource):
 	def load_audio(self, paths):
 		""" Loads unnormalized audio data.
 		"""
-		return [
+		result = [
 			get_audio_features(
 				path,
 				feature_type=self.feature_type,
-				high_freq=self.max_frequency
+				high_freq=self.max_frequency,
+				on_error='suppress'
 			)
 			for path in paths
 		]
+
+		# Clean up bad audio
+		if any(x is None for x in result):
+			logger.error('Recovering from a bad audio uttereance.')
+			good = None
+			for candidate in result:
+				if candidate is not None:
+					good = candidate
+					break
+			if good is None:
+				raise ValueError(
+					'Cannot tolerate an entire batch of bad audio.')
+			for i, x in enumerate(result):
+				if x is None:
+					result[i] = good
+
+		return result
 
 	###########################################################################
 	def train_normalizer(self, norm, depth):

@@ -173,7 +173,7 @@ def load_audio(filename):
 		raise
 
 ###############################################################################
-def get_audio_features(audio, feature_type, **kwargs):
+def get_audio_features(audio, feature_type, on_error=None, **kwargs):
 	""" Returns audio features.
 
 		# Arguments
@@ -185,6 +185,9 @@ def get_audio_features(audio, feature_type, **kwargs):
 			- raw: Returns raw audio data (1-dimensional)
 			- mfcc: Returns MFCC features
 			- spec: Returns a spectrogram
+		on_error: str or None (default: None). One of:
+			- 'raise' or None: let the error propagate (no special catching)
+			- 'suppress': catch the error and return None
 		kwargs. Additional arguments that depend on `feature_type`:
 			- For 'raw': no additional parameters
 			- For 'mfcc':
@@ -196,8 +199,22 @@ def get_audio_features(audio, feature_type, **kwargs):
 				- low_freq: int (default: None). The low-frequency cutoff.
 				- high_freq: int (default: None). The high-frequency cutoff.
 	"""
+	assert on_error in (None, 'suppress', 'raise')
+
 	if isinstance(audio, str):
+		original_path = audio
 		audio = load_audio(audio)
+	else:
+		original_path = None
+
+	if len(audio['signal']) < 1:
+		logger.error('Failed to produce audio features while processing file '
+			'%s. Length: %d. Sample rate: %d.', original_path,
+			len(audio['signal']), audio['sample_rate'])
+		if on_error == 'suppress':
+			return None
+		else:
+			raise ValueError('Audio data is too short.')
 
 	if feature_type == 'raw':
 		return audio['signal']
@@ -230,6 +247,16 @@ def get_audio_features(audio, feature_type, **kwargs):
 
 		hop_size = int(step_size * audio['sample_rate'])
 		frame_size = int(window_size * audio['sample_rate'])
+
+		if len(signal) < frame_size:
+			logger.error('Failed to produce FFT while processing file '
+				'%s. Original length: %d. Hop size: %d. Frame size: %d. '
+				'Sample rate: %d.', original_path, len(signal), hop_size,
+				frame_size, audio['sample_rate'])
+			if on_error == 'suppress':
+				return None
+			else:
+				raise ValueError('Audio data is too short.')
 
 		# Cleave off any samples that do not cleanly fit into our step size.
 		remove = (len(signal) - frame_size) % hop_size
