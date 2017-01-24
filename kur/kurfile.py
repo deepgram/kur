@@ -203,13 +203,9 @@ class Kurfile:
 		else:
 			provider = Kurfile.DEFAULT_PROVIDER
 
-		# TODO: merge_dict is good for different columns, but we may need to
-		#   concatenate columns with the same names. Need ConcatenateSource.
 		return provider(
-			sources=merge_dict(
-				*[supplier.get_sources() for supplier in suppliers]
-			),
-			**provider_spec		# Everything remaining are parameters.
+			sources=Supplier.merge_suppliers(suppliers),
+			**provider_spec
 		)
 
 	###########################################################################

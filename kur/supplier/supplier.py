@@ -14,7 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
+
 from ..utils import get_subclasses, get_any_value
+from ..sources import StackSource
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 class Supplier:
@@ -101,6 +106,41 @@ class Supplier:
 			if cls.get_name() == name:
 				return cls
 		raise ValueError('No such supplier with name "{}"'.format(name))
+
+	###########################################################################
+	@classmethod
+	def merge_suppliers(cls, suppliers):
+		""" Merges a number of suppliers together, usually in order to create
+			a data Provider.
+
+			# Arguments
+
+			suppliers: list of Supplier instance. The Suppliers to merge.
+
+			# Return value
+
+			A dictionary whose keys are the names of data sources and whose
+			values are sources corresponding to those keys.
+		"""
+		result = {}
+		for supplier in suppliers:
+			sources = supplier.get_sources()
+			for k, v in sources.items():
+				if k not in result:
+					# If we haven't added it before, do so now.
+					result[k] = v
+				elif v.is_derived():
+					# We don't need to stack derived outputs.
+					pass
+				elif isinstance(result[k], StackSource):
+					# Add this to the stack.
+					logger.info('Stacking data source: %s', k)
+					result[k].stack(v)
+				else:
+					# Create a stack.
+					logger.info('Stacking data source: %s', k)
+					result[k] = StackSource(result[k], v)
+		return result
 
 	###########################################################################
 	def __init__(self, name=None):
