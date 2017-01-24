@@ -48,7 +48,7 @@ class Provider:						# pylint: disable=too-few-public-methods
 		  datasets iterated over (because the epoch will end before the last
 		  entries in the longer sources are reached). If this is unacceptable,
 		  then you should consider restructuring your data sources, or using
-		  Shuffleable sources with a ShuffleProvider.
+		  shuffleable sources with a ShuffleProvider.
 		- Sources are said to be infinite if they cannot determine how many
 		  samples they can provide (i.e., "len" returns <= 0 for the Source).
 		  A Provider is said to be infinite if all of its Sources are infinite.

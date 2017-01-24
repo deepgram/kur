@@ -19,7 +19,6 @@ import logging
 import numpy
 
 from . import Provider
-from ..utils import Shuffleable
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +70,7 @@ class ShuffleProvider(Provider): \
 	###########################################################################
 	def __init__(self, *args, randomize=True, sort_by=None, sortagrad=None,
 		shuffle_after=None, **kwargs):
-		""" Create a new data provider that can shuffle Shuffleable sources.
+		""" Create a new data provider that can shuffle shuffleable sources.
 
 			# Arguments
 
@@ -85,8 +84,8 @@ class ShuffleProvider(Provider): \
 
 		if randomize:
 			for i, source in enumerate(self.sources):
-				if not isinstance(source, Shuffleable):
-					raise ValueError('All data sources must be Shuffleable '
+				if not source.can_shuffle():
+					raise ValueError('All data sources must be shuffleable '
 						'for the provider to able to shuffle them. Source '
 						'"{}" does not seem to match: {}'.format(
 							'unknown' if self.keys is None else self.keys[i],
@@ -144,7 +143,7 @@ class ShuffleProvider(Provider): \
 		""" Adds a new data source to an existing provider.
 		"""
 		if self.randomize:
-			if not isinstance(source, Shuffleable):
+			if not source.can_shuffle():
 				raise ValueError('Cannot add a non-shuffleable source to an '
 					'already shuffled provider.')
 

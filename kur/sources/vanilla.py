@@ -15,10 +15,9 @@ limitations under the License.
 """
 
 from . import ChunkSource
-from ..utils import Shuffleable
 
 ###############################################################################
-class VanillaSource(ChunkSource, Shuffleable):
+class VanillaSource(ChunkSource):
 	""" A data source which is simple wrapper around an in-memory array.
 	"""
 
@@ -62,6 +61,12 @@ class VanillaSource(ChunkSource, Shuffleable):
 		""" Returns the shape of the individual data samples.
 		"""
 		return self.data.shape[1:]
+
+	###########################################################################
+	def can_shuffle(self):
+		""" This source can be shuffled.
+		"""
+		return True
 
 	###########################################################################
 	def shuffle(self, indices):

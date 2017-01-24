@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from ..utils import Shuffleable
-
 ###############################################################################
 class Source:						# pylint: disable=too-few-public-methods
 	""" Base class for all data sources.
@@ -91,6 +89,29 @@ class Source:						# pylint: disable=too-few-public-methods
 		"""
 		raise NotImplementedError
 
+	###########################################################################
+	def can_shuffle(self):
+		""" Returns True if this data source can be shuffled.
+
+			By default, sources are not shuffleable.
+		"""
+		raise False
+
+	###########################################################################
+	def shuffle(self, indices):
+		""" Applies a permutation to the data.
+
+			# Arguments
+
+			indices: numpy array. List of indices to use in constructing the
+				data permutation.
+
+			# Return value
+
+			None
+		"""
+		raise NotImplementedError
+
 ###############################################################################
 class OriginalSource(Source):				# pylint: disable=abstract-method
 	""" A source which is not derived.
@@ -103,7 +124,7 @@ class OriginalSource(Source):				# pylint: disable=abstract-method
 		return False
 
 ###############################################################################
-class DerivedSource(Source, Shuffleable):	# pylint: disable=abstract-method
+class DerivedSource(Source):	# pylint: disable=abstract-method
 	""" A source which is not derived.
 	"""
 
@@ -163,5 +184,11 @@ class DerivedSource(Source, Shuffleable):	# pylint: disable=abstract-method
 		""" Applies a permutation to the data.
 		"""
 		pass
+
+	###########################################################################
+	def can_shuffle(self):
+		""" Returns True if this data source can be shuffled.
+		"""
+		return True
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

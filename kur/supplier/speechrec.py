@@ -22,7 +22,6 @@ import random
 import numpy
 
 from ..sources import DerivedSource, VanillaSource, ChunkSource
-from ..utils import Shuffleable
 from . import Supplier
 from ..utils import package
 from ..utils import count_lines
@@ -71,7 +70,7 @@ class Utterance(DerivedSource):
 		return (self.source, )
 
 ###############################################################################
-class RawUtterance(ChunkSource, Shuffleable):
+class RawUtterance(ChunkSource):
 	""" Data source for audio samples
 	"""
 
@@ -211,6 +210,12 @@ class RawUtterance(ChunkSource, Shuffleable):
 		return (None, self.features)
 
 	###########################################################################
+	def can_shuffle(self):
+		""" This source can be shuffled.
+		"""
+		return True
+
+	###########################################################################
 	def shuffle(self, indices):
 		""" Applies a permutation to the data.
 		"""
@@ -254,7 +259,7 @@ class Transcript(DerivedSource):
 		return (self.source, )
 
 ###############################################################################
-class RawTranscript(ChunkSource, Shuffleable):
+class RawTranscript(ChunkSource):
 	""" Data source for variable-length transcripts.
 	"""
 
@@ -348,6 +353,12 @@ class RawTranscript(ChunkSource, Shuffleable):
 			this data source.
 		"""
 		return (None, )
+
+	###########################################################################
+	def can_shuffle(self):
+		""" This source can be shuffled.
+		"""
+		return True
 
 	###########################################################################
 	def shuffle(self, indices):

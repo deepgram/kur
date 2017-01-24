@@ -16,10 +16,9 @@ limitations under the License.
 
 import numpy
 from . import ChunkSource
-from ..utils import Shuffleable
 
 ###############################################################################
-class RepeatSource(ChunkSource, Shuffleable):
+class RepeatSource(ChunkSource):
 	""" A data source which always returns the same value.
 	"""
 
@@ -49,6 +48,12 @@ class RepeatSource(ChunkSource, Shuffleable):
 		""" Returns the shape of the individual data samples.
 		"""
 		return self.data.shape[1:]
+
+	###########################################################################
+	def can_shuffle(self):
+		""" This source can be shuffled.
+		"""
+		return True
 
 	###########################################################################
 	def shuffle(self, indices):
