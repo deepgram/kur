@@ -43,7 +43,8 @@ class Executor:
 		self.optimizer = optimizer
 
 	###########################################################################
-	def compile(self, target=None, recompile=False, with_provider=None):
+	def compile(self, target=None, recompile=False, with_provider=None,
+		**kwargs):
 		""" Compiles a model.
 
 			This generates a backend-specific representation of the model,
@@ -89,7 +90,8 @@ class Executor:
 			model=self.model,
 			loss=self.loss if target != 'evaluate' else None,
 			optimizer=None if target != 'train' else self.optimizer,
-			blocking=True
+			blocking=True,
+			**kwargs
 		)
 
 		if with_provider is not None:

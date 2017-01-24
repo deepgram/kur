@@ -494,7 +494,8 @@ class KerasBackend(Backend):
 		return loss_inputs, loss_outputs, total_loss
 
 	###########################################################################
-	def compile(self, model, loss=None, optimizer=None, blocking=True):
+	def compile(self, model, loss=None, optimizer=None, blocking=True,
+		assemble_only=False):
 		""" Returns the Keras model instance.
 		"""
 		if model.compiled is None:
@@ -526,11 +527,12 @@ class KerasBackend(Backend):
 			logger.debug('Assembling an evaluation function from the model.')
 
 			loss_inputs = loss_outputs = {}
-			func = K.function(
-				compiled.inputs + \
-					[K.learning_phase()],
-				compiled.outputs
-			)
+			if not assemble_only:
+				func = K.function(
+					compiled.inputs + \
+						[K.learning_phase()],
+					compiled.outputs
+				)
 			key = 'evaluate'
 
 		elif optimizer is None:
@@ -539,13 +541,14 @@ class KerasBackend(Backend):
 			loss_inputs, loss_outputs, _ = \
 				self.process_loss(model, loss)
 
-			func = K.function(
-				compiled.inputs + \
-					list(loss_inputs.values()) + \
-					[K.learning_phase()],
-				compiled.outputs + \
-					list(loss_outputs.values())
-			)
+			if not assemble_only:
+				func = K.function(
+					compiled.inputs + \
+						list(loss_inputs.values()) + \
+						[K.learning_phase()],
+					compiled.outputs + \
+						list(loss_outputs.values())
+				)
 			key = 'test'
 
 		else:
@@ -560,14 +563,15 @@ class KerasBackend(Backend):
 				compiled.trainable_weights, total_loss
 			)
 
-			func = K.function(
-				compiled.inputs + \
-					list(loss_inputs.values()) + \
-					[K.learning_phase()],
-				compiled.outputs + \
-					list(loss_outputs.values()),
-				updates=updates
-			)
+			if not assemble_only:
+				func = K.function(
+					compiled.inputs + \
+						list(loss_inputs.values()) + \
+						[K.learning_phase()],
+					compiled.outputs + \
+						list(loss_outputs.values()),
+					updates=updates
+				)
 			key = 'train'
 
 		logger.debug('Additional inputs for log functions: %s',
@@ -591,7 +595,10 @@ class KerasBackend(Backend):
 				zip(input_names, input_shapes)
 			))
 
-		model.compiled[key] = {
+		if assemble_only:
+			func = None
+
+		result = {
 			'func' : func,
 			'names' : {
 				'input' : input_names,
@@ -603,12 +610,14 @@ class KerasBackend(Backend):
 		}
 
 		if logger.isEnabledFor(logging.DEBUG):
-			logger.debug('Compiled model: %s', model.compiled[key])
+			logger.debug('Compiled model: %s', result)
 
-		if blocking:
-			self.wait_for_compile(model, key)
+		if not assemble_only:
+			model.compiled[key] = result
+			if blocking:
+				self.wait_for_compile(model, key)
 
-		return model.compiled[key]
+		return result
 
 	###########################################################################
 	def wait_for_compile(self, model, key):

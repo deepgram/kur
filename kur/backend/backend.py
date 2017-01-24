@@ -310,7 +310,8 @@ class Backend:
 		raise NotImplementedError
 
 	###########################################################################
-	def compile(self, model, loss=None, optimizer=None, blocking=True):
+	def compile(self, model, loss=None, optimizer=None, blocking=True,
+		assemble_only=False):
 		""" Creates an implementation-specific representation of the
 			instantiated model.
 
@@ -333,11 +334,17 @@ class Backend:
 				processes, and these may still be running when
 				train/test/evaluate are called (leading to blocking behavior at
 				that point).
+			assemble_only: bool (default: False). If True, does not attempt to
+				create any compiled functions/models at all. Simply assembles
+				the model and prepares the data sources. If this is True, then
+				blocking is ignored.
 
 			# Return value
 
 			An implementation-specific object ("model") that can be used for
-			training or evaluation.
+			training or evaluation. However, if `assemble_only` is True, then
+			this returns a limited object which cannot be actually used for
+			anything.
 
 			# Notes
 

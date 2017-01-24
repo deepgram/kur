@@ -113,6 +113,62 @@ def build(args):
 	target.compile()
 
 ###############################################################################
+def prepare_data(args):
+	""" Prepares a model's data provider.
+	"""
+	spec = parse_kurfile(args.kurfile, args.engine)
+
+	if args.target == 'auto':
+		result = None
+		for section in ('train', 'validate', 'test', 'evaluate'):
+			if section in spec.data and 'data' in spec.data[section]:
+				result = section
+				break
+		if result is None:
+			raise ValueError('No data sections were found in the Kurfile.')
+		args.target = result
+
+	logger.info('Preparing data sources for: %s', args.target)
+
+	provider = spec.get_provider(args.target)
+
+	if args.assemble:
+
+		spec.get_model(provider)
+
+		if args.target == 'train':
+			target = spec.get_trainer(with_optimizer=True)
+		elif args.target == 'test':
+			target = spec.get_trainer(with_optimizer=False)
+		elif args.target == 'evaluate':
+			target = spec.get_evaluator()
+		else:
+			logger.error('Unhandled assembly target: %s. This is a bug.',
+				args.target)
+			return 1
+
+		target.compile(assemble_only=True)
+
+	batch = None
+	for batch in provider:
+		break
+	if batch is None:
+		logger.error('No batches were produced.')
+		return 1
+
+	num_entries = None
+	keys = sorted(batch.keys())
+	num_entries = len(batch[keys[0]])
+	for entry in range(num_entries):
+		print('Entry {}/{}:'.format(entry+1, num_entries))
+		for k in keys:
+			print('  {}: {}'.format(k, batch[k][entry]))
+
+	if num_entries is None:
+		logger.error('No data sources was produced.')
+		return 1
+
+###############################################################################
 def version(args):							# pylint: disable=unused-argument
 	""" Prints the Kur version and exits.
 	"""
@@ -165,6 +221,19 @@ def parse_args():
 			'model to build correctly with this option, you will need to '
 			'specify shapes for all of your inputs.')
 	subparser.set_defaults(func=build)
+
+	subparser = subparsers.add_parser('data',
+		help='Does not actually compile anything, but only prints out a '
+			'single batch of data. This is useful for debugging data sources.')
+	subparser.add_argument('kurfile', help='The Kurfile to use.')
+	subparser.add_argument('-t', '--target',
+		choices=['train', 'validate', 'test', 'evaluate', 'auto'],
+		default='auto', help='Try to produce data corresponding to a specific '
+			'variation of the model.')
+	subparser.add_argument('--assemble', action='store_true', help='Also '
+		'begin assembling the model to pull in compile-time, auxiliary data '
+		'sources.')
+	subparser.set_defaults(func=prepare_data)
 
 	return parser.parse_args()
 
