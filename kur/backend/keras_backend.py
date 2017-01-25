@@ -436,7 +436,8 @@ class KerasBackend(Backend):
 		else:
 			raise ValueError('Failed to find a layer named "{}"'
 				.format(layer_name))
-		for keras_layer, kur_layer in zip(model.compiled['raw'].outputs, model.outputs):
+		for keras_layer, kur_layer in \
+			zip(model.compiled['raw'].outputs, model.outputs):
 			if kur_layer == target:
 				return keras_layer
 		raise ValueError('Did not find expected layer. This is a bug.')
@@ -452,6 +453,16 @@ class KerasBackend(Backend):
 				of model layer names mapped to Loss instances.
 		"""
 		import keras.backend as K
+
+		if loss is None:
+			num_outputs = len(model.outputs)
+			logger.error('You are trying to construct a training/validation'
+				'/testing model, but you haven\'t specified any loss '
+				'functions. Your model has %d outputs: %s. You need to '
+				'specify %d loss functions, one for each output.',
+				num_outputs, ', '.join(model.outputs), num_outputs)
+			raise ValueError('No loss functions were specified, but are '
+				'required for training, testing, and validation.')
 
 		if isinstance(loss, Loss):
 			loss = [loss]
