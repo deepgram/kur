@@ -18,5 +18,6 @@ from .hooks import TrainingHook, EvaluationHook
 from .output_hook import OutputHook
 from .mnist_hook import MnistHook
 from .transcript import TranscriptHook
+from .slack_hook import SlackHook
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

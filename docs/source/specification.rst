@@ -1394,3 +1394,23 @@ as part of Kur:
 - ``transcript``: This is useful for performing argmax-decoding of the ASR
   pipeline, effectively turning your model outputs into true transcriptions.
   This is intended as a ``test``/``validate`` hook.
+- ``slack``: This is useful for posting to a Slack channel using Slack's
+  `incoming webhooks <https://api.slack.com/custom-integrations>`_. It is
+  intended soley as a training hook. It takes this form:
+
+  .. code-block:: yaml
+
+	slack:
+	  channel: CHANNEL
+	  url: URL
+	  icon: ICON
+	  user: USER
+	  title: TITLE
+
+  ``CHANNEL`` is the name of the Slack channel to post to (e.g, "#kur") and is
+  required. ``URL`` is the Slack webhook URL and is required. ``ICON`` is the
+  name of the Emoji to use in the posts (e.g., "dragon") and is optional.
+  ``USER`` is the name of the user to post as (e.g., "kur-bot") and is
+  optional. ``TITLE`` is a message that is prepended to the message body. It is
+  optional and is useful for distinguishing between different models that you
+  may be training (e.g., "model #1").
