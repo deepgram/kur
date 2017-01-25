@@ -102,9 +102,7 @@ class KerasBackend(Backend):
 					logger.error('Your Kurfile is trying to use TensorFlow.')
 					logger.error('However, we cannot find TensorFlow '
 						'installed.')
-					logger.error('It is easy to install, but you need to make '
-						'sure you are using Python 3.4 or 3.5 (3.6 does not '
-						'work).')
+					logger.error('At least it is easy to install!')
 					logger.error('To install TensorFlow for CPU: pip install '
 						'tensorflow')
 					logger.error('To install TensorFlow for GPU: pip install '
@@ -112,8 +110,8 @@ class KerasBackend(Backend):
 					logger.error('See our troubleshooting page for more '
 						'information: %s', os.path.join(__homepage__,
 						'troubleshooting.html'))
-					raise ValueError('Need to install TensorFlow with Python '
-						'3.4 or Python 3.5 for this Kurfile to work.')
+					raise ValueError('Need to install TensorFlow for this '
+						'Kurfile to work.')
 				else:
 					logger.warning('The Keras backend was asked to use the %s '
 						'backend, but %s does not appear to be installed. You '
