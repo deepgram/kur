@@ -16,10 +16,11 @@ limitations under the License.
 
 import logging
 import shutil
-import tempfile
 import math
+import traceback
 import tqdm
 from ..utils import get_any_value, CriticalSection, parallelize
+from .hooks import TrainingHook
 
 logger = logging.getLogger(__name__)
 
@@ -181,23 +182,28 @@ class Executor:
 		return test_loss
 
 	###########################################################################
-	def train(self, *args, last_weights=None, log=None, **kwargs):
+	def train(self, *args, last_weights=None, log=None, training_hooks=None,
+		**kwargs):
 		""" Trains the model on some data.
 
 			This is the public entry point for training. It wraps the business
 			logic so that it can handle error conditions.
 		"""
 
+		reason = 'unknown'
 		try:
 			result = self.wrapped_train(
 				*args,
 				log=log,
+				training_hooks=training_hooks,
 				**kwargs
 			)
-		except:
+		except (KeyboardInterrupt, Exception) as exc:
 			logger.exception('Exception raised during training.')
+			reason = traceback.format_exception_only(type(exc), exc)[0].strip()
 			raise
 		else:
+			reason = 'success'
 			return result
 		finally:
 			if last_weights is not None:
@@ -207,9 +213,14 @@ class Executor:
 			if log is not None:
 				log.flush()
 
+			if training_hooks:
+				for hook in training_hooks:
+					hook.notify(TrainingHook.TRAINING_END, {'Reason' : reason})
+
 	###########################################################################
 	def wrapped_train(self, provider, *, validation=None, epochs=None,
-		log=None, best_train=None, best_valid=None, validation_hooks=None):
+		log=None, best_train=None, best_valid=None, training_hooks=None,
+		validation_hooks=None):
 		""" Trains the model on some data.
 
 			# Arguments
@@ -291,6 +302,10 @@ class Executor:
 		# be as simple as copying the previously saved file.
 		saved_recent = None
 
+		if training_hooks:
+			for hook in training_hooks:
+				hook.notify(TrainingHook.TRAINING_START)
+
 		epoch = completed_epochs - 1
 		while True:
 			epoch += 1
@@ -368,24 +383,25 @@ class Executor:
 							return
 
 			if not n_entries:
-				logger.warning('No data provided to training loop. Trying to '
-					'move on to the next epoch.')
-				continue
+				logger.warning('No data provided to training loop.')
+				cur_train_loss = None
+			else:
+				cur_train_loss = sum(train_loss.values())
+				logger.info('Training loss: %.3f', cur_train_loss)
 
-			cur_train_loss = sum(train_loss.values())
-			logger.info('Training loss: %.3f', cur_train_loss)
+				if best_train is not None:
+					if best_train_loss is None or \
+						cur_train_loss < best_train_loss:
 
-			if best_train is not None:
-				if best_train_loss is None or cur_train_loss < best_train_loss:
-					logger.info('Saving best historical training weights: %s',
-						best_train)
-					best_train_loss = cur_train_loss
-					with CriticalSection():
-						self.model.save(best_train)
-					saved_recent = best_train
+						logger.info('Saving best historical training weights: '
+							'%s', best_train)
+						best_train_loss = cur_train_loss
+						with CriticalSection():
+							self.model.save(best_train)
+						saved_recent = best_train
 
-			if log is not None:
-				log.log_training(train_loss, 'loss')
+				if log is not None:
+					log.log_training(train_loss, 'loss')
 
 			if validation is not None:
 				# Continue with a validation run.
@@ -421,6 +437,17 @@ class Executor:
 
 				if log is not None:
 					log.log_validation(validation_loss, 'loss')
+
+			if training_hooks:
+				info = {
+					'epoch' : epoch+1,
+					'total_epochs' : epochs,
+					'Training loss' : cur_train_loss
+				}
+				if validation is not None:
+					info['Validation loss'] = validation_loss
+				for hook in training_hooks:
+					hook.notify(TrainingHook.EPOCH_END, info)
 
 	###########################################################################
 	def evaluate(self, provider, callback=None):

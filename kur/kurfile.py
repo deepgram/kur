@@ -21,7 +21,7 @@ import logging
 from .engine import ScopeStack
 from .reader import Reader
 from .containers import Container, ParsingError
-from .model import Model, Executor, EvaluationHook, OutputHook
+from .model import Model, Executor, EvaluationHook, OutputHook, TrainingHook
 from .backend import Backend
 from .optimizer import Optimizer, Adam
 from .loss import Loss
@@ -225,6 +225,13 @@ class Kurfile:
 
 		provider = self.get_provider('train')
 
+		training_hooks = self.data['train'].get('hooks', [])
+		if not isinstance(training_hooks, (list, tuple)):
+			raise ValueError('"hooks" (in the "train" section) should '
+				'be a list of hook specifications.')
+		training_hooks = [TrainingHook.from_specification(spec) \
+			for spec in training_hooks]
+
 		if 'validate' in self.data:
 			validation = self.get_provider('validate')
 			validation_weights = self.data['validate'].get('weights')
@@ -309,6 +316,7 @@ class Kurfile:
 				best_train=best_train,
 				best_valid=best_valid,
 				last_weights=last_weights,
+				training_hooks=training_hooks,
 				validation_hooks=validation_hooks
 			)
 

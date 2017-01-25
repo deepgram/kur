@@ -134,4 +134,114 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 		"""
 		raise NotImplementedError
 
+###############################################################################
+class TrainingHook:					# pylint: disable=too-few-public-methods
+	""" Base class for all training hooks.
+
+		Training hooks are between-epoch callbacks that can be used to notify
+		external systems about progress.
+	"""
+
+	TRAINING_START = object()
+	TRAINING_END = object()
+	EPOCH_START = object()
+	EPOCH_END = object()
+
+	###########################################################################
+	@staticmethod
+	def from_specification(spec):
+		""" Creates a new training hook from a specification.
+
+			# Arguments
+
+			spec: str or dict. The specification object that was given.
+
+			# Return value
+
+			New TrainingHook instance.
+		"""
+		if isinstance(spec, str):
+			name = spec
+			target = TrainingHook.get_hook_by_name(spec)
+			params = {}
+			meta = {}
+		elif isinstance(spec, dict):
+			candidates = {}
+			for key in spec:
+				try:
+					cls = TrainingHook.get_hook_by_name(key)
+					candidates[key] = cls
+				except ValueError:
+					pass
+
+			if not candidates:
+				raise ValueError('No valid evaluation hook found in '
+					'Kurfile: {}'.format(spec))
+			elif len(candidates) > 1:
+				raise ValueError('Too many possible evaluation hooks found in '
+					'Kurfile: {}'.format(spec))
+			else:
+				name, target = candidates.popitem()
+				meta = dict(spec)
+				meta.pop(name)
+				params = spec[name] or {}
+
+		else:
+			raise ValueError('Expected the training hooks to be a string or '
+				'dictionary. We got this instead: {}'.format(spec))
+
+		return target(**params)
+
+	###########################################################################
+	@classmethod
+	def get_name(cls):
+		""" Returns the name of the training hook.
+
+			# Return value
+
+			A lower-case string unique to this training hook.
+		"""
+		return cls.__name__.lower()
+
+	###########################################################################
+	@staticmethod
+	def get_all_hooks():
+		""" Returns an iterator to the names of all training hooks.
+		"""
+		for cls in get_subclasses(TrainingHook):
+			yield cls
+
+	###########################################################################
+	@staticmethod
+	def get_hook_by_name(name):
+		""" Finds a training hook class with the given name.
+		"""
+		name = name.lower()
+		for cls in TrainingHook.get_all_hooks():
+			if cls.get_name() == name:
+				return cls
+		raise ValueError('No such training hook with name "{}"'.format(name))
+
+	###########################################################################
+	def __init__(self, *args, **kwargs):
+		""" Creates a new training hook.
+		"""
+		if args or kwargs:
+			raise ValueError('One or more unexpected or unsupported arguments '
+				'to the training hook: {}'.format(
+					', '.join(args + list(kwargs.keys()))
+			))
+
+	###########################################################################
+	def notify(self, status, info=None):
+		""" Notifies the hook that the epoch has ended.
+
+			# Arguments
+
+			status: object. One of the class objects (e.g., `TRAINING_START`)
+				that indicates what is going on right now.
+			info: dict or None. Additional information to pass to the hook.
+		"""
+		raise NotImplementedError
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
