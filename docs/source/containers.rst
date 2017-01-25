@@ -328,6 +328,36 @@ or::
   almost certainly remain False for most applications, since you probably don't
   want your layers to act differently depending on batch size!
 
+Merge
+-----
+
+**Description**. A merge layer combines multiple inputs into a single tensor.
+
+**Purpose**. If your model has branches (a single layer is used as input by
+multiple layers) or multiple inputs, then at some point you may want to combine
+information from different layers. The Merge layer takes multiple inputs and
+produces a single output.
+
+**Usage**::
+
+	merge: MODE
+
+or::
+
+	merge:
+	  mode: MODE
+	  axis: AXIS
+
+- ``MODE``: the function to use to combine input data. It can be one of these:
+
+	- ``average``: Computes the mean of the input tensors.
+	- ``multiply``: Computes the product of the input tensors.
+	- ``add``: Computes the sum of the input tensors.
+	- ``concat``: Concatenates the data tensors along ``AXIS`` axis.
+
+- ``AXIS``: the axis to concatenate input tensors along. Only used if ``MODE``
+  is ``concat``. Defaults to -1 (the last axis).
+
 Placeholder
 -----------
 

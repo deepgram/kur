@@ -29,5 +29,6 @@ from .recurrent import Recurrent
 from .batchnorm import BatchNormalization
 from .output import Output
 from .transpose import Transpose
+from .merge import Merge
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
