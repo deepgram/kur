@@ -237,9 +237,17 @@ class Kurfile:
 			else:
 				raise ValueError('Unknown type for validation weights: {}'
 					.format(validation_weights))
+
+			validation_hooks = self.data['validate'].get('hooks', [])
+			if not isinstance(validation_hooks, (list, tuple)):
+				raise ValueError('"hooks" (in the "validate" section) should '
+					'be a list of hook specifications.')
+			validation_hooks = [EvaluationHook.from_specification(spec) \
+				for spec in validation_hooks]
 		else:
 			validation = None
 			best_valid = None
+			validation_hooks = None
 
 		train_weights = self.data['train'].get('weights')
 		if train_weights is None:
@@ -257,12 +265,6 @@ class Kurfile:
 		else:
 			raise ValueError('Unknown weight specification for training: {}'
 				.format(train_weights))
-
-		hooks = self.data['validate'].get('hooks', [])
-		if not isinstance(hooks, (list, tuple)):
-			raise ValueError('"hooks" (in the "validate" section) should be a '
-			   'list of hook specifications.')
-		hooks = [EvaluationHook.from_specification(spec) for spec in hooks]
 
 		expand = lambda x: os.path.expanduser(os.path.expandvars(x))
 		initial_weights, best_train, best_valid, last_weights = [
@@ -307,7 +309,7 @@ class Kurfile:
 				best_train=best_train,
 				best_valid=best_valid,
 				last_weights=last_weights,
-				validation_hooks=hooks
+				validation_hooks=validation_hooks
 			)
 
 		return func
