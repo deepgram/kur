@@ -584,6 +584,34 @@ train for during a ``kur train`` run. If it isn't specified (or if it is set to
 an empty or null value), then Kur trains interminably (or rather, until you
 Ctrl+C the process).
 
+The ``epochs`` field tells Kur how many epochs to train for during a ``kur
+train`` run. If it isn't specified (or if it is set to an empty or null value),
+then Kur trains interminably (or rather, until you Ctrl+C the process). If you
+set it to an integer, then Kur will train for that many epochs every time ``kur
+train`` is called. More complicated configurations can be specified with:
+
+.. code-block:: yaml
+
+	epochs:
+	  number: NUMBER
+	  mode: MODE
+
+``NUMBER`` is the number of epochs to train for. To train forever, set this to
+``null`` or ``infinite``. For finite values of ``NUMBER``, ``MODE`` tells Kur
+how to interpret ``NUMBER`` and can be one of the following:
+
+- ``additional``. Kur will train for ``NUMBER`` epochs every time ``kur train``
+  is called. This is the default, and is equivalent to the shorter ``epochs:
+  NUMBER`` syntax.
+- ``total``. Using the :ref:`log_spec`, Kur will train for exactly ``NUMBER``
+  epochs total, regardless of how many times ``kur train`` is called. For
+  example, let's say that ``NUMBER`` is 10 in ``total`` mode. You call ``kur
+  train`` but interrupt it after epoch 6 completes. If you can ``kur train``
+  again, it will only train for 4 more epochs (to reach its total of 10). If
+  you call ``kur train`` a third time, it will simply report that has already
+  finished 10 epochs. If a log is not specified, Kur will warn you but proceed
+  training as if ``MODE`` were ``additional``.
+
 Optimizer
 ---------
 

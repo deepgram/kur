@@ -235,6 +235,7 @@ class Executor:
 			logger.info('No log specified, so no historical loss information '
 				'is available.')
 			best_train_loss = best_valid_loss = None
+			completed_epochs = None
 		else:
 			best_train_loss = log.get_best_training_loss()
 			if best_train_loss is not None:
@@ -251,15 +252,50 @@ class Executor:
 				logger.info(
 					'No historical validation loss available from logs.')
 
+			completed_epochs = log.get_number_of_epochs()
+
+		if completed_epochs is None:
+			completed_epochs = 0
+			logger.info('No previous epochs.')
+		else:
+			logger.info('Restarting from epoch %d.', completed_epochs+1)
+
+		valid_modes = ('total', 'additional')
+		default_mode = 'additional'
+		mode = default_mode
+		if isinstance(epochs, dict):
+			mode = epochs.get('mode', default_mode)
+			if mode not in valid_modes:
+				raise ValueError('If "mode" in "epochs" must be one of: {}. '
+					'Instead, we received: {}.'.format(', '.join(valid_modes),
+					mode))
+			if mode == 'total' and log is None:
+				logger.warning('The epoch specification has "mode" set to '
+					'"%s". This mode requires a log to be used correctly. Kur '
+					'will proceed as if "mode" were "%s".', mode, default_mode)
+				mode = default_mode
+			epochs = epochs.get('number')
+			if epochs in ('inf', 'all', 'infinite', 'infinity'):
+				epochs = None
+		elif not isinstance(epochs, (int, type(None))):
+			raise ValueError('Expected "epochs" to be a dictionary or '
+				'integer. Instead, we received: {}.'.format(epochs))
+		logger.debug('Epoch handling mode: %s', mode)
+
+		if epochs is not None:
+			if mode == 'additional':
+				epochs += completed_epochs
+
 		# The name of the most recently saved weight file. If the weights
 		# change, this should be reset to None. Otherwise, saving weights can
 		# be as simple as copying the previously saved file.
 		saved_recent = None
 
-		epoch = -1
+		epoch = completed_epochs - 1
 		while True:
 			epoch += 1
 			if epochs is not None and epoch >= epochs:
+				print('Completed {} epochs.'.format(epochs))
 				break
 
 			# We are about to modify the weights. Invalidate the name of the
