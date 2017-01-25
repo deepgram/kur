@@ -35,7 +35,7 @@ Welcome to Kur! You've found the future of deep learning!
 
 - Install Kur easily with ``pip install kur``.
 - Design, train, and evaluate models *without ever needing to code*.
-- Describe your model with easily undestandable concepts, rather than trudge
+- Describe your model with easily understandable concepts, rather than trudge
   through programming.
 - Quickly explore better versions of your model with the power of the `Jinja2
   <http://jinja.pocoo.org>`_ templating engine.
