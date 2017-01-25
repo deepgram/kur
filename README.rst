@@ -12,15 +12,19 @@
 .. _LinkedIn: https://www.linkedin.com/shareArticle?mini=true&url=https%3A//kur.deepgram.com&title=Kur%20-%20descriptive%20deep%20learning&summary=Kur%20is%20the%20future%20of%20deep%20learning%3A%20advanced%20AI%20without%20programming!&source=
 .. _Twitter: https://twitter.com/home?status=%40DeepgramAI%20has%20released%20the%20future%20of%20deep%20learning.%20https%3A//kur.deepgram.com%20%23Kur
 
-.. _Tutorial: https://kur.deepgram.com/tutorial.html
-
 .. image:: http://kur.deepgram.com/images/logo-small.png
    :align: center
    :target: https://deepgram.com
 
+.. package_readme_starts_here
+
+.. _Tutorial: https://kur.deepgram.com/tutorial.html
+
 ******************************
 Kur: Descriptive Deep Learning
 ******************************
+
+.. package_readme_ignore
 
 |BUILD| |LICENSE| |PYTHON| |GITTER|
 
@@ -43,7 +47,11 @@ the `Examples`_! Then build your own model in our Tutorial_. Remember to check
 out our `homepage <https://kur.deepgram.com>`_ for complete documentation and
 the newest news.
 
+.. package_readme_ignore
+
 Like us? Share!
+
+.. package_readme_ignore
 
 - Facebook_
 - `Google+`_

@@ -46,8 +46,6 @@ if sys.version_info < (3, 4):
 ###############################################################################
 # pylint: disable=wrong-import-position
 import os
-import subprocess
-import warnings
 from setuptools import setup, find_packages
 # pylint: enable=wrong-import-position
 
@@ -55,11 +53,35 @@ from setuptools import setup, find_packages
 def readme():
 	""" Return the README text.
 	"""
-	with open('README.rst') as fh:
+	with open('README.rst', 'rb') as fh:
 		result = fh.read()
-	mark = result.find('.. package_readme_ends_here')
+
+	result = result.decode('utf-8')
+
+	token = '.. package_readme_ends_here'
+	mark = result.find(token)
 	if mark >= 0:
 		result = result[:mark]
+
+	token = '.. package_readme_starts_here'
+	mark = result.find(token)
+	if mark >= 0:
+		result = result[mark+len(token):]
+
+	chunks = []
+	skip = False
+	for chunk in result.split('\n\n'):
+		if not chunk:
+			pass
+		elif chunk.strip().startswith('.. package_readme_ignore'):
+			skip = True
+		elif skip:
+			skip = False
+		else:
+			chunks.append(chunk)
+
+	result = '\n\n'.join(chunks)
+
 	return result
 
 ################################################################################
