@@ -220,7 +220,7 @@ class Executor:
 	###########################################################################
 	def wrapped_train(self, provider, *, validation=None, epochs=None,
 		log=None, best_train=None, best_valid=None, training_hooks=None,
-		validation_hooks=None):
+		validation_hooks=None, checkpoint=None):
 		""" Trains the model on some data.
 
 			# Arguments
@@ -241,6 +241,32 @@ class Executor:
 
 		self.compile('train', with_provider=provider)
 		provider.source_shapes()
+
+		if isinstance(checkpoint, dict):
+			if 'path' not in checkpoint:
+				checkpoint['path'] = 'checkpoint'
+
+			found = False
+			for k in ('epochs', 'batches', 'samples'):
+				if k in checkpoint:
+					if not isinstance(checkpoint[k], int):
+						raise ValueError('Expected "{}" key in "checkpoint" '
+							'to be an integer. Received: {}'.format(k,
+							checkpoint[k]))
+					found = True
+
+			if not found:
+				checkpoint['epochs'] = 1
+
+		elif isinstance(checkpoint, str):
+			checkpoint = {
+				'path' : checkpoint,
+				'epochs' : 1
+			}
+		elif checkpoint is not None:
+			raise ValueError('Unknown format for "checkpoint". Expected a '
+				'single file or a dictionary. Instead we received: {}'
+				.format(checkpoint))
 
 		if log is None:
 			logger.info('No log specified, so no historical loss information '
@@ -306,6 +332,9 @@ class Executor:
 			for hook in training_hooks:
 				hook.notify(TrainingHook.TRAINING_START)
 
+		session = {'epochs' : 0, 'batches' : 0, 'samples' : 0}
+		last_checkpoint = session.copy()
+
 		epoch = completed_epochs - 1
 		while True:
 			epoch += 1
@@ -318,6 +347,9 @@ class Executor:
 			saved_recent = None
 
 			print()
+
+			###################################################################
+			# START: Train one epoch
 
 			# Create progress bar
 			train_loss = None
@@ -345,6 +377,23 @@ class Executor:
 
 					# How many entries we just processed.
 					batch_size = len(get_any_value(batch))
+
+					# Update our session statistics.
+					session['batches'] += 1
+					session['samples'] += batch_size
+
+					# Checkpoint if necessary
+					if checkpoint is not None:
+						for k in ('samples', 'batches'):
+							if k not in checkpoint:
+								continue
+							if session[k] - last_checkpoint[k] > checkpoint[k]:
+								logger.info('Making checkpoint backup: %s',
+									checkpoint['path'])
+								with CriticalSection():
+									self.model.save(checkpoint['path'])
+								last_checkpoint = session.copy()
+								break
 
 					# How many entries we've processed this epoch.
 					new_entries = n_entries + batch_size
@@ -382,6 +431,23 @@ class Executor:
 								'switching optimizers or backend.', k)
 							return
 
+			# END: Train one epoch
+			###################################################################
+
+			# Update our session statistics.
+			session['epochs'] += 1
+
+			# Checkpoint if necessary
+			if checkpoint is not None:
+				k = 'epochs'
+				if k in checkpoint:
+					if session[k] - last_checkpoint[k] > checkpoint[k]:
+						logger.info('Making checkpoint backup: %s',
+							checkpoint['path'])
+						with CriticalSection():
+							self.model.save(checkpoint['path'])
+						last_checkpoint = session.copy()
+
 			if not n_entries:
 				logger.warning('No data provided to training loop.')
 				cur_train_loss = None
@@ -402,6 +468,9 @@ class Executor:
 
 				if log is not None:
 					log.log_training(train_loss, 'loss')
+
+			###################################################################
+			# START: Validate
 
 			if validation is not None:
 				# Continue with a validation run.
@@ -437,6 +506,9 @@ class Executor:
 
 				if log is not None:
 					log.log_validation(validation_loss, 'loss')
+
+			# END: Validate
+			###################################################################
 
 			if training_hooks:
 				info = {

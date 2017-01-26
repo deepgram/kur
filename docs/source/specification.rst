@@ -726,6 +726,9 @@ The most flexibility can be gleaned from a dictionary-like value:
 	  # Where to save the most recent model weights.
 	  last: LAST
 
+	  # How to create checkpoints.
+	  checkpoint: CHECKPOINT
+
 Each of the fields is optional.
 
 The best weights that Kur saves (whether specified with ``best:`` or just with
@@ -734,6 +737,39 @@ lowest loss values. Kur uses its log, when available, to decide when it has
 encountered a historically low loss value, even if it encountered it during a
 previous training run. See :ref:`log_spec` for more information on saving to a
 log.
+
+The ``CHECKPOINT`` field is for creating intermediate checkpoints. If it is a
+dictionary, it should look like this:
+
+.. code-block:: yaml
+
+	checkpoint:
+	  path: PATH
+	  epochs: EPOCHS
+	  batches: BATCHES
+	  samples: SAMPLES
+
+``PATH`` is the name of the path to save the checkpoint to. It defaults to
+``checkpoint`` if not specified. The other fields---``EPOCHS``, ``BATCHES``,
+``SAMPLES``---are all optional. If specified, they indicate how often the
+checkpoint should be created. They can be used together; for example, consider
+this specification:
+
+.. code-block:: yaml
+
+	checkpoint:
+	  batches: 10
+	  samples: 1000
+
+Here, the model will be saved after every 10 batches or after every 1000
+samples, whichever comes first. Once a checkpoint is created, the internal
+counter is reset. So if ``SAMPLES`` causes a checkpoint to be created after
+1000 samples, then the next checkpoint will not be created for another 10
+batches or another 1000 samples, whichever comes first.
+
+``CHECKPOINT`` can also be a string instead of a dictionary. In this case,
+the string specifies the ``PATH`` to checkpoint to, and the checkpoint is
+configured to save after every epoch (as if ``EPOCHS`` were 1).
 
 .. _validate_spec:
 

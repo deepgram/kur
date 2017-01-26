@@ -259,16 +259,19 @@ class Kurfile:
 		train_weights = self.data['train'].get('weights')
 		if train_weights is None:
 			initial_weights = best_train = last_weights = None
+			checkpoint = None
 		elif isinstance(train_weights, str):
 			initial_weights = train_weights
 			best_train = train_weights if best_valid is None else None
 			last_weights = None
 			initial_must_exist = False
+			checkpoint = None
 		elif isinstance(train_weights, dict):
 			initial_weights = train_weights.get('initial')
 			best_train = train_weights.get('best')
 			last_weights = train_weights.get('last')
 			initial_must_exist = train_weights.get('must_exist', False)
+			checkpoint = train_weights.get('checkpoint')
 		else:
 			raise ValueError('Unknown weight specification for training: {}'
 				.format(train_weights))
@@ -317,7 +320,8 @@ class Kurfile:
 				best_valid=best_valid,
 				last_weights=last_weights,
 				training_hooks=training_hooks,
-				validation_hooks=validation_hooks
+				validation_hooks=validation_hooks,
+				checkpoint=checkpoint
 			)
 
 		return func
