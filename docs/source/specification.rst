@@ -1433,7 +1433,7 @@ as part of Kur:
   This is intended as a ``test``/``validate`` hook.
 - ``slack``: This is useful for posting to a Slack channel using Slack's
   `incoming webhooks <https://api.slack.com/custom-integrations>`_. It is
-  intended soley as a training hook. It takes this form:
+  intended as both a training and evaluation hook. It takes this form:
 
   .. code-block:: yaml
 

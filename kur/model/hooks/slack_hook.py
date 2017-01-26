@@ -19,26 +19,26 @@ import json
 
 import urllib.request
 
-from . import TrainingHook
+from . import TrainingHook, EvaluationHook
 
 logger = logging.getLogger(__name__)
 
 ###############################################################################
-class SlackHook(TrainingHook):
-	""" Training hook for posting to Slack.
+class SlackHook(TrainingHook, EvaluationHook):
+	""" Hook for posting to Slack.
 	"""
 
 	###########################################################################
 	@classmethod
 	def get_name(cls):
-		""" Returns the name of the training hook.
+		""" Returns the name of the hook.
 		"""
 		return 'slack'
 
 	###########################################################################
 	def __init__(self, channel, url, user=None, icon=None, title=None,
 		*args, **kwargs):
-		""" Creates a new Slack training hook.
+		""" Creates a new Slack hook.
 		"""
 		super().__init__(*args, **kwargs)
 
@@ -49,25 +49,9 @@ class SlackHook(TrainingHook):
 		self.title = title
 
 	###########################################################################
-	def notify(self, status, info=None):
-		""" Sends the Slack message.
+	def send_message(self, text, info=None):
+		""" Sends a message to Slack.
 		"""
-
-		logger.debug('Slack hook received message.')
-
-		info = info or {}
-
-		if status is TrainingHook.EPOCH_END:
-			epoch = info.pop('epoch', None)
-			total_epochs = info.pop('total_epochs', None)
-			text = 'Finished epoch {} of {}.'.format(epoch+1, total_epochs)
-		elif status is TrainingHook.TRAINING_END:
-			text = 'Training has ended.'
-		elif status is TrainingHook.TRAINING_START:
-			text = 'Started training.'
-		else:
-			return
-
 		if self.title is not None:
 			text = '{}: {}'.format(self.title, text)
 
@@ -107,4 +91,39 @@ class SlackHook(TrainingHook):
 				'the URL and channel are correct. If the channel was newly '
 				'created, it might take a little time for Slack to catch up.')
 
-#### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
+	###########################################################################
+	def notify(self, status, info=None):
+		""" Sends the Slack message.
+		"""
+
+		logger.debug('Slack hook received training message.')
+
+		info = info or {}
+
+		if status is TrainingHook.EPOCH_END:
+			epoch = info.pop('epoch', None)
+			total_epochs = info.pop('total_epochs', None)
+			text = 'Finished epoch {} of {}.'.format(epoch, total_epochs)
+		elif status is TrainingHook.TRAINING_END:
+			text = 'Training has ended.'
+		elif status is TrainingHook.TRAINING_START:
+			text = 'Started training.'
+		else:
+			return
+
+		self.send_message(text, info)
+
+	###########################################################################
+	def apply(self, data, truth=None, model=None):
+		""" Sends a Slack message in response to an evaluation hook.
+		"""
+
+		logger.debug('Slack hook received non-training message.')
+
+		self.send_message(
+			'Truth = "{}", Prediction = "{}"'.format(truth, data)
+		)
+
+		return data
+
+### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
