@@ -4,6 +4,22 @@ CHANGES
 master (unreleased)
 -------------------
 
+0.3.0 (2017.01.25)
+
+- New data supplier for CSV data!
+- Hooks have been added to training, testing, and validation sections.
+- Added a Slack training hook for keeping your team informed of training
+  progress.
+- Kur will transparently stack data sources when distributed across multiple
+  files.
+- Added a Merge layer.
+- Integrated TensorFlow support for Python 3.6.
+- "data" command added to Kur for checking data pipeline.
+- Fixed problems with Kur selecting GPU devices.
+- Fixed a localization problem with the PyPI description.
+- More flexible vocabulary and normalization specification for ASR training.
+- Minor typos corrected.
+
 0.2.0 (2017.01.18)
 
 - Massive overhaul of the Keras backend, moving away from the model extension
