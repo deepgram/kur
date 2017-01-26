@@ -17,6 +17,7 @@ limitations under the License.
 import logging
 import shutil
 import math
+import time
 import traceback
 import tqdm
 from ..utils import get_any_value, CriticalSection, parallelize
@@ -332,7 +333,12 @@ class Executor:
 			for hook in training_hooks:
 				hook.notify(TrainingHook.TRAINING_START)
 
-		session = {'epochs' : 0, 'batches' : 0, 'samples' : 0}
+		session = {
+			'epochs' : 0,
+			'batches' : 0,
+			'samples' : 0,
+			'minutes' : time.perf_counter() / 60
+		}
 		last_checkpoint = session.copy()
 
 		epoch = completed_epochs - 1
@@ -381,10 +387,11 @@ class Executor:
 					# Update our session statistics.
 					session['batches'] += 1
 					session['samples'] += batch_size
+					session['minutes'] = time.perf_counter() / 60
 
 					# Checkpoint if necessary
 					if checkpoint is not None:
-						for k in ('samples', 'batches'):
+						for k in ('samples', 'batches', 'minutes'):
 							if k not in checkpoint:
 								continue
 							if session[k] - last_checkpoint[k] > checkpoint[k]:

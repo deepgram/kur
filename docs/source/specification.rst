@@ -748,12 +748,13 @@ dictionary, it should look like this:
 	  epochs: EPOCHS
 	  batches: BATCHES
 	  samples: SAMPLES
+	  minutes: MINUTES
 
 ``PATH`` is the name of the path to save the checkpoint to. It defaults to
 ``checkpoint`` if not specified. The other fields---``EPOCHS``, ``BATCHES``,
-``SAMPLES``---are all optional. If specified, they indicate how often the
-checkpoint should be created. They can be used together; for example, consider
-this specification:
+``SAMPLES``, ``MINUTES``---are all optional. If specified, they indicate how
+often the checkpoint should be created. They can be used together; for example,
+consider this specification:
 
 .. code-block:: yaml
 
