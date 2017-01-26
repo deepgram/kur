@@ -450,46 +450,67 @@ class SpeechRecognitionSupplier(Supplier):
 			checksum=checksum
 		)
 
+		manifest = None
 		if is_packed and unpack:
 			logger.debug('Unpacking input data: %s', local_path)
-			extracted = package.unpack(local_path, recursive=True)
+			manifest = package.unpack(local_path, recursive=True)
 			is_packed = False
 		elif is_packed and not unpack:
 			logger.debug('Using packed input data.')
 			raise NotImplementedError
 		elif not is_packed and unpack:
 			logger.debug('Using already unpacked input data.')
-			extracted = []
-			for dirpath, _, filenames in os.walk(local_path):
-				extracted.extend([
-					package.canonicalize(os.path.join(dirpath, filename))
-					for filename in filenames
-				])
 		elif not is_packed and not unpack:
 			logger.debug('Ignore "unpack" for input data, since it is already '
 				'unpacked.')
 		else:
 			logger.error('Unhandled data package requirements. This is a bug.')
 
-		self.metadata, self.data = self.get_metadata(extracted, max_duration)
+		self.metadata, self.data = self.get_metadata(
+			manifest=manifest,
+			root=local_path,
+			max_duration=max_duration
+		)
 
 	###########################################################################
-	def get_metadata(self, package_contents, max_duration):
+	def get_metadata(self, manifest=None, root=None, max_duration=None):
 		""" Scans the package for a metadata file, makes sure everything is in
 			order, and returns some information about the data set.
 		"""
 		logger.debug('Looking for metadata file.')
 		metadata_file = None
-		for filename in package_contents:
-			parts = os.path.splitext(filename)
-			if parts[1].lower() == '.jsonl' and \
-				not os.path.basename(filename).startswith('.'):
-				metadata_file = filename
-				source = os.path.join(os.path.dirname(metadata_file), 'audio')
-				break
+
+		def look_in_list(filenames):
+			""" Searches a list of files for a JSONL file.
+			"""
+			for filename in filenames:
+				parts = os.path.splitext(filename)
+				if parts[1].lower() == '.jsonl' and \
+					not os.path.basename(filename).startswith('.'):
+					return filename
+			return None
+
+		if manifest is None:
+			if root is None:
+				raise ValueError('No root provided and no manifest provided. '
+					'This is a bug.')
+			if not os.path.isdir(root):
+				raise ValueError('Root is not a directory. This is a bug.')
+			for dirpath, _, filenames in os.walk(root):
+				metadata_file = look_in_list(filenames)
+				if metadata_file is not None:
+					metadata_file = os.path.join(dirpath, metadata_file)
+					break
+		else:
+			metadata_file = look_in_list(manifest)
 
 		if metadata_file is None:
 			raise ValueError('Failed to find a JSONL metadata file.')
+
+		source = os.path.join(
+			os.path.dirname(metadata_file),
+			'audio'
+		)
 
 		logger.debug('Found metadata file: %s', metadata_file)
 		logger.debug('Inferred source path: %s', source)
