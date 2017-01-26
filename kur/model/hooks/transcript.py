@@ -16,7 +16,7 @@ limitations under the License.
 
 import logging
 import numpy
-from . import EvaluationHook
+from . import EvaluationHook, UpdateTruth
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,9 @@ class TranscriptHook(EvaluationHook):
 		print('Prediction: "{}"'.format(result['prediction']))
 		print('Truth: "{}"'.format(result['truth']))
 
-		return result
+		return UpdateTruth(
+			data=result['prediction'],
+			truth=result['truth']
+		)
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
