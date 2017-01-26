@@ -19,9 +19,10 @@ import shutil
 import math
 import time
 import traceback
+import numpy
 import tqdm
 from ..utils import get_any_value, CriticalSection, parallelize
-from .hooks import TrainingHook
+from .hooks import TrainingHook, UpdateTruth
 
 logger = logging.getLogger(__name__)
 
@@ -179,6 +180,8 @@ class Executor:
 			prediction, batch = first_batch
 			for hook in hooks:
 				prediction = hook.apply(prediction, batch, self.model)
+				if isinstance(prediction, UpdateTruth):
+					prediction, batch = prediction.data, prediction.truth
 
 		return test_loss
 

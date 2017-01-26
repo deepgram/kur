@@ -17,6 +17,19 @@ limitations under the License.
 from kur.utils import get_subclasses
 
 ###############################################################################
+class UpdateTruth:					# pylint: disable=too-few-public-methods
+	""" A wrapper for letting callers of evaluation hooks know that they should
+		swap out their idea of "truth" for what is contained here.
+	"""
+
+	###########################################################################
+	def __init__(self, data=None, truth=None):
+		""" Holds the tuple.
+		"""
+		self.data = data
+		self.truth = truth
+
+###############################################################################
 class EvaluationHook:					# pylint: disable=too-few-public-methods
 	""" Base class for all evaluation hooks.
 
@@ -130,7 +143,8 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 			# Return value
 
 			A dictionary in the same format as `data` which can be passed on to
-			the next hook.
+			the next hook, or an UpdateTruth instance with new data and truth
+			to be passed on to the next hook.
 		"""
 		raise NotImplementedError
 
