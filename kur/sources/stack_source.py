@@ -165,7 +165,7 @@ class StackSource(ChunkSource):
 				end = min(num_entries, start + chunk_size)
 
 			num = end - start
-			result = numpy.empty(shape=(num,) + self.shape())
+			result = [None] * num
 			for i in range(num):
 
 				which = self.draw[start+i]
@@ -177,7 +177,7 @@ class StackSource(ChunkSource):
 				if len(queues[which]) == 0:
 					queues[which] = None
 
-			yield result
+			yield numpy.array(result)
 			start = end
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
