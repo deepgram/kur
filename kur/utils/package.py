@@ -237,7 +237,7 @@ def install(url=None, path=None, checksum=None):
 					logger.warning('Input file "%s" failed its checksum. '
 						'Redownloading...', path)
 			else:
-				logger.debug('File exists, but there is not checksum: %s',
+				logger.debug('File exists, but there is no checksum: %s',
 					path)
 				return path, True
 
