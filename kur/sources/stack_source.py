@@ -59,6 +59,15 @@ class StackSource(ChunkSource):
 		return sum(len(source) for source in self.sources)
 
 	###########################################################################
+	def __getattr__(self, name):
+		""" Pass-through for stacked sources.
+		"""
+		for source in self.sources:
+			if hasattr(source, name):
+				return getattr(source, name)
+		raise AttributeError('No such attribute: {}'.format(name))
+
+	###########################################################################
 	def stack(self, source):
 		""" Adds a new source to this data stack.
 		"""
@@ -143,6 +152,11 @@ class StackSource(ChunkSource):
 	def __iter__(self):
 		""" Returns the next chunk of data.
 		"""
+
+		for source in self.sources:
+			if isinstance(source, ChunkSource):
+				if source.requested_chunk_size is ChunkSource.USE_BATCH_SIZE:
+					source.set_chunk_size(self.chunk_size)
 
 		queues = [None]*len(self.sources)
 		iterators = [iter(source) for source in self.sources]
