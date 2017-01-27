@@ -152,22 +152,39 @@ class RawUtterance(ChunkSource):
 		self.norm = norm
 
 	###########################################################################
+	def find_audio_path(self, partial_path):
+		""" Resolves the audio file extension.
+		"""
+		for ext in SpeechRecognitionSupplier.SUPPORTED_TYPES:
+			candidate = '{}.{}'.format(partial_path, ext)
+			if os.path.isfile(candidate):
+				return candidate
+		return None
+
+	###########################################################################
 	def load_audio(self, paths):
 		""" Loads unnormalized audio data.
 		"""
-		result = [
-			get_audio_features(
-				path,
-				feature_type=self.feature_type,
-				high_freq=self.max_frequency,
-				on_error='suppress'
-			)
-			for path in paths
-		]
+		# Resolve and load each path.
+		result = [None] * len(paths)
+		for i, partial_path in enumerate(paths):
+			path = self.find_audio_path(partial_path)
+			if path is None:
+				logger.error('Could not find audio file that---ignoring '
+					'extension---begins with: %s', partial_path)
+			else:
+				result[i] = get_audio_features(
+					path,
+					feature_type=self.feature_type,
+					high_freq=self.max_frequency,
+					on_error='suppress'
+				)
+				if result[i] is None:
+					logger.error('Failed to load audio file at path: %s', path)
 
 		# Clean up bad audio
 		if any(x is None for x in result):
-			logger.error('Recovering from a bad audio uttereance.')
+			logger.warning('Recovering from a bad audio uttereance.')
 			good = None
 			for candidate in result:
 				if candidate is not None:
@@ -546,19 +563,7 @@ class SpeechRecognitionSupplier(Supplier):
 
 				data['duration'][entries] = entry['duration_s']
 				data['transcript'][entries] = entry['text']
-
-				audio = os.path.join(source, entry['uuid'])
-				for ext in SpeechRecognitionSupplier.SUPPORTED_TYPES:
-					candidate = '{}.{}'.format(audio, ext)
-					if os.path.isfile(candidate):
-						data['audio'][entries] = candidate
-						break
-				else:
-					logger.warning('Line %d in the metadata file (%s) '
-						'references UUID %s, but we could not find a '
-						'supported audio file type: %s.*', line_number,
-						metadata_file, entry['uuid'], audio)
-					continue
+				data['audio'][entries] = os.path.join(source, entry['uuid'])
 
 				entries += 1
 
