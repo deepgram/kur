@@ -532,11 +532,11 @@ class Kurfile:
 				callback=None
 			)
 			for hook in hooks:
-				result = hook.apply(result, truth)
+				result = hook.apply(result, truth, model)
 				if isinstance(result, UpdateTruth):
 					result, truth = result.data, result.truth
 			if destination is not None:
-				result = destination.apply(result, truth)
+				result = destination.apply(result, truth, model)
 				if isinstance(result, UpdateTruth):
 					result, truth = result.data, result.truth
 			return result
