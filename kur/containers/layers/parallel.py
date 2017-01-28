@@ -63,15 +63,16 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 		""" Instantiate the container.
 		"""
 		backend = model.get_backend()
-		for child in self.children:
-			for layer in child.build(model):
+		for child_index, child in enumerate(self.children):
+			for layer_index, layer in enumerate(child.build(model)):
 
 				if backend.get_name() == 'keras':
 
 					import keras.layers as L	# pylint: disable=import-error
 					yield L.TimeDistributed(
 						layer,
-						name='{}_{}'.format(self.name, child.name)
+						name='{}_{}_{}_{}'.format(self.name, child.name,
+							child_index, layer_index)
 					)
 
 				else:
