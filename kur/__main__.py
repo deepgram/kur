@@ -46,7 +46,7 @@ def train(args):
 	"""
 	spec = parse_kurfile(args.kurfile, args.engine)
 	func = spec.get_training_function()
-	func()
+	func(step=args.step)
 
 ###############################################################################
 def test(args):
@@ -54,7 +54,7 @@ def test(args):
 	"""
 	spec = parse_kurfile(args.kurfile, args.engine)
 	func = spec.get_testing_function()
-	func()
+	func(step=args.step)
 
 ###############################################################################
 def evaluate(args):
@@ -62,7 +62,7 @@ def evaluate(args):
 	"""
 	spec = parse_kurfile(args.kurfile, args.engine)
 	func = spec.get_evaluation_function()
-	func()
+	func(step=args.step)
 
 ###############################################################################
 def build(args):
@@ -193,14 +193,20 @@ def parse_args():
 	subparsers = parser.add_subparsers(dest='cmd', help='Sub-command help.')
 
 	subparser = subparsers.add_parser('train', help='Trains a model.')
+	subparser.add_argument('--step', action='store_true',
+		help='Interactive debug; prompt user before submitting each batch.')
 	subparser.add_argument('kurfile', help='The Kurfile to use.')
 	subparser.set_defaults(func=train)
 
 	subparser = subparsers.add_parser('test', help='Tests a model.')
+	subparser.add_argument('--step', action='store_true',
+		help='Interactive debug; prompt user before submitting each batch.')
 	subparser.add_argument('kurfile', help='The Kurfile to use.')
 	subparser.set_defaults(func=test)
 
 	subparser = subparsers.add_parser('evaluate', help='Evaluates a model.')
+	subparser.add_argument('--step', action='store_true',
+		help='Interactive debug; prompt user before submitting each batch.')
 	subparser.add_argument('kurfile', help='The Kurfile to use.')
 	subparser.set_defaults(func=evaluate)
 

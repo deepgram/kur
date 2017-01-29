@@ -285,7 +285,7 @@ class Kurfile:
 		model = self.get_model(provider)
 		trainer = self.get_trainer()
 
-		def func():
+		def func(**kwargs):
 			""" Trains a model from a pre-packaged specification file.
 			"""
 			if initial_weights is not None:
@@ -311,18 +311,20 @@ class Kurfile:
 							'this is undesireable, set "must_exist" to "yes" '
 							'in the approriate "weights" section.',
 							initial_weights)
-			return trainer.train(
-				provider=provider,
-				validation=validation,
-				epochs=epochs,
-				log=log,
-				best_train=best_train,
-				best_valid=best_valid,
-				last_weights=last_weights,
-				training_hooks=training_hooks,
-				validation_hooks=validation_hooks,
-				checkpoint=checkpoint
-			)
+			defaults = {
+				'provider' : provider,
+				'validation' : validation,
+				'epochs' : epochs,
+				'log' : log,
+				'best_train' : best_train,
+				'best_valid' : best_valid,
+				'last_weights' : last_weights,
+				'training_hooks' : training_hooks,
+				'validation_hooks' : validation_hooks,
+				'checkpoint' : checkpoint
+			}
+			defaults.update(kwargs)
+			return trainer.train(**defaults)
 
 		return func
 
@@ -364,7 +366,7 @@ class Kurfile:
 		model = self.get_model(provider)
 		trainer = self.get_trainer(with_optimizer=False)
 
-		def func():
+		def func(**kwargs):
 			""" Tests a model from a pre-packaged specification file.
 			"""
 			if initial_weights is not None:
@@ -380,11 +382,13 @@ class Kurfile:
 					'proceed with default-initialized weights. This will '
 					'test that the system works, but the results will be '
 					'terrible.')
-			return trainer.test(
-				provider=provider,
-				validating=False,
-				hooks=hooks
-			)
+			defaults = {
+				'provider' : provider,
+				'validating' : False,
+				'hooks' : hooks
+			}
+			defaults.update(kwargs)
+			return trainer.test(**defaults)
 
 		return func
 
@@ -511,7 +515,7 @@ class Kurfile:
 		model = self.get_model(provider)
 		evaluator = self.get_evaluator()
 
-		def func():
+		def func(**kwargs):
 			""" Evaluates a model from a pre-packaged specification file.
 			"""
 			if initial_weights is not None:
@@ -527,10 +531,12 @@ class Kurfile:
 					'proceed with default-initialized weights. This will '
 					'test that the system works, but the results will be '
 					'terrible.')
-			result, truth = evaluator.evaluate(
-				provider=provider,
-				callback=None
-			)
+			defaults = {
+				'provider' : provider,
+				'callback' : None
+			}
+			defaults.update(kwargs)
+			result, truth = evaluator.evaluate(**defaults)
 			for hook in hooks:
 				result = hook.apply(result, truth, model)
 				if isinstance(result, UpdateTruth):

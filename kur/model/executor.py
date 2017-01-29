@@ -101,7 +101,7 @@ class Executor:
 			self.model.supplement_provider(with_provider)
 
 	###########################################################################
-	def test(self, provider, validating=False, hooks=None):
+	def test(self, provider, validating=False, hooks=None, step=False):
 		""" Tests/validates the model on some data.
 
 			# Arguments
@@ -135,7 +135,10 @@ class Executor:
 				) as pbar:
 
 			# Present each batch to the network.
-			for batch in parallelize(provider):
+			for num_batches, batch in parallelize(enumerate(provider)):
+				if step:
+					self.do_step('Test', num_batches, batch)
+
 				prediction, batch_loss = self.model.backend.test(
 					model=self.model,
 					data=batch
@@ -224,7 +227,7 @@ class Executor:
 	###########################################################################
 	def wrapped_train(self, provider, *, validation=None, epochs=None,
 		log=None, best_train=None, best_valid=None, training_hooks=None,
-		validation_hooks=None, checkpoint=None):
+		validation_hooks=None, checkpoint=None, step=False):
 		""" Trains the model on some data.
 
 			# Arguments
@@ -371,10 +374,15 @@ class Executor:
 					) as pbar:
 
 				# Present each batch to the network.
-				for batch in parallelize(provider):
+				for num_batches, batch in parallelize(enumerate(provider)):
 
 					# The loss averaged over this batch.
 					logger.debug('Training on batch...')
+					if step:
+						self.do_step(
+							'Train, Epoch {}'.format(session['epochs']+1),
+							num_batches, batch)
+
 					_, batch_loss = self.model.backend.train(
 						model=self.model,
 						data=batch
@@ -532,7 +540,7 @@ class Executor:
 					hook.notify(TrainingHook.EPOCH_END, info)
 
 	###########################################################################
-	def evaluate(self, provider, callback=None):
+	def evaluate(self, provider, callback=None, step=False):
 		""" Evaluates the model on some data.
 
 			# Arguments
@@ -572,7 +580,11 @@ class Executor:
 					desc='Evaluating'
 				) as pbar:
 
-			for batch in parallelize(provider):
+			for num_batches, batch in parallelize(enumerate(provider)):
+
+				if step:
+					self.do_step('Evaluate', num_batches, batch)
+
 				evaluated, _ = self.model.backend.evaluate(
 					model=self.model,
 					data=batch
@@ -627,5 +639,19 @@ class Executor:
 				truth[k] = numpy.concatenate(v)
 
 		return result, truth
+
+	###########################################################################
+	def do_step(self, what, num_batches, batch):
+		""" Wait for user input before running a single batch of data.
+		"""
+		print('{}, Batch {}:'.format(what, num_batches+1))
+		for k, v in batch.items():
+			print('{} {}: {}'.format(
+				k,
+				v.shape if hasattr(v, 'shape') else \
+					'(list, {} entries)'.format(len(v)),
+				v
+			))
+		input('Press ENTER to continue...')
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
