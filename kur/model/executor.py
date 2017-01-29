@@ -27,9 +27,17 @@ from .hooks import TrainingHook, UpdateTruth
 logger = logging.getLogger(__name__)
 
 ###############################################################################
+class RetryException(Exception):
+	""" Exception class for retrying an operation on a new batch of data.
+	"""
+	pass
+
+###############################################################################
 class Executor:
 	""" Class for using models.
 	"""
+
+	MAX_RETRIES = 3
 
 	###########################################################################
 	def __init__(self, model, loss=None, optimizer=None):
@@ -128,6 +136,7 @@ class Executor:
 		test_loss = None
 		n_entries = 0
 		first_batch = None
+		test_func = self.retry(self.model.backend.test)
 		with tqdm.tqdm(
 					total=len(provider),
 					unit='samples',
@@ -139,10 +148,13 @@ class Executor:
 				if step:
 					self.do_step('Test', num_batches, batch)
 
-				prediction, batch_loss = self.model.backend.test(
-					model=self.model,
-					data=batch
-				)
+				try:
+					prediction, batch_loss = test_func(
+						model=self.model,
+						data=batch
+					)
+				except RetryException:
+					continue
 
 				if first_batch is None:
 					first_batch = (prediction, batch)
@@ -348,6 +360,8 @@ class Executor:
 		last_checkpoint = session.copy()
 
 		epoch = completed_epochs - 1
+		train_func = self.retry(self.model.backend.train)
+
 		while True:
 			epoch += 1
 			if epochs is not None and epoch >= epochs:
@@ -383,10 +397,12 @@ class Executor:
 							'Train, Epoch {}'.format(session['epochs']+1),
 							num_batches, batch)
 
-					_, batch_loss = self.model.backend.train(
-						model=self.model,
-						data=batch
-					)
+					try:
+						_, batch_loss = train_func(
+							model=self.model, data=batch)
+					except RetryException:
+						continue
+
 					logger.debug('Finished training on batch.')
 
 					if log is not None:
@@ -574,6 +590,8 @@ class Executor:
 		total = len(provider)
 		n_entries = 0
 
+		eval_func = self.retry(self.model.backend.evaluate)
+
 		with tqdm.tqdm(
 					total=total,
 					unit='samples',
@@ -585,10 +603,11 @@ class Executor:
 				if step:
 					self.do_step('Evaluate', num_batches, batch)
 
-				evaluated, _ = self.model.backend.evaluate(
-					model=self.model,
-					data=batch
-				)
+				try:
+					evaluated, _ = eval_func(model=self.model, data=batch)
+				except RetryException:
+					continue
+
 				batch_size = len(get_any_value(batch))
 
 				if has_truth is None:
@@ -653,5 +672,34 @@ class Executor:
 				v
 			))
 		input('Press ENTER to continue...')
+
+	###########################################################################
+	def retry(self, func):
+		""" Creates a wrapper that implements some retry semantics.
+		"""
+
+		def try_func(*args, **kwargs):
+			""" Wraps a function with some retry logic.
+			"""
+			try:
+				result = func(*args, **kwargs)
+
+			# Catch Exception so that we don't catch KeyboardInterrupt.
+			except Exception:
+				try_func.counter += 1
+				if try_func.counter > Executor.MAX_RETRIES:
+					logger.exception(
+						'Failed to execute on batch. No more retries.')
+					raise
+				logger.exception('Failed to execute on batch. Tolerating up '
+					'to %d more consecutive failures.',
+					Executor.MAX_RETRIES - try_func.counter)
+				raise RetryException
+			else:
+				try_func.counter = 0
+				return result
+		try_func.counter = 0
+
+		return try_func
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
