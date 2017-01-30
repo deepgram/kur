@@ -14,9 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
+import signal
+import atexit
+import time
 import sys
 import argparse
 import logging
+
 from . import __version__, __homepage__
 from .utils import logcolor
 from . import Kurfile
@@ -177,6 +182,90 @@ def version(args):							# pylint: disable=unused-argument
 	print('Homepage: {}'.format(__homepage__))
 
 ###############################################################################
+def do_monitor(args):
+	""" Handle "monitor" mode.
+	"""
+
+	# If we aren't running in monitor mode, then we are done.
+	if not args.monitor:
+		return
+
+	# This is the main retry loop.
+	while True:
+		# Fork the process.
+		logger.info('Forking child process.')
+		pid = os.fork()
+
+		# If we are the child, leave this function and work.
+		if pid == 0:
+			logger.info('We are a newly spawned child process.')
+			return
+
+		logger.info('Child process spawned: %d', pid)
+
+		# Wait for the child to die. If we die first, kill the child.
+		atexit.register(kill_process, pid)
+		try:
+			_, exit_status = os.waitpid(pid, 0)
+		except KeyboardInterrupt:
+			break
+		atexit.unregister(kill_process)
+
+		# Process the exit code.
+		signal_number = exit_status & 0xFF
+		exit_code = (exit_status >> 8) & 0xFF
+		core_dump = bool(0x80 & signal_number)
+
+		if signal_number == 0:
+			logger.info('Child process exited with exit code: %d.', exit_code)
+		else:
+			logger.info('Child process exited with signal %d (core dump: %s).',
+				signal_number, core_dump)
+
+		retry = False
+		if os.WIFSIGNALED(exit_status):
+			if os.WTERMSIG(exit_status) == signal.SIGSEGV:
+				logger.error('Child process seg faulted.')
+				retry = True
+
+		if not retry:
+			break
+
+	sys.exit(0)
+
+###############################################################################
+def kill_process(pid):
+	""" Kills a child process by PID.
+	"""
+
+	# Maximum time we wait (in seconds) before we send SIGKILL.
+	max_timeout = 60
+
+	# Terminate child process
+	logger.info('Sending Ctrl+C to the child process %d', pid)
+	os.kill(pid, signal.SIGINT)
+
+	start = time.time()
+	while True:
+		now = time.time()
+
+		# Check the result.
+		result = os.waitpid(pid, os.WNOHANG)
+		if result != (0, 0):
+			# The child process is dead.
+			break
+
+		# Check the timeout.
+		if now - start > max_timeout:
+			# We've waited too long.
+			os.kill(pid, signal.SIGKILL)
+			break
+
+		# Keep waiting.
+		logger.debug('Waiting patiently...')
+		time.sleep(0.5)
+
+###############################################################################
 def parse_args():
 	""" Constructs an argument parser and returns the parsed arguments.
 	"""
@@ -187,6 +276,9 @@ def parse_args():
 	parser.add_argument('-v', '--verbose', default=0, action='count',
 		help='Increase verbosity. Can be specified twice for debug-level '
 			'output.')
+	parser.add_argument('--monitor', action='store_true',
+		help='Run Kur in monitor mode, which tries to recover from critical '
+			'errors, like segmentation faults.')
 	parser.add_argument('--version', action='store_true',
 		help='Display version and exit.')
 
@@ -245,14 +337,6 @@ def main():
 	"""
 	args = parse_args()
 
-	if args.version:
-		args.func = version
-	elif not hasattr(args, 'func'):
-		print('Nothing to do!', file=sys.stderr)
-		print('For usage information, try: kur --help', file=sys.stderr)
-		print('Or visit our homepage: {}'.format(__homepage__))
-		sys.exit(1)
-
 	loglevel = {
 		0 : logging.WARNING,
 		1 : logging.INFO,
@@ -268,6 +352,16 @@ def main():
 			)
 	)
 	logging.captureWarnings(True)
+
+	do_monitor(args)
+
+	if args.version:
+		args.func = version
+	elif not hasattr(args, 'func'):
+		print('Nothing to do!', file=sys.stderr)
+		print('For usage information, try: kur --help', file=sys.stderr)
+		print('Or visit our homepage: {}'.format(__homepage__))
+		sys.exit(1)
 
 	engine = JinjaEngine()
 	setattr(args, 'engine', engine)
