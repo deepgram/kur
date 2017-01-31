@@ -15,11 +15,13 @@ limitations under the License.
 """
 
 import logging
-import json
 
 import urllib.request
 
 from . import TrainingHook, EvaluationHook
+from .transcript import Transcript
+from ...utils import prepare_multipart, prepare_json, UploadFile
+from ...supplier import SpeechRecognitionSupplier
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,8 @@ logger = logging.getLogger(__name__)
 class SlackHook(TrainingHook, EvaluationHook):
 	""" Hook for posting to Slack.
 	"""
+
+	FILES_UPLOAD = 'https://slack.com/api/files.upload'
 
 	###########################################################################
 	@classmethod
@@ -36,8 +40,8 @@ class SlackHook(TrainingHook, EvaluationHook):
 		return 'slack'
 
 	###########################################################################
-	def __init__(self, channel, url, user=None, icon=None, title=None,
-		*args, **kwargs):
+	def __init__(self, channel, url=None, user=None, icon=None, title=None,
+		token=None, *args, **kwargs):
 		""" Creates a new Slack hook.
 		"""
 		super().__init__(*args, **kwargs)
@@ -47,6 +51,29 @@ class SlackHook(TrainingHook, EvaluationHook):
 		self.url = url
 		self.channel = channel
 		self.title = title
+		self.token = token
+
+		if url is None and token is None:
+			raise ValueError('Slack hook requires at least one of "url" or '
+				'"token" is defined.')
+
+	###########################################################################
+	def upload_message(self, text, filename):
+		""" Sends a message to Slack and uploads a file.
+		"""
+		data = {
+			'token' : self.token,
+			'file' : UploadFile(filename),
+			'filename' : filename,
+			'initial_comment' : text,
+			'channels' : self.channel
+		}
+
+		if self.title is not None:
+			data['title'] = self.title
+
+		data, header = prepare_multipart(data)
+		self._submit(SlackHook.FILES_UPLOAD, data, header)
 
 	###########################################################################
 	def send_message(self, text, info=None):
@@ -66,15 +93,18 @@ class SlackHook(TrainingHook, EvaluationHook):
 			'icon_emoji' : ':{}:'.format(self.icon),
 			'text' : text
 		}
-		data = json.dumps(data)
-		data = data.encode('utf-8')
 
+		data, header = prepare_json(data)
+		self._submit(self.url, data, header)
+
+	###########################################################################
+	def _submit(self, url, data, header):
+		""" Submits a POST request to Slack.
+		"""
 		request = urllib.request.Request(
-			self.url,
+			url,
 			data=data,
-			headers={
-				'Content-type' : 'application/json'
-			},
+			headers=header,
 			method='POST'
 		)
 		director = urllib.request.build_opener()
@@ -121,9 +151,28 @@ class SlackHook(TrainingHook, EvaluationHook):
 		logger.debug('Slack hook received non-training message.')
 
 		data, truth = current
-		self.send_message(
-			'Truth = "{}", Prediction = "{}"'.format(truth, data)
-		)
+
+		upload = False
+		if self.token is not None:
+			if isinstance(data, Transcript) \
+					and original[1] is not None \
+					and 'audio_source' in original[1]:
+				path = SpeechRecognitionSupplier.find_audio_path(
+					original[1]['audio_source'][0]
+				)
+				if path is not None:
+					upload = True
+
+		text = 'Truth = "{}", Prediction = "{}"'.format(truth, data),
+		if upload:
+			self.upload_message(text, path)
+		elif self.url is not None:
+			self.send_message(text)
+		else:
+			logger.warning('Failed to post to Slack. The "slack" hook was '
+				'given enough information for uploading only, and not enough '
+				'for message posting. However, the data you are working with '
+				'does not provide enough information for file uploading.')
 
 		return current
 

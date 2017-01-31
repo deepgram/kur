@@ -454,7 +454,8 @@ class SpeechRecognitionSupplier(Supplier):
 			'utterance_raw' : utterance_raw,
 			'utterance_length' : UtteranceLength('utterance_raw'),
 			'utterance' : Utterance('utterance_raw', utterance_raw),
-			'duration' : VanillaSource(numpy.array(self.data['duration']))
+			'duration' : VanillaSource(numpy.array(self.data['duration'])),
+			'audio_source' : VanillaSource(numpy.array(self.data['audio']))
 		}
 
 	###########################################################################
