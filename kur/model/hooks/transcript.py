@@ -16,7 +16,7 @@ limitations under the License.
 
 import logging
 import numpy
-from . import EvaluationHook, UpdateTruth
+from . import EvaluationHook
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +59,11 @@ class TranscriptHook(EvaluationHook):
 		self.warp = warp
 
 	###########################################################################
-	def apply(self, data, truth=None, model=None):
+	def apply(self, current, original, model=None):
 		""" Applies the hook to the data.
 		"""
+
+		data, truth = current
 
 		k = model.provider.keys.index('transcript_raw')
 		vocab = model.provider.sources[k].vocab
@@ -83,9 +85,6 @@ class TranscriptHook(EvaluationHook):
 		print('Prediction: "{}"'.format(result['prediction']))
 		print('Truth: "{}"'.format(result['truth']))
 
-		return UpdateTruth(
-			data=result['prediction'],
-			truth=result['truth']
-		)
+		return (result['prediction'], result['truth'])
 
 #### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -114,16 +114,17 @@ class SlackHook(TrainingHook, EvaluationHook):
 		self.send_message(text, info)
 
 	###########################################################################
-	def apply(self, data, truth=None, model=None):
+	def apply(self, current, original, model=None):
 		""" Sends a Slack message in response to an evaluation hook.
 		"""
 
 		logger.debug('Slack hook received non-training message.')
 
+		data, truth = current
 		self.send_message(
 			'Truth = "{}", Prediction = "{}"'.format(truth, data)
 		)
 
-		return data
+		return current
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

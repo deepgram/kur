@@ -22,7 +22,7 @@ import traceback
 import numpy
 import tqdm
 from ..utils import get_any_value, CriticalSection, parallelize
-from .hooks import TrainingHook, UpdateTruth
+from .hooks import TrainingHook
 
 logger = logging.getLogger(__name__)
 
@@ -193,10 +193,11 @@ class Executor:
 
 		if hooks and first_batch is not None:
 			prediction, batch = first_batch
+			prev = first_batch
 			for hook in hooks:
-				prediction = hook.apply(prediction, batch, self.model)
-				if isinstance(prediction, UpdateTruth):
-					prediction, batch = prediction.data, prediction.truth
+				new_prev = hook.apply(prev, first_batch, self.model)
+				prev = (new_prev, prev[1]) \
+					if not isinstance(new_prev, tuple) else new_prev
 
 		return test_loss
 

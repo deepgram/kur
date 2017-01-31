@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from .hooks import TrainingHook, EvaluationHook, UpdateTruth
+from .hooks import TrainingHook, EvaluationHook
 from .output_hook import OutputHook
 from .mnist_hook import MnistHook
 from .transcript import TranscriptHook

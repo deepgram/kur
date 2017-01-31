@@ -17,19 +17,6 @@ limitations under the License.
 from kur.utils import get_subclasses
 
 ###############################################################################
-class UpdateTruth:					# pylint: disable=too-few-public-methods
-	""" A wrapper for letting callers of evaluation hooks know that they should
-		swap out their idea of "truth" for what is contained here.
-	"""
-
-	###########################################################################
-	def __init__(self, data=None, truth=None):
-		""" Holds the tuple.
-		"""
-		self.data = data
-		self.truth = truth
-
-###############################################################################
 class EvaluationHook:					# pylint: disable=too-few-public-methods
 	""" Base class for all evaluation hooks.
 
@@ -130,21 +117,33 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 			))
 
 	###########################################################################
-	def apply(self, data, truth=None, model=None):
+	def apply(self, current, original, model=None):
 		""" Applies the hook to the data.
 
 			# Arguments
 
-			data: dict. Dictionary whose keys are the names of the output layers
+			current: tuple. A 2-tuple, `(prediction, truth)`. `prediction` is
+				a dictionary whose keys are the names of the output layers
 				in the model, and whose values are a list of output tensors.
-			truth: dict or None (default: None). If not None, then a dictionary
-				with the same keys as `data` which contains ground truth data.
+				If `truth` is not None, then it is a dictionary with the same
+				keys as `prediction` which contains ground truth data.
+			original: tuple. Same format as `current`. See Notes for details.
+				This should not be modified.
 
 			# Return value
 
-			A dictionary in the same format as `data` which can be passed on to
-			the next hook, or an UpdateTruth instance with new data and truth
-			to be passed on to the next hook.
+			If the hook wants to modify the truth value that the next hook in
+			the processing stack sees, then it should return a tuple of
+			`(new_prediction, new_truth)` whose values are dictionaries in the
+			same form as `data`. If the hook does not modify the truth data,
+			then it can also simply return `new_prediction`.
+
+			# Notes
+
+			Hooks can be stacked. The value of `current` is the output of the
+			most recent hook in the stack. `original` is the output of the
+			model before being passed to the hooks. For the first hook, it is
+			true that `output is current`.
 		"""
 		raise NotImplementedError
 

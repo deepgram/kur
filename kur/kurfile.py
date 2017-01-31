@@ -21,7 +21,7 @@ import logging
 from .engine import ScopeStack
 from .reader import Reader
 from .containers import Container, ParsingError
-from .model import Model, Executor, EvaluationHook, OutputHook, TrainingHook, UpdateTruth
+from .model import Model, Executor, EvaluationHook, OutputHook, TrainingHook
 from .backend import Backend
 from .optimizer import Optimizer, Adam
 from .loss import Loss
@@ -537,15 +537,17 @@ class Kurfile:
 			}
 			defaults.update(kwargs)
 			result, truth = evaluator.evaluate(**defaults)
+			orig = (result, truth)
+			prev = orig
 			for hook in hooks:
-				result = hook.apply(result, truth, model)
-				if isinstance(result, UpdateTruth):
-					result, truth = result.data, result.truth
+				new_prev = hook.apply(prev, orig, model)
+				prev = (new_prev, prev[1]) \
+					if not isinstance(new_prev, tuple) else new_prev
 			if destination is not None:
-				result = destination.apply(result, truth, model)
-				if isinstance(result, UpdateTruth):
-					result, truth = result.data, result.truth
-			return result
+				new_prev = destination.apply(prev, orig, model)
+				prev = (new_prev, prev[1]) \
+					if not isinstance(new_prev, tuple) else new_prev
+			return prev
 
 		return func
 

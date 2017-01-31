@@ -69,14 +69,15 @@ class OutputHook(EvaluationHook):
 				format))
 
 	###########################################################################
-	def apply(self, data, truth=None, model=None):
+	def apply(self, current, original, model=None):
 		""" Applies the hook to the data.
 		"""
+		data, truth = current
 		self.saver(
 			target=self.path,
 			data=data,
 			truth=truth
 		)
-		return data
+		return current
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -34,13 +34,14 @@ class MnistHook(EvaluationHook):
 		return 'mnist'
 
 	###########################################################################
-	def apply(self, data, truth=None, model=None):
+	def apply(self, current, original, model=None):
 		""" Applies the hook to the data.
 		"""
+		data, truth = original
 		if truth is None:
 			logger.warning('MNIST hook only works with ground-truth data. We '
 				'will skip this hook.')
-			return data
+			return current
 
 		stats = {
 			i : {'correct' : 0, 'total' : 0}
@@ -56,20 +57,20 @@ class MnistHook(EvaluationHook):
 			else:
 				logger.error('Cannot parse this data in the MNIST hook. Too '
 					'many keys, none of which is "labels".')
-				return data
+				return current
 		else:
 			logger.error('MNIST hook cannot process this output: it has no '
 				'keys.')
-			return data
+			return current
 
 		if key not in truth:
 			logger.error('No ground truth data present for MNIST hook.')
-			return data
+			return current
 
 		if len(truth[key]) != len(data[key]):
 			logger.warning('There appears to be a different amount of ground '
 				'truth information than model output.')
-			return data
+			return current
 
 		decoded_estimate = numpy.argmax(data[key], axis=1)
 		decoded_truth = numpy.argmax(truth[key], axis=1)
@@ -98,6 +99,6 @@ class MnistHook(EvaluationHook):
 			'ALL', correct, total, correct * 100. / total if total else 0
 		))
 
-		return data
+		return current
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
