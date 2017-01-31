@@ -16,6 +16,7 @@ limitations under the License.
 
 import os
 import copy
+import socket
 import warnings
 import logging
 from .engine import ScopeStack
@@ -98,7 +99,8 @@ class Kurfile:
 		stack.append({
 			'filename' : self.filename,
 			'raw' : copy.deepcopy(self.data),
-			'parsed' : self.data
+			'parsed' : self.data,
+			'host' : socket.gethostname()
 		})
 
 		# Parse the settings (backends, globals, hyperparameters, ...)
