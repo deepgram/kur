@@ -21,6 +21,23 @@ from . import EvaluationHook
 logger = logging.getLogger(__name__)
 
 ###############################################################################
+class Transcript:
+	""" Container for holding transcripts.
+	"""
+
+	###########################################################################
+	def __init__(self, transcript):
+		self.transcript = transcript
+
+	###########################################################################
+	def __str__(self):
+		return self.transcript
+
+	###########################################################################
+	def __repr__(self):
+		return '{}({})'.format(self.__class__.__name__, self.transcript)
+
+###############################################################################
 class TranscriptHook(EvaluationHook):
 	""" Post-evaluation hook for MNIST data, which prints summary statistics
 		specific to the MNIST data set.
@@ -70,17 +87,17 @@ class TranscriptHook(EvaluationHook):
 		rev = {v : k for k, v in vocab.items()}
 
 		blank = len(vocab) if not self.warp else 0
-		prediction = data['asr'][0]
 
+		prediction = data['asr'][0]
 		result = {
-			'prediction' : self.argmax_decode(
+			'prediction' : Transcript(self.argmax_decode(
 				prediction,
 				rev,
 				blank
-			),
-			'truth' : ''.join(
+			)),
+			'truth' : Transcript(''.join(
 				rev.get(i, '') for i in truth['transcript_raw'][0]
-			) if truth is not None else None
+			)) if truth is not None else None
 		}
 		print('Prediction: "{}"'.format(result['prediction']))
 		print('Truth: "{}"'.format(result['truth']))
