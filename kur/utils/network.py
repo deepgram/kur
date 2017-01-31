@@ -16,13 +16,22 @@ limitations under the License.
 
 import os
 import hashlib
-import tempfile
 import logging
+import mimetypes
 import urllib.request
+import urllib.parse
+import uuid
+import json
+import io
+from collections import namedtuple
 
 import tqdm
 
 logger = logging.getLogger(__name__)
+
+###############################################################################
+UploadFile = namedtuple('UploadFile', 'filename')
+UploadFileData = namedtuple('UploadFileData', ('filename', 'data'))
 
 ###############################################################################
 def get_hash(path):
@@ -63,5 +72,77 @@ def download(url, target):
 				pbar.update(len(chunk))
 
 	logger.info('File downloaded: %s', target)
+
+###############################################################################
+def prepare_json(data):
+	""" Prepares a JSON-encoded HTTP message.
+	"""
+	data = json.dumps(data)
+	data = data.encode('utf-8')
+	header = {
+		'Content-type' : 'application/json'
+	}
+	return (data, header)
+
+###############################################################################
+def prepare_multipart(data):
+	""" Prepares an HTTP multipart message.
+	"""
+	# This is where we'll store our message as we build it.
+	buffer = io.BytesIO()
+
+	# Create our boundary ID.
+	boundary = uuid.uuid4().hex
+
+	# Loop over all entries in data.
+	for k, v in data.items():
+
+		# Do we need to upload a file?
+		if isinstance(v, (UploadFile, UploadFileData)):
+			buffer.write(
+				'--{}\r\n'
+				'Content-Disposition: form-data; name="{}"; filename="{}"\r\n'
+				'Content-Type: {}\r\n'
+				'\r\n'
+					.format(
+						boundary,
+						urllib.parse.quote(k),
+						urllib.parse.quote(
+							os.path.basename(v.filename)
+						),
+						mimetypes.guess_type(v.filename)[0] or
+							'application/octet-stream'
+					).encode('utf-8')
+			)
+			if isinstance(v, UploadFile):
+				with open(v.filename, 'rb') as fh:
+					buffer.write(fh.read())
+			else:
+				if not isinstance(v.data, bytes):
+					buffer.write(v.data.encode('utf-8'))
+				else:
+					buffer.write(v.data)
+			buffer.write(b'\r\n')
+
+		# Or just upload a simple value?
+		else:
+			buffer.write(
+				'--{}\r\n'
+				'Content-Disposition: form-data; name="{}"\r\n'
+				'\r\n'
+				'{}\r\n'
+					.format(boundary, urllib.parse.quote(k), v).encode('utf-8')
+			)
+
+	# Write out the footer.
+	buffer.write('--{}--\r\n'.format(boundary).encode('utf-8'))
+
+	# Return everything.
+	data = buffer.getvalue()
+	header = {
+		'Content-type' : 'multipart/form-data; boundary={}'.format(boundary)
+	}
+
+	return (data, header)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

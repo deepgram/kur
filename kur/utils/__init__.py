@@ -18,7 +18,8 @@ from .subclass import get_subclasses
 from .flatiter import flatten, concatenate
 from .iterhelp import get_any_value, merge_dict, parallelize, partial_sum
 from .importhelp import can_import
-from .network import download, get_hash
+from .network import download, get_hash, prepare_multipart, prepare_json, \
+	UploadFile, UploadFileData
 from .timer import Timer
 from .critical import CriticalSection
 from . import idx
