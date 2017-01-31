@@ -152,23 +152,13 @@ class RawUtterance(ChunkSource):
 		self.norm = norm
 
 	###########################################################################
-	def find_audio_path(self, partial_path):
-		""" Resolves the audio file extension.
-		"""
-		for ext in SpeechRecognitionSupplier.SUPPORTED_TYPES:
-			candidate = '{}.{}'.format(partial_path, ext)
-			if os.path.isfile(candidate):
-				return candidate
-		return None
-
-	###########################################################################
 	def load_audio(self, paths):
 		""" Loads unnormalized audio data.
 		"""
 		# Resolve and load each path.
 		result = [None] * len(paths)
 		for i, partial_path in enumerate(paths):
-			path = self.find_audio_path(partial_path)
+			path = SpeechRecognitionSupplier.find_audio_path(partial_path)
 			if path is None:
 				logger.error('Could not find audio file that---ignoring '
 					'extension---begins with: %s', partial_path)
@@ -413,6 +403,17 @@ class SpeechRecognitionSupplier(Supplier):
 	DEFAULT_UNPACK = True
 	DEFAULT_TYPE = 'spec'
 	SUPPORTED_TYPES = ('wav', 'mp3', 'flac')
+
+	###########################################################################
+	@staticmethod
+	def find_audio_path(partial_path):
+		""" Resolves the audio file extension.
+		"""
+		for ext in SpeechRecognitionSupplier.SUPPORTED_TYPES:
+			candidate = '{}.{}'.format(partial_path, ext)
+			if os.path.isfile(candidate):
+				return candidate
+		return None
 
 	###########################################################################
 	@classmethod
