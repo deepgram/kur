@@ -104,10 +104,14 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		iterators = [iter(source) for source in self.sources]
 		ordering = self.order_sources()
 		dependencies = self.source_dependencies()
-		queues = [next(it) for it in iterators]
+		queues = [[] for it in iterators]
 		sentinel = object()
 		proceed = True
 		batches_produced = 0
+
+		for it, source in zip(iterators, self.sources):
+			if source.is_derived():
+				next(it)
 
 		while iterators and proceed:
 
@@ -147,35 +151,13 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 							break
 
 						# Add the data to the queue.
-						try:
-							if len(queues[i]) == 0:
-								queues[i] = x
-							else:
-								# FIXME: For variable-length data sources,
-								# this can cause problems unless the data
-								# source is a ChunkSource with batch size
-								# set to DEFAULT_CHUNK_SIZE.
-								queues[i] = numpy.concatenate([queues[i], x])
-						except ValueError:
-							logger.exception('Failed to concatenate data for '
-								'source "%s". Queue had %d entries of shape '
-								'%s, and now we are trying to add %d entries '
-								'of shape %s. This is a bug.',
-								'unknown' if self.keys is None \
-									else self.keys[i],
-								len(queues[i]),
-								queues[i].shape[1:] \
-									if isinstance(queues[i], numpy.ndarray) \
-									else 'unknown',
-								len(x),
-								x.shape[1:] \
-									if isinstance(x, numpy.ndarray) \
-									else 'unknown'
-							)
-							raise
+						if len(queues[i]) == 0:
+							queues[i] = x
+						else:
+							queues[i].extend(x)
 
 					# Get the data ready.
-					result[i] = queues[i][:self.batch_size]
+					result[i] = numpy.array(queues[i][:self.batch_size])
 					queues[i] = queues[i][self.batch_size:]
 
 					if len(result[i]) == 0:
