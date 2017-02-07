@@ -56,6 +56,24 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 
 		self.num_batches = num_batches
 
+		self.force = force_batch_size
+		if self.force:
+			logger.debug('Batch provider will force batches of exactly %d '
+				'samples.', self.batch_size)
+
+	###########################################################################
+	@property
+	def num_batches(self):
+		""" Returns the number of batches.
+		"""
+		return self._num_batches
+
+	###########################################################################
+	@num_batches.setter
+	def num_batches(self, value):
+		""" Sets the number of batches this provider should use per epoch.
+		"""
+		self._num_batches = value # pylint: disable=attribute-defined-outside-init
 		if self.num_batches is not None:
 			logger.debug('Maximum number of batches set to: %d',
 				self.num_batches)
@@ -64,11 +82,6 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 					self.entries,
 					self.num_batches * self.batch_size
 				)
-
-		self.force = force_batch_size
-		if self.force:
-			logger.debug('Batch provider will force batches of exactly %d '
-				'samples.', self.batch_size)
 
 	###########################################################################
 	def add_source(self, source, name=None):
