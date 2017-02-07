@@ -261,22 +261,33 @@ class Kurfile:
 		train_weights = self.data['train'].get('weights')
 		if train_weights is None:
 			initial_weights = best_train = last_weights = None
-			checkpoint = None
+			deprecated_checkpoint = None
 		elif isinstance(train_weights, str):
 			initial_weights = train_weights
 			best_train = train_weights if best_valid is None else None
 			last_weights = None
 			initial_must_exist = False
-			checkpoint = None
+			deprecated_checkpoint = None
 		elif isinstance(train_weights, dict):
 			initial_weights = train_weights.get('initial')
 			best_train = train_weights.get('best')
 			last_weights = train_weights.get('last')
 			initial_must_exist = train_weights.get('must_exist', False)
-			checkpoint = train_weights.get('checkpoint')
+			deprecated_checkpoint = train_weights.get('checkpoint')
 		else:
 			raise ValueError('Unknown weight specification for training: {}'
 				.format(train_weights))
+
+		checkpoint = self.data['train'].get('checkpoint')
+
+		if deprecated_checkpoint is not None:
+			warnings.warn('"checkpoint" belongs under "train", not under '
+				'"weights".', DeprecationWarning)
+			if checkpoint is None:
+				checkpoint = deprecated_checkpoint
+			else:
+				logger.warning('The currently-accepted "checkpoint" will be '
+					'used over the deprecated "checkpoint".')
 
 		expand = lambda x: os.path.expanduser(os.path.expandvars(x))
 		initial_weights, best_train, best_valid, last_weights = [
