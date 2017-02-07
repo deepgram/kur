@@ -78,7 +78,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 			logger.debug('Maximum number of batches set to: %d',
 				self.num_batches)
 			if self.entries > 0:
-				self.entries = min(
+				self.entries = min( # pylint: disable=attribute-defined-outside-init
 					self.entries,
 					self.num_batches * self.batch_size
 				)
@@ -90,7 +90,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		super().add_source(source, name=name)
 		if self.num_batches is not None:
 			if self.entries > 0:
-				self.entries = min(
+				self.entries = min( # pylint: disable=attribute-defined-outside-init
 					self.entries,
 					self.num_batches * self.batch_size
 				)
@@ -165,7 +165,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 							break
 
 						# Add the data to the queue.
-						if len(queues[i]) == 0:
+						if not queues[i]:
 							queues[i] = x
 						else:
 							queues[i].extend(x)
@@ -174,7 +174,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 					result[i] = numpy.array(queues[i][:self.batch_size])
 					queues[i] = queues[i][self.batch_size:]
 
-					if len(result[i]) == 0:
+					if not result[i].shape[0]:
 						logger.debug('An original source has no data.')
 						return
 
