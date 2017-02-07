@@ -259,9 +259,8 @@ class Executor:
 			None
 		"""
 
-		self.compile('train', with_provider=provider)
-		provider.source_shapes()
-
+		#######################################################################
+		# Process checkpoint requirements
 		if isinstance(checkpoint, dict):
 			if 'path' not in checkpoint:
 				checkpoint['path'] = 'checkpoint'
@@ -288,6 +287,8 @@ class Executor:
 				'single file or a dictionary. Instead we received: {}'
 				.format(checkpoint))
 
+		#######################################################################
+		# Parse logs
 		if log is None:
 			logger.info('No log specified, so no historical loss information '
 				'is available.')
@@ -311,6 +312,8 @@ class Executor:
 
 			completed_epochs = log.get_number_of_epochs()
 
+		#######################################################################
+		# Parse desired number of epochs
 		if completed_epochs is None:
 			completed_epochs = 0
 			logger.info('No previous epochs.')
@@ -343,14 +346,13 @@ class Executor:
 			if mode == 'additional':
 				epochs += completed_epochs
 
+		#######################################################################
+		# Local variables
+
 		# The name of the most recently saved weight file. If the weights
 		# change, this should be reset to None. Otherwise, saving weights can
 		# be as simple as copying the previously saved file.
 		saved_recent = None
-
-		if training_hooks:
-			for hook in training_hooks:
-				hook.notify(TrainingHook.TRAINING_START)
 
 		session = {
 			'epochs' : 0,
@@ -363,6 +365,160 @@ class Executor:
 		epoch = completed_epochs - 1
 		train_func = self.retry(self.model.backend.train)
 
+		#######################################################################
+		def run_validation(num_batches=None):
+			""" Executes a validation run.
+			"""
+			if validation is None:
+				return None
+
+			nonlocal best_valid_loss, saved_recent
+
+			# Continue with a validation run.
+			try:
+				if num_batches is not None and \
+						hasattr(validation, 'num_batches'):
+					previous_num_batches = validation.num_batches
+					validation.num_batches = num_batches
+
+				validation_loss = self.test(
+					provider=validation,
+					validating=True,
+					hooks=validation_hooks
+				)
+			finally:
+				if num_batches is not None and \
+						hasattr(validation, 'num_batches'):
+					validation.num_batches = previous_num_batches
+
+			if validation_loss is None:
+				return None
+
+			cur_validation_loss = sum(validation_loss.values())
+			if best_valid is not None:
+				if best_valid_loss is None or \
+						cur_validation_loss < best_valid_loss:
+					logger.info(
+						'Saving best historical validation weights: %s',
+						best_valid
+					)
+					best_valid_loss = cur_validation_loss
+					if saved_recent is None:
+						with CriticalSection():
+							self.model.save(best_valid)
+						saved_recent = best_valid
+					else:
+						logger.debug(
+							'Copying weights from: %s',
+							saved_recent
+						)
+						with CriticalSection():
+							shutil.rmtree(best_valid, ignore_errors=True)
+							shutil.copytree(saved_recent, best_valid)
+
+			if log is not None:
+				log.log_validation(validation_loss, 'loss')
+
+			return validation_loss
+
+		#######################################################################
+		def run_posttrain(n_entries, train_loss):
+			""" Calculates training loss and saves if necessary.
+
+				Read-only non-locals:
+					n_entries, train_loss, best_train, log
+				Read-write non-locals:
+					best_train_loss, saved_recent
+			"""
+			nonlocal best_train_loss, saved_recent
+			if not n_entries:
+				logger.warning('No data provided to training loop.')
+				return None
+
+			cur_train_loss = sum(train_loss.values())
+			logger.info('Training loss: %.3f', cur_train_loss)
+
+			if best_train is not None:
+				if best_train_loss is None or \
+					cur_train_loss < best_train_loss:
+
+					logger.info('Saving best historical training weights: '
+						'%s', best_train)
+					best_train_loss = cur_train_loss
+					with CriticalSection():
+						self.model.save(best_train)
+					saved_recent = best_train
+
+			if log is not None:
+				log.log_training(train_loss, 'loss')
+
+			return cur_train_loss
+
+		#######################################################################
+		def run_training_hooks(cur_train_loss, validation_loss):
+			""" Executes the training hooks, if necessary.
+
+				Read-only non-locals:
+					training_hooks, epoch, epochs, validation_loss
+			"""
+			if not training_hooks:
+				return
+			info = {
+				'epoch' : epoch+1,
+				'total_epochs' : epochs,
+				'Training loss' : cur_train_loss
+			}
+			if validation is not None:
+				info['Validation loss'] = validation_loss
+			for hook in training_hooks:
+				hook.notify(TrainingHook.EPOCH_END, info)
+
+		#######################################################################
+		def run_checkpoint(*triggers, allow_validation=True):
+			""" Runs the checkpoint triggers, if necessary.
+			"""
+			nonlocal last_checkpoint
+
+			if checkpoint is None:
+				return
+
+			for k in triggers:
+				if k not in checkpoint:
+					continue
+				if session[k] - last_checkpoint[k] >= checkpoint[k]:
+					# We need a checkpoint
+
+					# Save the file if necessary.
+					if checkpoint['path']:
+						logger.info('Making checkpoint backup: %s',
+							checkpoint['path'])
+						with CriticalSection():
+							self.model.save(checkpoint['path'])
+
+					# Validate if necessary.
+					if checkpoint.get('validation', False) \
+							and allow_validation:
+						if isinstance(checkpoint['validation'], bool):
+							num_batches = None
+						else:
+							num_batches = checkpoint['validation']
+						run_validation(num_batches)
+
+					last_checkpoint = session.copy()
+					break
+
+		#######################################################################
+		# Prepare to train
+
+		self.compile('train', with_provider=provider)
+		provider.source_shapes()
+
+		if training_hooks:
+			for hook in training_hooks:
+				hook.notify(TrainingHook.TRAINING_START)
+
+		#######################################################################
+		# Main training loop.
 		while True:
 			epoch += 1
 			if epochs is not None and epoch >= epochs:
@@ -418,17 +574,8 @@ class Executor:
 					session['minutes'] = time.perf_counter() / 60
 
 					# Checkpoint if necessary
-					if checkpoint is not None:
-						for k in ('samples', 'batches', 'minutes'):
-							if k not in checkpoint:
-								continue
-							if session[k] - last_checkpoint[k] > checkpoint[k]:
-								logger.info('Making checkpoint backup: %s',
-									checkpoint['path'])
-								with CriticalSection():
-									self.model.save(checkpoint['path'])
-								last_checkpoint = session.copy()
-								break
+					run_checkpoint('samples', 'batches', 'minutes',
+						allow_validation=True)
 
 					# How many entries we've processed this epoch.
 					new_entries = n_entries + batch_size
@@ -473,88 +620,16 @@ class Executor:
 			session['epochs'] += 1
 
 			# Checkpoint if necessary
-			if checkpoint is not None:
-				k = 'epochs'
-				if k in checkpoint:
-					if session[k] - last_checkpoint[k] > checkpoint[k]:
-						logger.info('Making checkpoint backup: %s',
-							checkpoint['path'])
-						with CriticalSection():
-							self.model.save(checkpoint['path'])
-						last_checkpoint = session.copy()
+			run_checkpoint('epochs', allow_validation=False)
 
-			if not n_entries:
-				logger.warning('No data provided to training loop.')
-				cur_train_loss = None
-			else:
-				cur_train_loss = sum(train_loss.values())
-				logger.info('Training loss: %.3f', cur_train_loss)
+			# Check to see what our current training loss is.
+			cur_train_loss = run_posttrain(n_entries, train_loss)
 
-				if best_train is not None:
-					if best_train_loss is None or \
-						cur_train_loss < best_train_loss:
+			# Validate
+			validation_loss = run_validation()
 
-						logger.info('Saving best historical training weights: '
-							'%s', best_train)
-						best_train_loss = cur_train_loss
-						with CriticalSection():
-							self.model.save(best_train)
-						saved_recent = best_train
-
-				if log is not None:
-					log.log_training(train_loss, 'loss')
-
-			###################################################################
-			# START: Validate
-
-			if validation is not None:
-				# Continue with a validation run.
-				validation_loss = self.test(
-					provider=validation,
-					validating=True,
-					hooks=validation_hooks
-				)
-				if validation_loss is None:
-					continue
-
-				cur_validation_loss = sum(validation_loss.values())
-				if best_valid is not None:
-					if best_valid_loss is None or \
-							cur_validation_loss < best_valid_loss:
-						logger.info(
-							'Saving best historical validation weights: %s',
-							best_valid
-						)
-						best_valid_loss = cur_validation_loss
-						if saved_recent is None:
-							with CriticalSection():
-								self.model.save(best_valid)
-							saved_recent = best_valid
-						else:
-							logger.debug(
-								'Copying weights from: %s',
-								saved_recent
-							)
-							with CriticalSection():
-								shutil.rmtree(best_valid, ignore_errors=True)
-								shutil.copytree(saved_recent, best_valid)
-
-				if log is not None:
-					log.log_validation(validation_loss, 'loss')
-
-			# END: Validate
-			###################################################################
-
-			if training_hooks:
-				info = {
-					'epoch' : epoch+1,
-					'total_epochs' : epochs,
-					'Training loss' : cur_train_loss
-				}
-				if validation is not None:
-					info['Validation loss'] = validation_loss
-				for hook in training_hooks:
-					hook.notify(TrainingHook.EPOCH_END, info)
+			# Execute training hooks.
+			run_training_hooks(cur_train_loss, validation_loss)
 
 	###########################################################################
 	def evaluate(self, provider, callback=None, step=False):

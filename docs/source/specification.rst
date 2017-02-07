@@ -514,6 +514,9 @@ existing model. It looks like this:
 	  # Where to store weights (optional)
 	  weights: WEIGHTS
 
+	  # How to create checkpoints.
+	  checkpoint: CHECKPOINT
+
 	  # What optimizer to use (optional)
 	  optimizer: OPTIMIZER
 
@@ -726,9 +729,6 @@ The most flexibility can be gleaned from a dictionary-like value:
 	  # Where to save the most recent model weights.
 	  last: LAST
 
-	  # How to create checkpoints.
-	  checkpoint: CHECKPOINT
-
 Each of the fields is optional.
 
 The best weights that Kur saves (whether specified with ``best:`` or just with
@@ -737,6 +737,11 @@ lowest loss values. Kur uses its log, when available, to decide when it has
 encountered a historically low loss value, even if it encountered it during a
 previous training run. See :ref:`log_spec` for more information on saving to a
 log.
+
+.. _checkpoint:
+
+Checkpoints
+-----------
 
 The ``CHECKPOINT`` field is for creating intermediate checkpoints. If it is a
 dictionary, it should look like this:
@@ -749,12 +754,16 @@ dictionary, it should look like this:
 	  batches: BATCHES
 	  samples: SAMPLES
 	  minutes: MINUTES
+	  validation: VALIDATION
 
 ``PATH`` is the name of the path to save the checkpoint to. It defaults to
-``checkpoint`` if not specified. The other fields---``EPOCHS``, ``BATCHES``,
-``SAMPLES``, ``MINUTES``---are all optional. If specified, they indicate how
-often the checkpoint should be created. They can be used together; for example,
-consider this specification:
+``checkpoint`` if not specified. ``VALIDATION`` indicates whether or not to run
+the model on the validation set during a checkpoint. By default, it is ``no``,
+but can be set to ``yes`` to use the entire validation set, or to an integer to
+indicate how many batches of the validation set should be used. The other
+fields---``EPOCHS``, ``BATCHES``, ``SAMPLES``, ``MINUTES``---are all optional.
+If specified, they indicate how often the checkpoint should be created. They
+can be used together; for example, consider this specification:
 
 .. code-block:: yaml
 
