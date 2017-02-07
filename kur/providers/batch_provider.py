@@ -50,13 +50,14 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 			batch_size: int. The number of batches to return each iteration.
 		"""
 		super().__init__(*args, **kwargs)
+
 		self.batch_size = batch_size or BatchProvider.DEFAULT_BATCH_SIZE
-		logger.info('Batch size set to: %d', self.batch_size)
+		logger.debug('Batch size set to: %d', self.batch_size)
 
 		self.num_batches = num_batches
 
 		if self.num_batches is not None:
-			logger.info('Maximum number of batches set to: %d',
+			logger.debug('Maximum number of batches set to: %d',
 				self.num_batches)
 			if self.entries > 0:
 				self.entries = min(
@@ -66,7 +67,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 
 		self.force = force_batch_size
 		if self.force:
-			logger.info('Batch provider will force batches of exactly %d '
+			logger.debug('Batch provider will force batches of exactly %d '
 				'samples.', self.batch_size)
 
 	###########################################################################
