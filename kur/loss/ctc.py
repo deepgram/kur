@@ -50,7 +50,7 @@ class ScaledSource(DerivedSource):
 					name=self.to_this,
 					assumptions={
 						self.relative_to : \
-							(x[0], ) + self.normal_shape[1:]
+							(x[0], ) + tuple(self.normal_shape[1:])
 					}
 				)[0]
 				for x in sizes
