@@ -77,6 +77,7 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 
 		if not isinstance(shape, (list, tuple)):
 			shape = (shape, )
+		shape = tuple(x if x != 'None' else None for x in shape)
 		for x in shape:
 			if not isinstance(x, (int, type(None))):
 				raise ParsingError(
