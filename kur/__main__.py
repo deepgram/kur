@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import os
+import json
 import signal
 import atexit
 import time
@@ -44,6 +45,13 @@ def parse_kurfile(filename, engine):
 	spec = Kurfile(filename, engine)
 	spec.parse()
 	return spec
+
+###############################################################################
+def dump(args):
+	""" Dumps the Kurfile to stdout as a JSON blob.
+	"""
+	spec = parse_kurfile(args.kurfile, args.engine)
+	print(json.dumps(spec.data, sort_keys=True, indent=4))
 
 ###############################################################################
 def train(args):
@@ -315,6 +323,11 @@ def parse_args():
 			'model to build correctly with this option, you will need to '
 			'specify shapes for all of your inputs.')
 	subparser.set_defaults(func=build)
+
+	subparser = subparsers.add_parser('dump',
+		help='Dumps the Kurfile out as a JSON blob. Useful for debugging.')
+	subparser.add_argument('kurfile', help='The Kurfile to use.')
+	subparser.set_defaults(func=dump)
 
 	subparser = subparsers.add_parser('data',
 		help='Does not actually compile anything, but only prints out a '
