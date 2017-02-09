@@ -31,5 +31,6 @@ from .filetools import count_lines
 from .audiotools import load_audio, get_audio_features
 from .normalize import Normalize
 from . import neighbor_sort
+from .cuda import CudaContext, CudaError
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
