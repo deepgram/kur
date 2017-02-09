@@ -193,11 +193,7 @@ class PyTorchBackend(Backend):
 			assembly.
 		"""
 		from .pytorch.modules import TorchModel
-		if self.device == 'gpu':
-			gpu = list(range(self.parallel))
-		else:
-			gpu = False
-		data = TorchModel(gpu=gpu)
+		data = TorchModel(gpu=self.devices)
 		data.allow_reuse = True
 		return data
 
@@ -375,7 +371,7 @@ class PyTorchBackend(Backend):
 		with DisableLogging():
 			provider = BatchProvider(
 				sources=dict(zip(model.provider.keys, model.provider.sources)),
-				batch_size=2*self.parallel,
+				batch_size=2*min(1, self.parallel),
 				num_batches=1,
 				randomize=False
 			)

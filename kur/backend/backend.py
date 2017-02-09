@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import re
 import logging
-from ..utils import get_subclasses
+from ..utils import get_subclasses, CudaContext, CudaError
 
 logger = logging.getLogger(__name__)
 
@@ -55,29 +56,100 @@ class Backend:
 
 		self.variant = set(variant)
 
+		if parallel is not None:
+			if not isinstance(parallel, int):
+				raise ValueError('If "parallel" is specified, it must be an '
+					'integer. We received: {}'.format(parallel))
+			if parallel <= 0:
+				logger.warning('"parallel" should be > 0, but we received '
+					'"%d". We are just ignoring "parallel".', parallel)
+				parallel = None
+
 		if device is None:
-			self.device = None
-		elif device == 'cpu':
-			self.device = 'cpu'
-		elif device.startswith('gpu'):
-			self.device = 'gpu'
-			x = device[3:]
-			if x:
-				try:
-					x = int(x)
-				except ValueError:
-					raise ValueError('Failed to parse GPU device number: {}'
-						.format(x))
-				else:
-					self.device_number = x
+			logger.debug('No execution device indicated to backend. Checking '
+				'available devices...')
+			try:
+				with CudaContext() as context:
+					n_devices = len(context)
+			except CudaError:
+				logger.debug('Failed to initialize CUDA. Falling back to '
+					'CPU.')
+				device = 'cpu'
 			else:
-				self.device_number = None
+				if n_devices > 0:
+					logger.debug('GPU capabilities detected.')
+					device = 'gpu'
+				else:
+					logger.debug('No GPUs detected.')
+					device = 'cpu'
+
+		if device == 'cpu':
+			self.devices = []
+			if parallel:
+				logger.warning('"parallel" execution was requested, but we '
+					'not using the GPU. "parallel" will be ignored.')
+
+		elif device.startswith('gpu'):
+			if device == 'gpu':
+				allowed = None
+			else:
+				allowed = set()
+				regex = re.compile(
+					r'gpu(?P<negate>!)?(?P<start>[0-9]+)(?:-(?P<end>[0-9]+))?')
+				parts = device.split(',')
+				for part in parts:
+					match = regex.match(part.strip())
+					if not match:
+						raise ValueError('Failed to parse device: {}'.format(
+							device))
+					if match.group('end'):
+						indices = set(range(
+							int(match.group('start')),
+							int(match.group('end'))+1
+						))
+					else:
+						indices = {int(match.group('start'))}
+					if match.group('negate') is None:
+						allowed |= indices
+					else:
+						allowed -= indices
+
+			with CudaContext() as context:
+				n_devices = len(context)
+				if allowed is None:
+					allowed = set(range(n_devices))
+				preferred = [
+					(device.is_busy(), device.index()) \
+						for device in context.rank_available()
+				]
+				preferred = [
+					index for busy, index in preferred
+					if index in allowed and not busy
+				]
+
+			if not preferred:
+				logger.error('Failed to find any available GPUs.')
+				raise ValueError('Failed to find any available GPUs.')
+
+			if parallel:
+				if parallel > len(preferred):
+					logger.warning('%d GPU devices were requested through '
+						'"parallel", but only %d devices seem '
+						'available/unused. We are decreasing "parallel" to '
+						'match.', parallel, len(preferred))
+					self.devices = preferred
+				else:
+					self.devices = preferred[:parallel]
+			else:
+				self.devices = preferred
+
+			logger.info('We are going to use %d GPU devices.',
+				len(self.devices))
+
 		else:
 			raise ValueError('Invalid device specification: {}. If a '
 				'device is explicitly specified, it must be "cpu", "gpu" '
 				'or "gpuX" where "X" is an integer.'.format(device))
-
-		self.parallel = parallel or 1
 
 		logger.info('Creating backend: %s', self.get_name())
 		logger.info('Backend variants: %s',
@@ -85,6 +157,15 @@ class Backend:
 				str(x) for x in sorted(self.variant)
 			)
 		)
+
+	###########################################################################
+	@property
+	def parallel(self):
+		""" Returns the number of GPU devices we are using.
+		"""
+		if self.devices:
+			return len(self.devices)
+		return 0
 
 	###########################################################################
 	def has_variant(self, variant):
