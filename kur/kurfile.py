@@ -174,6 +174,33 @@ class Kurfile:
 		return self.backend
 
 	###########################################################################
+	def get_seed(self):
+		""" Retrieves the global random seed, if any.
+
+			# Return value
+
+			The `settings.seed` value, as an integer, if such a key exists.
+			If the key does not exist, returns None.
+		"""
+
+		if 'settings' not in self.data or \
+				not isinstance(self.data['settings'], dict):
+			return None
+
+		seed = self.data['settings'].get('seed')
+		if seed is None:
+			return None
+		elif not isinstance(seed, int):
+			raise ValueError('Unknown format for random seed: {}'.format(seed))
+
+		if seed < 0 or seed >= 2**32:
+			logger.warning('Random seeds should be unsigned, 32-bit integers. '
+				'We are truncating the seed.')
+			seed %= 2**32
+
+		return seed
+
+	###########################################################################
 	def get_provider(self, section):
 		""" Creates the provider corresponding to a part of the Kurfile.
 

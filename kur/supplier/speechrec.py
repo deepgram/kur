@@ -495,8 +495,10 @@ class SpeechRecognitionSupplier(Supplier):
 			raise TypeError('Invalid/unexpected type for "samples": {}'
 				.format(samples))
 
-		# Create the seeded random number generator
-		gen = numpy.random.RandomState(seed=None)
+		# Create the seeded random number generator.
+		gen = numpy.random.RandomState(
+			seed=self.kurfile.get_seed() if self.kurfile else None
+		)
 
 		# Produce a mask (True = keep, False = discard)
 		mask = numpy.zeros(self.metadata['entries'], dtype=bool)
