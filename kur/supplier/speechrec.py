@@ -633,31 +633,6 @@ class SpeechRecognitionSupplier(Supplier):
 		return metadata, data
 
 	###########################################################################
-	def get_data(self, start, end):
-		""" Loads data.
-
-			# Arguments
-
-			start: int. First index to grab.
-			end: int. One plus the last index to grab.
-
-			# Return value
-
-			Returns `end - end` entries, because this gets indices
-			[start, end).
-		"""
-		if start < 0 or end > self.metadata['entries']:
-			raise IndexError('Out-of-range indices: must be >= 0 and <= {}. '
-				'Received start={}, end={}.'.format(self.metadata['entries'],
-				start, end))
-
-		if start > end:
-			raise IndexError('Starting index must be <= the end index.')
-
-		if start == end:
-			raise NotImplementedError
-
-	###########################################################################
 	def get_sources(self, sources=None):
 		""" Returns all sources from this provider.
 		"""
