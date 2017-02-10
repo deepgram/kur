@@ -425,7 +425,7 @@ class SpeechRecognitionSupplier(Supplier):
 	###########################################################################
 	def __init__(self, url=None, path=None, checksum=None, unpack=None, 
 		type=None, normalization=None, max_duration=None, max_frequency=None,
-		vocab=None, *args, **kwargs):
+		vocab=None, samples=None, *args, **kwargs):
 		""" Creates a new speech recognition supplier.
 
 			# Arguments
@@ -436,6 +436,7 @@ class SpeechRecognitionSupplier(Supplier):
 			unpack = SpeechRecognitionSupplier.DEFAULT_UNPACK
 		self.load_data(url=url, path=path, checksum=checksum, unpack=unpack,
 			max_duration=max_duration)
+		self.downselect(samples)
 
 		logger.debug('Creating sources.')
 		utterance_raw = RawUtterance(
@@ -457,6 +458,56 @@ class SpeechRecognitionSupplier(Supplier):
 			'duration' : VanillaSource(numpy.array(self.data['duration'])),
 			'audio_source' : VanillaSource(numpy.array(self.data['audio']))
 		}
+
+	###########################################################################
+	def downselect(self, samples):
+		""" Selects a subset of the data.
+		"""
+		if samples is None:
+			logger.debug('Using all available data.')
+			return
+		elif isinstance(samples, int):
+			if samples < 1:
+				raise ValueError('"samples" cannot be less than 1.')
+			if samples >= self.metadata['entries']:
+				return
+			logger.debug('Using only %d / %d samples of the available data.',
+				samples, self.metadata['entries'])
+		elif isinstance(samples, str):
+			if samples.endswith('%'):
+				try:
+					percentage = float(samples[:-1])
+				except ValueError:
+					logger.exception('Failed to parse a "samples" percentage: '
+						'%s', samples)
+					raise
+				samples = int(self.metadata['entries'] * (percentage / 100))
+				if samples < 0:
+					samples = 1
+				if samples >= self.metadata['entries']:
+					return
+				logger.info('Using %.2f%% of available data (%d samples).',
+					percentage, samples)
+			else:
+				raise ValueError('Received an invalid string for "samples": {}'
+					.format(samples))
+		else:
+			raise TypeError('Invalid/unexpected type for "samples": {}'
+				.format(samples))
+
+		# Create the seeded random number generator
+		gen = numpy.random.RandomState(seed=None)
+
+		# Produce a mask (True = keep, False = discard)
+		mask = numpy.zeros(self.metadata['entries'], dtype=bool)
+		indices = gen.choice(self.metadata['entries'], samples, replace=False)
+		mask[indices] = True
+
+		# Downselect
+		for k in self.data:
+			self.data[k] = [x for i, x in enumerate(self.data[k]) if mask[i]]
+
+		self.metadata['entries'] = samples
 
 	###########################################################################
 	def load_data(self, url=None, path=None, checksum=None, unpack=None,
