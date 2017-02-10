@@ -197,7 +197,9 @@ class Kurfile:
 		supplier_list = section.get('data') or []
 		if not isinstance(supplier_list, (list, tuple)):
 			raise ValueError('"data" section should be a list.')
-		suppliers = [Supplier.from_specification(x) for x in supplier_list]
+		suppliers = [
+			Supplier.from_specification(x, kurfile=self) for x in supplier_list
+		]
 
 		provider_spec = dict(section.get('provider') or {})
 		if 'name' in provider_spec:

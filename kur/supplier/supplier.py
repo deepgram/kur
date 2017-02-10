@@ -32,7 +32,7 @@ class Supplier:
 
 	###########################################################################
 	@staticmethod
-	def from_specification(spec):
+	def from_specification(spec, kurfile=None):
 		""" Creates a new Supplier from a specification.
 		"""
 
@@ -63,13 +63,13 @@ class Supplier:
 
 		if isinstance(params, dict):
 			result = Supplier.get_supplier_by_name(name)(
-				name=supplier_name, **params)
+				name=supplier_name, kurfile=kurfile, **params)
 		elif isinstance(params, str):
 			result = Supplier.get_supplier_by_name(name)(params,
-				name=supplier_name)
+				name=supplier_name, kurfile=kurfile)
 		elif isinstance(params, (list, tuple)):
 			result = Supplier.get_supplier_by_name(name)(*params,
-				name=supplier_name)
+				name=supplier_name, kurfile=kurfile)
 		else:
 			raise ValueError('Expected the Supplier to be given a dictionary, '
 				'list, tuple, or string for parameters. Instead, we received: '
@@ -143,10 +143,11 @@ class Supplier:
 		return result
 
 	###########################################################################
-	def __init__(self, name=None):
+	def __init__(self, name=None, kurfile=None):
 		""" Creates a new supplier.
 		"""
 		self.name = name
+		self.kurfile = kurfile
 
 	###########################################################################
 	def is_delegate(self):						# pylint: disable=no-self-use
