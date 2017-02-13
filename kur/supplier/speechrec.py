@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import json
+import re
 import os
 import logging
 import random
@@ -462,6 +463,39 @@ class SpeechRecognitionSupplier(Supplier):
 	###########################################################################
 	def downselect(self, samples):
 		""" Selects a subset of the data.
+
+			# Arguments
+
+			samples: None, int, or str. If None, uses all samples. If an
+				integer, uses the first `samples` entries. If a string, follows
+				the `Sample Specification` below.
+
+			# Sample Specification
+
+			Forms:			Meaning:
+
+			10				Use 10 samples: 0 through 10.
+			10-				Use all but 10 samples: use the 10th through
+							the remainder.
+			10%				Use the first 10% of samples.
+			10-20			Use 10 samples: 10 through 19.
+			10-20%			Use 10% of samples, from 10% through 20%.
+							When combined with a random seed, this lets you
+							split a dataset on the fly.
+			10-%			Use all but 10% of samples: from 10% through
+							the remainder.
+
+			# Notes:
+
+			- For percentage ranges of the form "X-%" or "X-Y%", Kur will
+			  compute the percentage and then add one to the start value.
+			  This makes it easier for you to use a random seed and then
+			  make dataset splits like 10%, 10-20%, 20% without worrying
+			  about having disjoint datasets.
+
+			- As evidenced by the examples above, Kur follows Python in using
+			  ranges that exclude the upper bound (e.g., "10" means "0 .. 9"
+			  and "10-20" means "0..19").
 		"""
 		if samples is None:
 			logger.debug('Using all available data.')
@@ -473,24 +507,50 @@ class SpeechRecognitionSupplier(Supplier):
 				return
 			logger.debug('Using only %d / %d samples of the available data.',
 				samples, self.metadata['entries'])
+			start = 0
+			end = samples
 		elif isinstance(samples, str):
-			if samples.endswith('%'):
-				try:
-					percentage = float(samples[:-1])
-				except ValueError:
-					logger.exception('Failed to parse a "samples" percentage: '
-						'%s', samples)
-					raise
-				samples = int(self.metadata['entries'] * (percentage / 100))
-				if samples < 0:
-					samples = 1
-				if samples >= self.metadata['entries']:
-					return
-				logger.info('Using %.2f%% of available data (%d samples).',
-					percentage, samples)
+			regex = re.compile(
+				r'(?P<start>[0-9]+(?:\.[0-9]*)?)'
+				r'(?:(?P<range>-)'
+					r'(?P<end>[0-9]+(?:\.[0-9]*)?)?'
+				r')?'
+				r'(?P<unit>%)?'
+			)
+			match = regex.match(samples)
+			if not match:
+				raise ValueError('Failed to parse the "samples" '
+					'specification: {}'.format(samples))
+
+			result = match.groupdict()
+			start = float(result['start'])
+			if result['range']:
+				if result['end']:
+					end = float(result['end'])
+				elif result['unit']:
+					end = 100
+				else:
+					end = self.metadata['entries']
 			else:
-				raise ValueError('Received an invalid string for "samples": {}'
-					.format(samples))
+				end = start
+				start = 0
+
+			if result['unit']:
+				start = int(self.metadata['entries'] * (start / 100))
+				end = int(self.metadata['entries'] * (end / 100))
+			else:
+				start = int(start)
+				end = int(end)
+
+			start = min(max(0, start), self.metadata['entries'])
+			end = min(max(0, end), self.metadata['entries'])
+
+			if start == 0 and end == self.metadata['entries']:
+				return
+
+			if start >= end:
+				raise ValueError('No samples pass this "samples" cut: [{}, {})'
+					.format(start, end))
 		else:
 			raise TypeError('Invalid/unexpected type for "samples": {}'
 				.format(samples))
@@ -502,14 +562,14 @@ class SpeechRecognitionSupplier(Supplier):
 
 		# Produce a mask (True = keep, False = discard)
 		mask = numpy.zeros(self.metadata['entries'], dtype=bool)
-		indices = gen.choice(self.metadata['entries'], samples, replace=False)
+		indices = gen.permutation(self.metadata['entries'])[start:end]
 		mask[indices] = True
 
 		# Downselect
 		for k in self.data:
 			self.data[k] = [x for i, x in enumerate(self.data[k]) if mask[i]]
 
-		self.metadata['entries'] = samples
+		self.metadata['entries'] = int(end - start)
 
 	###########################################################################
 	def load_data(self, url=None, path=None, checksum=None, unpack=None,
