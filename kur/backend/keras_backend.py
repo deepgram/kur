@@ -313,7 +313,15 @@ class KerasBackend(Backend):
 			output=[node.value for node in model.outputs.values()]
 		)
 
-		self._restore_keras(keras_model, filename)
+		try:
+			self._restore_keras(keras_model, filename)
+		except:
+			logger.exception('Failed to load previously-saved Keras model. '
+				'Are you accidentally loading pre-existing weights from an '
+				'incompatible model? Make sure that any weights on disk are '
+				'actually associated with the model you are trying to load '
+				'them into.')
+			raise
 
 	###########################################################################
 	def _restore_keras(self, keras_model, filename):
