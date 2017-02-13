@@ -27,6 +27,11 @@ from kur.providers import BatchProvider
 from kur.sources import VanillaSource
 from kur.utils import can_import
 
+###############################################################################
+def pytest_addoption(parser):
+    parser.addoption("--examples", action="store_true",
+		help="Test the examples and tutorials as well.")
+
 ################################################################################
 def keras_mock(cls, backend, deps, **kwargs):
 	""" Fakes a backend-looking object that can be used in place of a Keras
@@ -82,6 +87,13 @@ def an_engine(request):
 	""" Fixture for obtaining an engine.
 	"""
 	return request.param()
+
+###############################################################################
+@pytest.fixture
+def passthrough_engine():
+	""" Returns a Jinja2 engine.
+	"""
+	return JinjaEngine()
 
 ###############################################################################
 @pytest.fixture
