@@ -41,7 +41,15 @@ def kurfile(request, example_directory, jinja_engine):
 		os.path.join(example_directory, request.param),
 		jinja_engine
 	)
+
 	modify_kurfile(result.data)
+	for k in ('train', 'validate', 'test', 'evaluate'):
+		if k in result.data and 'data' in result.data[k]:
+			for data_source in result.data[k]['data']:
+				if 'speech_recognition' in data_source \
+					and 'normalization' in data_source['speech_recognition']:
+					del data_source['speech_recognition']['normalization']
+
 	result.parse()
 	return result
 
