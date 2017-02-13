@@ -620,7 +620,7 @@ class Executor:
 								'different algorithms/implementations '
 								'work better than others, so you can try '
 								'switching optimizers or backend.', k)
-							return
+							raise ValueError('Model loss is NaN.')
 
 			# END: Train one epoch
 			###################################################################
