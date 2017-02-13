@@ -19,7 +19,7 @@ import copy
 import socket
 import warnings
 import logging
-from .engine import ScopeStack
+from .engine import ScopeStack, PassthroughEngine
 from .reader import Reader
 from .containers import Container, ParsingError
 from .model import Model, Executor, EvaluationHook, OutputHook, TrainingHook
@@ -42,7 +42,7 @@ class Kurfile:
 	DEFAULT_PROVIDER = BatchProvider
 
 	###########################################################################
-	def __init__(self, source, engine):
+	def __init__(self, source, engine=None):
 		""" Creates a new Kurfile.
 
 			# Arguments
@@ -51,7 +51,9 @@ class Kurfile:
 				filename to an on-disk Kurfile. Otherwise, it is
 				interpretted as an already-loaded, but unparsed, Kurfile.
 			engine: Engine instance. The templating engine to use in parsing.
+				If None, a Passthrough engine is instantiated.
 		"""
+		engine = engine or PassthroughEngine()
 		if isinstance(source, str):
 			filename = os.path.expanduser(os.path.expandvars(source))
 			if not os.path.isfile(filename):
