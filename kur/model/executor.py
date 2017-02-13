@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
 import logging
 import shutil
 import math
@@ -372,7 +373,7 @@ class Executor:
 			if validation is None:
 				return None
 
-			nonlocal best_valid_loss, saved_recent
+			nonlocal best_valid_loss
 
 			# Continue with a validation run.
 			try:
@@ -403,23 +404,34 @@ class Executor:
 						best_valid
 					)
 					best_valid_loss = cur_validation_loss
-					if saved_recent is None:
-						with CriticalSection():
-							self.model.save(best_valid)
-						saved_recent = best_valid
-					else:
-						logger.debug(
-							'Copying weights from: %s',
-							saved_recent
-						)
-						with CriticalSection():
-							shutil.rmtree(best_valid, ignore_errors=True)
-							shutil.copytree(saved_recent, best_valid)
+					save_or_copy_weights(best_valid)
 
 			if log is not None:
 				log.log_validation(validation_loss, 'loss')
 
 			return validation_loss
+
+		#######################################################################
+		def save_or_copy_weights(target):
+			""" Saves the current model weights.
+			"""
+			nonlocal saved_recent
+
+			if saved_recent is None:
+				logger.debug('Saving weights to: %s', target)
+				with CriticalSection():
+					self.model.save(target)
+				saved_recent = target
+			elif not os.path.exists(saved_recent):
+				logger.warning('Recently saved weight file seems to have '
+					'vanished: %s', saved_recent)
+				saved_recent = None
+				save_or_copy_weights(target)
+			else:
+				logger.debug('Copying weights from: %s', saved_recent)
+				with CriticalSection():
+					shutil.rmtree(target, ignore_errors=True)
+					shutil.copytree(saved_recent, target)
 
 		#######################################################################
 		def run_posttrain(n_entries, train_loss):
@@ -428,9 +440,9 @@ class Executor:
 				Read-only non-locals:
 					n_entries, train_loss, best_train, log
 				Read-write non-locals:
-					best_train_loss, saved_recent
+					best_train_loss
 			"""
-			nonlocal best_train_loss, saved_recent
+			nonlocal best_train_loss
 			if not n_entries:
 				logger.warning('No data provided to training loop.')
 				return None
@@ -445,9 +457,7 @@ class Executor:
 					logger.info('Saving best historical training weights: '
 						'%s', best_train)
 					best_train_loss = cur_train_loss
-					with CriticalSection():
-						self.model.save(best_train)
-					saved_recent = best_train
+					save_or_copy_weights(best_train)
 
 			if log is not None:
 				log.log_training(train_loss, 'loss')
@@ -492,8 +502,7 @@ class Executor:
 					if checkpoint['path']:
 						logger.info('Making checkpoint backup: %s',
 							checkpoint['path'])
-						with CriticalSection():
-							self.model.save(checkpoint['path'])
+						save_or_copy_weights(checkpoint['path'])
 
 					# Validate if necessary.
 					if checkpoint.get('validation', False) \
@@ -525,10 +534,6 @@ class Executor:
 				print('Completed {} epochs.'.format(epochs))
 				break
 
-			# We are about to modify the weights. Invalidate the name of the
-			# last weight file.
-			saved_recent = None
-
 			print()
 
 			###################################################################
@@ -559,6 +564,10 @@ class Executor:
 							model=self.model, data=batch)
 					except RetryException:
 						continue
+
+					# We just modified the weights. Invalidate the name of the
+					# last weight file.
+					saved_recent = None
 
 					logger.debug('Finished training on batch.')
 
