@@ -63,7 +63,7 @@ class Kurfile:
 			self.data = self.parse_source(
 				engine,
 				source=filename,
-				context='top-level'
+				context=None
 			)
 		else:
 			self.filename = None
@@ -683,25 +683,28 @@ class Kurfile:
 			if 'source' not in source:
 				raise ParsingError('Error while parsing source file {}. '
 					'Missing required "source" key in the include '
-					'dictionary: {}.'.format(context, source))
+					'dictionary: {}.'.format(context or 'top-level', source))
 			filename = source.pop('source')
 			strategy = source.pop('method', None)
 			for k in source:
 				warnings.warn('Warning while parsing source file {}. '
 					'Ignoring extra key in an "include" dictionary: {}.'
-					.format(context, k))
+					.format(context or 'top-level', k))
 		else:
 			raise ParsingError('Error while parsing source file {}. '
 				'Expected each "include" to be a string or a dictionary. '
-				'Received: {}'.format(context, source))
+				'Received: {}'.format(context or 'top-level', source))
 
-		logger.info('Parsing source: %s, included by %s.', source, context)
+		logger.info('Parsing source: %s, included by %s.', source,
+			context or 'top-level')
 
+		if context:
+			filename = os.path.join(os.path.dirname(context), filename)
 		expanded = os.path.expanduser(os.path.expandvars(filename))
 		if not os.path.isfile(expanded):
 			raise IOError('Error while parsing source file {}. No such '
 				'source file found: {}. Path was expanded to: {}'.format(
-				context, filename, expanded))
+				context or 'top-level', filename, expanded))
 		file_id = get_id(expanded)
 		if file_id in loaded:
 			logger.warning('Skipping an already included source file: %s. '
