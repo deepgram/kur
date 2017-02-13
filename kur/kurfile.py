@@ -28,7 +28,7 @@ from .optimizer import Optimizer, Adam
 from .loss import Loss
 from .providers import Provider, BatchProvider, ShuffleProvider
 from .supplier import Supplier
-from .utils import merge_dict, mergetools
+from .utils import mergetools
 from .loggers import Logger
 
 logger = logging.getLogger(__name__)
