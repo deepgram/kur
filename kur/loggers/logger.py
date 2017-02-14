@@ -224,6 +224,7 @@ class Logger:
 	def _push(self, data_type, tag, data):
 		""" Helper function for pushing data into the storage queue.
 		"""
+		data = dict(data)
 		if tag not in self.data[data_type]:
 			self.data[data_type][tag] = deque()
 		if tag == 'loss':
