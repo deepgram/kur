@@ -321,7 +321,7 @@ class Executor:
 
 		#######################################################################
 		# Parse desired number of epochs
-		completed_epochs = log.get_number_of_epochs()
+		completed_epochs = log.get_number_of_epochs() if log else 0
 		if not completed_epochs:
 			logger.info('No previous epochs.')
 		else:
