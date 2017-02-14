@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
 import logging
 
 import urllib.request
@@ -41,10 +42,13 @@ class SlackHook(TrainingHook, EvaluationHook):
 
 	###########################################################################
 	def __init__(self, channel, url=None, user=None, icon=None, title=None,
-		token=None, *args, **kwargs):
+		token=None, extra_files=None, *args, **kwargs):
 		""" Creates a new Slack hook.
 		"""
 		super().__init__(*args, **kwargs)
+
+		if extra_files and isinstance(extra_files, str):
+			extra_files = [extra_files]
 
 		self.username = user or 'kur'
 		self.icon = icon or 'dragon'
@@ -52,22 +56,30 @@ class SlackHook(TrainingHook, EvaluationHook):
 		self.channel = channel
 		self.title = title
 		self.token = token
+		self.extra_files = extra_files
 
 		if url is None and token is None:
 			raise ValueError('Slack hook requires at least one of "url" or '
 				'"token" is defined.')
 
+		if extra_files and token is None:
+			raise ValueError('A Slack "token" is required to upload files.')
+
 	###########################################################################
-	def upload_message(self, text, filename):
+	def upload_message(self, filename, text=None):
 		""" Sends a message to Slack and uploads a file.
 		"""
+		logger.debug('Upload file: %s', filename)
+
 		data = {
 			'token' : self.token,
 			'file' : UploadFile(filename),
 			'filename' : filename,
-			'initial_comment' : text,
 			'channels' : self.channel
 		}
+
+		if text:
+			data['initial_comment'] = text
 
 		if self.title is not None:
 			data['title'] = self.title
@@ -79,6 +91,8 @@ class SlackHook(TrainingHook, EvaluationHook):
 	def send_message(self, text, info=None):
 		""" Sends a message to Slack.
 		"""
+		logger.debug('Sending Slack message.')
+
 		if self.title is not None:
 			text = '{}: {}'.format(self.title, text)
 
@@ -139,9 +153,18 @@ class SlackHook(TrainingHook, EvaluationHook):
 		elif status is TrainingHook.TRAINING_START:
 			text = 'Started training.'
 		else:
-			return
+			text = None
 
-		self.send_message(text, info)
+		if text:
+			self.send_message(text, info)
+
+		if status in (
+			TrainingHook.EPOCH_END,
+			TrainingHook.VALIDATION_END
+		):
+			for filename in self.extra_files:
+				if os.path.isfile(filename):
+					self.upload_message(filename)
 
 	###########################################################################
 	def apply(self, current, original, model=None):
@@ -165,7 +188,7 @@ class SlackHook(TrainingHook, EvaluationHook):
 
 		text = 'Truth = "{}", Prediction = "{}"'.format(truth, data),
 		if upload:
-			self.upload_message(text, path)
+			self.upload_message(path, text)
 		elif self.url is not None:
 			self.send_message(text)
 		else:
@@ -173,6 +196,9 @@ class SlackHook(TrainingHook, EvaluationHook):
 				'given enough information for uploading only, and not enough '
 				'for message posting. However, the data you are working with '
 				'does not provide enough information for file uploading.')
+
+		for filename in self.extra_files:
+			self.upload_message(filename)
 
 		return current
 
