@@ -246,13 +246,15 @@ class TrainingHook:					# pylint: disable=too-few-public-methods
 			))
 
 	###########################################################################
-	def notify(self, status, info=None):
+	def notify(self, status, log=None, info=None):
 		""" Notifies the hook that the epoch has ended.
 
 			# Arguments
 
 			status: object. One of the class objects (e.g., `TRAINING_START`)
 				that indicates what is going on right now.
+			log: Logger instance or None. The logger that has been tracking
+				training and validation statistics.
 			info: dict or None. Additional information to pass to the hook.
 		"""
 		raise NotImplementedError

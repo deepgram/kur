@@ -237,7 +237,11 @@ class Executor:
 
 			if training_hooks:
 				for hook in training_hooks:
-					hook.notify(TrainingHook.TRAINING_END, {'Reason' : reason})
+					hook.notify(
+						TrainingHook.TRAINING_END,
+						log=log,
+						info={'Reason' : reason}
+					)
 
 	###########################################################################
 	def wrapped_train(self, provider, *, validation=None, epochs=None,
@@ -483,7 +487,11 @@ class Executor:
 			if validation is not None:
 				info['Validation loss'] = validation_loss
 			for hook in training_hooks:
-				hook.notify(TrainingHook.EPOCH_END, info)
+				hook.notify(
+					TrainingHook.EPOCH_END,
+					log=log,
+					info=info
+				)
 
 		#######################################################################
 		def run_checkpoint(*triggers, allow_validation=True):
@@ -526,7 +534,10 @@ class Executor:
 
 		if training_hooks:
 			for hook in training_hooks:
-				hook.notify(TrainingHook.TRAINING_START)
+				hook.notify(
+					TrainingHook.TRAINING_START,
+					log=log
+				)
 
 		#######################################################################
 		# Main training loop.

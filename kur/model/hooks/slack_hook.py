@@ -122,7 +122,7 @@ class SlackHook(TrainingHook, EvaluationHook):
 				'created, it might take a little time for Slack to catch up.')
 
 	###########################################################################
-	def notify(self, status, info=None):
+	def notify(self, status, log=None, info=None):
 		""" Sends the Slack message.
 		"""
 
