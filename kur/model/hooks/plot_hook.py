@@ -17,7 +17,6 @@ limitations under the License.
 import os
 import logging
 
-from matplotlib import pyplot as plt
 import numpy
 
 from . import TrainingHook
@@ -44,10 +43,20 @@ class PlotHook(TrainingHook):
 		super().__init__(*args, **kwargs)
 		self.path = os.path.expanduser(os.path.expandvars(path))
 
+		try:
+			from matplotlib import pyplot		# pylint: disable=import-error
+		except:
+			logger.exception('Failed to import "matplotlib". Make sure it is '
+				'installed, and if you have continued trouble, please check '
+				'out our troubleshooting page: https://kur.deepgram.com/'
+				'troubleshooting.html#plotting')
+			raise
+
 	###########################################################################
 	def notify(self, status, log=None, info=None):
 		""" Creates the plot.
 		"""
+		from matplotlib import pyplot as plt	# pylint: disable=import-error
 
 		logger.debug('Plotting hook received training message.')
 
