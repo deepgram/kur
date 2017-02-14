@@ -23,6 +23,7 @@ import traceback
 import numpy
 import tqdm
 from ..utils import get_any_value, CriticalSection, parallelize
+from ..loggers import PersistentLogger
 from .hooks import TrainingHook
 
 logger = logging.getLogger(__name__)
@@ -294,7 +295,10 @@ class Executor:
 			logger.info('No log specified, so no historical loss information '
 				'is available.')
 			best_train_loss = best_valid_loss = None
-			completed_epochs = None
+		elif not isinstance(log, PersistentLogger):
+			logger.info('Log type is non-persistent, so no historical loss '
+				'information is available.')
+			best_train_loss = best_valid_loss = None
 		else:
 			best_train_loss = log.get_best_training_loss()
 			if best_train_loss is not None:
@@ -311,12 +315,10 @@ class Executor:
 				logger.info(
 					'No historical validation loss available from logs.')
 
-			completed_epochs = log.get_number_of_epochs()
-
 		#######################################################################
 		# Parse desired number of epochs
-		if completed_epochs is None:
-			completed_epochs = 0
+		completed_epochs = log.get_number_of_epochs()
+		if not completed_epochs:
 			logger.info('No previous epochs.')
 		else:
 			logger.info('Restarting from epoch %d.', completed_epochs+1)
@@ -571,11 +573,11 @@ class Executor:
 
 					logger.debug('Finished training on batch.')
 
-					if log is not None:
-						log.log_batch(batch_loss, 'loss')
-
 					# How many entries we just processed.
 					batch_size = len(get_any_value(batch))
+
+					if log is not None:
+						log.log_batch(batch_size, batch_loss, 'loss')
 
 					# Update our session statistics.
 					session['batches'] += 1

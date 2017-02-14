@@ -111,14 +111,14 @@ class Logger:
 				`rate`).
 		"""
 		if kwargs:
-			logger.warning('Unexpected or unsupported arguments to the logger: '
-			'%s', ', '.join(str(k) for k in kwargs.keys()))
+			logger.warning('Unexpected or unsupported arguments to the '
+				'logger: %s', ', '.join(str(k) for k in kwargs))
 
 		self.keep_batch = keep_batch
 		if rate is not None:
 			if not keep_batch:
-				logger.warning('Logger rate is only meaningful when keep_batch '
-					'is True. Ignoring the rate value.')
+				logger.warning('Logger rate is only meaningful when '
+					'keep_batch is True. Ignoring the rate value.')
 				rate = None
 			if not isinstance(rate, int):
 				raise ValueError('Logger rate must be None or an integer. '
@@ -126,6 +126,9 @@ class Logger:
 		self.rate = rate
 
 		self.data = None
+		self.batches = 0
+		self.epochs = 0
+		self.samples = 0
 		self.timer = Timer(started=False)
 
 		self._clear()
@@ -209,7 +212,7 @@ class Logger:
 		with CriticalSection():
 			for key, tags in self.data.items():
 				for tag, data in tags.items():
-					if len(data) == 0:
+					if not data:
 						continue
 					data = self._arrange(data)
 					self.process(data, key, tag)
@@ -226,12 +229,15 @@ class Logger:
 		if tag == 'loss':
 			if 'total' not in data:
 				data['total'] = sum(data.values())
+		data['batch'] = self.batches
 		self.data[data_type][tag].append(data)
 
 	###########################################################################
-	def log_batch(self, data, tag=None):
+	def log_batch(self, batch_size, data, tag=None):
 		""" Log training information after a batch.
 		"""
+		self.samples += batch_size
+		self.batches += 1
 		if not self.keep_batch:
 			return
 
@@ -245,6 +251,7 @@ class Logger:
 	def log_training(self, data, tag=None):
 		""" Log training statistics after an epoch.
 		"""
+		self.epochs += 1
 		self._push('training', tag, data)
 		self.flush()
 
@@ -256,37 +263,39 @@ class Logger:
 		self.flush()
 
 	###########################################################################
-	def get_best_training_loss(self):
-		""" Returns the best historical training loss.
-
-			# Return value
-
-			If historical training loss is present in the log, it is returned.
-			Otherwise, None is returned.
-		"""
-		raise NotImplementedError
-
-	###########################################################################
-	def get_best_validation_loss(self):
-		""" Returns the best historical validation loss.
-
-			# Return value
-
-			If historical validation loss is present in the log, it is returned.
-			Otherwise, None is returned.
-		"""
-		raise NotImplementedError
-
-	###########################################################################
 	def get_number_of_epochs(self):
 		""" Returns the number of epochs this model has historically completed.
 
 			# Return value
 
 			If the number of epochs is known from the logs, it is returned.
-			Otherwise, None is returned.
+			Otherwise, the count is started from zero.
 		"""
-		raise NotImplementedError
+		return self.epochs
+
+	###########################################################################
+	def get_number_of_batches(self):
+		""" Returns the number of batches this model has historically
+			completed.
+
+			# Return value
+
+			If the number of epochs is known from the logs, it is returned.
+			Otherwise, the count is started from zero.
+		"""
+		return self.batches
+
+	###########################################################################
+	def get_number_of_samples(self):
+		""" Returns the number of samples this model has historically
+			trained on.
+
+			# Return value
+
+			If the number of epochs is known from the logs, it is returned.
+			Otherwise, the count is started from zero.
+		"""
+		return self.samples
 
 	###########################################################################
 	def process(self, data, data_type, tag=None):

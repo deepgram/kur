@@ -16,16 +16,22 @@ limitations under the License.
 
 import os
 import logging
-from .logger import Logger
+
+import yaml
+
+from .persistent_logger import PersistentLogger
+from .statistic import Statistic
 from ..utils import idx
 
 logger = logging.getLogger(__name__)
 
 ###############################################################################
-class BinaryLogger(Logger):
+class BinaryLogger(PersistentLogger):
 	""" A class for storing log data in a fast binary format that can be
 		quickly appended to or randomly seeked.
 	"""
+
+	SUMMARY = 'summary.yml'
 
 	###########################################################################
 	@classmethod
@@ -49,6 +55,8 @@ class BinaryLogger(Logger):
 		"""
 		super().__init__(**kwargs)
 
+		self.sessions = 1
+
 		self.path = path
 		self.prepare()
 
@@ -62,17 +70,29 @@ class BinaryLogger(Logger):
 			if os.path.isdir(path):
 				logger.info('Loading log data: %s', path)
 
-				training_loss = BinaryLogger.load_column(
-					path, 'training_loss_total')
+				summary_path = os.path.join(path, self.SUMMARY)
+				if os.path.exists(summary_path):
+					self.load_summary()
+					has_summary = True
+				else:
+					logger.debug('Loading old-style binary logger.')
+					has_summary = False
+
+				_, training_loss = self.load_statistic(
+					Statistic(Statistic.Type.TRAINING, 'loss', 'total')
+				)
 				if training_loss is None:
 					self.best_training_loss = None
-					self.num_epochs = None
 				else:
 					self.best_training_loss = training_loss.min()
-					self.num_epochs = len(training_loss)
 
-				validation_loss = BinaryLogger.load_column(
-					path, 'validation_loss_total')
+					# Handle the old log format.
+					if not has_summary:
+						self.epochs = len(training_loss)
+
+				_, validation_loss = self.load_statistic(
+					Statistic(Statistic.Type.VALIDATION, 'loss', 'total')
+				)
 				if validation_loss is None:
 					self.best_validation_loss = None
 				else:
@@ -88,7 +108,6 @@ class BinaryLogger(Logger):
 			os.makedirs(path, exist_ok=True)
 
 			self.best_training_loss = None
-			self.num_epochs = None
 			self.best_validation_loss = None
 
 	###########################################################################
@@ -104,12 +123,6 @@ class BinaryLogger(Logger):
 		return self.best_validation_loss
 
 	###########################################################################
-	def get_number_of_epochs(self):
-		""" Returns the number of epochs this model has historically completed.
-		"""
-		return self.num_epochs
-
-	###########################################################################
 	def process(self, data, data_type, tag=None):
 		""" Processes training statistics.
 		"""
@@ -121,6 +134,36 @@ class BinaryLogger(Logger):
 
 			logger.debug('Adding data to binary column: %s', column)
 			idx.save(filename, v, append=True)
+
+		self.update_summary()
+
+	###########################################################################
+	def update_summary(self):
+		""" Updates the summary log file.
+		"""
+		logger.debug('Writing logger summary.')
+		path = os.path.expanduser(os.path.expandvars(self.path))
+		summary_path = os.path.join(path, self.SUMMARY)
+		with open(summary_path, 'w') as fh:
+			fh.write(yaml.dump({
+				'version' : 2,
+				'epochs' : self.epochs,
+				'batches' : self.batches,
+				'samples' : self.samples,
+				'sessions' : self.sessions
+			}))
+
+	###########################################################################
+	def load_summary(self):
+		logger.debug('Reading logger summary.')
+		path = os.path.expanduser(os.path.expandvars(self.path))
+		summary_path = os.path.join(path, self.SUMMARY)
+		with open(summary_path) as fh:
+			summary = yaml.load(fh.read())
+		self.epochs = summary.get('epochs', 0)
+		self.batches = summary.get('batches', 0)
+		self.samples = summary.get('samples', 0)
+		self.sessions = summary.get('sessions', 0) + 1
 
 	###########################################################################
 	@staticmethod
@@ -150,5 +193,50 @@ class BinaryLogger(Logger):
 			return None
 
 		return idx.load(filename)
+
+	###########################################################################
+	def enumerate_statistics(self):
+
+		result = []
+
+		path = os.path.expanduser(os.path.expandvars(self.path))
+		for filename in os.listdir(path):
+			if filename == self.SUMMARY or not os.path.isfile(filename):
+				continue
+
+			parts = filename.split('_', 2)
+			if len(parts) != 3:
+				continue
+
+			if parts[-1] == 'batches':
+				continue
+
+			try:
+				stat = Statistic(*parts)
+			except KeyError:
+				continue
+
+			result.append(stat)
+
+		return result
+
+	###########################################################################
+	def load_statistic(self, statistic):
+		path = os.path.expanduser(os.path.expandvars(self.path))
+		values = BinaryLogger.load_column(path, '{}_{}_{}'.format(
+			statistic.data_type, statistic.tag, statistic.name
+		))
+
+		batches = BinaryLogger.load_column(path, '{}_{}_batch'.format(
+			statistic.data_type, statistic.tag
+		))
+
+		if batches is not None:
+			if len(batches) < len(values):
+				values = values[:len(batches)]
+			elif len(batches) > len(values):
+				batches = batches[:len(values)]
+
+		return (batches, values)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
