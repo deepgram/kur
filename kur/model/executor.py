@@ -768,13 +768,14 @@ class Executor:
 		""" Wait for user input before running a single batch of data.
 		"""
 		print('{}, Batch {}:'.format(what, num_batches+1))
-		for k, v in batch.items():
-			print('{} {}: {}'.format(
-				k,
-				v.shape if hasattr(v, 'shape') else \
-					'(list, {} entries)'.format(len(v)),
-				v
-			))
+		if logger.isEnabledFor(logging.DEBUG):
+			for k, v in batch.items():
+				print('{} {}: {}'.format(
+					k,
+					v.shape if hasattr(v, 'shape') else \
+						'(list, {} entries)'.format(len(v)),
+					v
+				))
 		input('Press ENTER to continue...')
 
 	###########################################################################

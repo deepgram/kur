@@ -189,10 +189,10 @@ class TrainingHook:					# pylint: disable=too-few-public-methods
 					pass
 
 			if not candidates:
-				raise ValueError('No valid evaluation hook found in '
+				raise ValueError('No valid training hook found in '
 					'Kurfile: {}'.format(spec))
 			elif len(candidates) > 1:
-				raise ValueError('Too many possible evaluation hooks found in '
+				raise ValueError('Too many possible training hooks found in '
 					'Kurfile: {}'.format(spec))
 			else:
 				name, target = candidates.popitem()
