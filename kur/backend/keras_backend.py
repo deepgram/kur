@@ -182,6 +182,10 @@ class KerasBackend(Backend):
 						env['CUDA_VISIBLE_DEVICES'] = str(self.device_number)
 						logger.info('Requesting GPU %d', self.device_number)
 
+			# Supress the deluge of TensorFlow messages that we aren't
+			# interested in.
+			env['TF_CPP_MIN_LOG_LEVEL'] = '1'
+
 			logger.debug('Overriding environmental variables: %s', env)
 			EnvironmentalVariable(**env).push()
 
