@@ -231,11 +231,17 @@ class BinaryLogger(PersistentLogger):
 			statistic.data_type, statistic.tag
 		))
 
-		if batches is not None:
+		if values is not None and batches is not None:
 			if len(batches) < len(values):
-				values = values[:len(batches)]
+				if len(batches):
+					values = values[-len(batches):]
+				else:
+					values = values[0:0]
 			elif len(batches) > len(values):
-				batches = batches[:len(values)]
+				if len(values):
+					batches = batches[-len(values):]
+				else:
+					batches = batches[0:0]
 
 		return (batches, values)
 
