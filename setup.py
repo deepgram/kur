@@ -135,7 +135,8 @@ setup(
 		'scipy>=0.18.1',
 		'python-magic>=0.4.12',
 		'pydub>=0.16.6',
-		'python_speech_features>=0.4'
+		'python_speech_features>=0.4',
+		'matplotlib>=1.5.3'
 	],
 	dependency_links=[
 	],
