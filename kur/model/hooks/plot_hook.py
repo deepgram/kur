@@ -44,13 +44,15 @@ class PlotHook(TrainingHook):
 		self.path = os.path.expanduser(os.path.expandvars(path))
 
 		try:
-			from matplotlib import pyplot		# pylint: disable=import-error
+			import matplotlib					# pylint: disable=import-error
 		except:
 			logger.exception('Failed to import "matplotlib". Make sure it is '
 				'installed, and if you have continued trouble, please check '
 				'out our troubleshooting page: https://kur.deepgram.com/'
 				'troubleshooting.html#plotting')
 			raise
+
+		matplotlib.use('Agg')
 
 	###########################################################################
 	def notify(self, status, log=None, info=None):
