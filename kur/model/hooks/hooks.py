@@ -204,7 +204,10 @@ class TrainingHook:					# pylint: disable=too-few-public-methods
 			raise ValueError('Expected the training hooks to be a string or '
 				'dictionary. We got this instead: {}'.format(spec))
 
-		return target(**params)
+		if isinstance(params, dict):
+			return target(**params)
+		else:
+			return target(params)
 
 	###########################################################################
 	@classmethod
