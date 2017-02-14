@@ -157,6 +157,7 @@ class TrainingHook:					# pylint: disable=too-few-public-methods
 
 	TRAINING_START = object()
 	TRAINING_END = object()
+	VALIDATION_END = object()
 	EPOCH_START = object()
 	EPOCH_END = object()
 

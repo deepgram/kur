@@ -471,7 +471,7 @@ class Executor:
 			return cur_train_loss
 
 		#######################################################################
-		def run_training_hooks(cur_train_loss, validation_loss):
+		def run_training_hooks(cur_train_loss, validation_loss, status):
 			""" Executes the training hooks, if necessary.
 
 				Read-only non-locals:
@@ -488,7 +488,7 @@ class Executor:
 				info['Validation loss'] = validation_loss
 			for hook in training_hooks:
 				hook.notify(
-					TrainingHook.EPOCH_END,
+					status,
 					log=log,
 					info=info
 				)
@@ -521,7 +521,9 @@ class Executor:
 							num_batches = None
 						else:
 							num_batches = checkpoint['validation']
-						run_validation(num_batches)
+						val_loss = run_validation(num_batches)
+						run_training_hooks(None, val_loss,
+							TrainingHook.VALIDATION_END)
 
 					last_checkpoint = session.copy()
 					break
@@ -651,7 +653,11 @@ class Executor:
 			validation_loss = run_validation()
 
 			# Execute training hooks.
-			run_training_hooks(cur_train_loss, validation_loss)
+			run_training_hooks(
+				cur_train_loss,
+				validation_loss,
+				status=TrainingHook.EPOCH_END
+			)
 
 	###########################################################################
 	def evaluate(self, provider, callback=None, step=False):
