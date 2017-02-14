@@ -73,6 +73,15 @@ class SlackHook(TrainingHook, EvaluationHook):
 		"""
 		logger.debug('Upload file: %s', filename)
 
+		if not self.token:
+			logger.warning('Skipping this upload -- "token" was not defined.')
+			return
+
+		if not os.path.isfile(filename):
+			logger.warning('Skipping this upload -- file does not exist: %s',
+				filename)
+			return
+
 		data = {
 			'token' : self.token,
 			'file' : UploadFile(filename),
@@ -94,6 +103,10 @@ class SlackHook(TrainingHook, EvaluationHook):
 		""" Sends a message to Slack.
 		"""
 		logger.debug('Sending Slack message.')
+
+		if not self.url:
+			logger.warning('Skipping this message -- "url" was not defined.')
+			return
 
 		if self.title is not None:
 			text = '{}: {}'.format(self.title, text)
@@ -164,9 +177,21 @@ class SlackHook(TrainingHook, EvaluationHook):
 			TrainingHook.EPOCH_END,
 			TrainingHook.VALIDATION_END
 		):
+			self.upload_extra_files()
+
+	###########################################################################
+	def upload_extra_files(self):
+		""" Uploads `extra_files` to Slack.
+		"""
+		if self.token:
 			for filename in self.extra_files:
 				if os.path.isfile(filename):
 					self.upload_message(filename)
+				else:
+					logger.debug('Skipping file upload -- file does not '
+						'exist: %s', filename)
+		else:
+			logger.debug('"token" is not defined. Skipping uploads.')
 
 	###########################################################################
 	def apply(self, current, original, model=None):
@@ -199,8 +224,7 @@ class SlackHook(TrainingHook, EvaluationHook):
 				'for message posting. However, the data you are working with '
 				'does not provide enough information for file uploading.')
 
-		for filename in self.extra_files:
-			self.upload_message(filename)
+		self.upload_extra_files()
 
 		return current
 
