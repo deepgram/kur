@@ -49,6 +49,8 @@ class SlackHook(TrainingHook, EvaluationHook):
 
 		if extra_files and isinstance(extra_files, str):
 			extra_files = [extra_files]
+		elif extra_files is None:
+			extra_files = []
 
 		self.username = user or 'kur'
 		self.icon = icon or 'dragon'
