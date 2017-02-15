@@ -61,6 +61,8 @@ Kur takes a very long before it starts training.
 
 See :ref:`this answer <looks_stuck>`.
 
+.. _theano_optimizer:
+
 Theano is complaining about BLAS.
 ---------------------------------
 
@@ -121,6 +123,18 @@ There are a number of ways to solve this.
 
 - If you are trying to run on an NVIDIA GPU
 	- Install cuDNN from NVIDIA's website.
+
+Theano complains with error "Optimization failure due to: constant_folding"
+---------------------------------------------------------------------------
+
+See :ref:`this answer <theano_optimizer>`.
+
+Theano complains about an ``ImportError: ... file too short``
+-------------------------------------------------------------
+
+This can be caused if the Theano cache becomes corrupt. Try moving (or, if you
+are brave, deleting) the ``~/.theano`` directory someplace else and trying
+again.
 
 TensorFlow throws an ``ImportError`` about ``GLIBC`` not found.
 ---------------------------------------------------------------
