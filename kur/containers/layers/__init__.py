@@ -30,5 +30,6 @@ from .batchnorm import BatchNormalization
 from .output import Output
 from .transpose import Transpose
 from .merge import Merge
+from .dropout import Dropout
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

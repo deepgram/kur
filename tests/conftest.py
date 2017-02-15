@@ -207,6 +207,7 @@ def uber_model(a_backend):
 				# Shape: (16, 16, 2), (8, 8, 4)
 				{'assert' : '{{ idx < 2 }}'}
 			]}},
+			{'dropout' : 0.2},
 			{'parallel' : {'apply' : [
 				'flatten',
 				# Shape: (8, 32)
