@@ -18,6 +18,7 @@ import logging
 import numpy
 from . import ShuffleProvider
 from ..sources import ChunkSource
+from ..utils import neighbor_sort
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,8 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 
 	###########################################################################
 	def __init__(self, batch_size=None, num_batches=None,
-		force_batch_size=False, *args, **kwargs):
+		force_batch_size=False, neighborhood_sort=None, neighborhood_size=None,
+		neighborhood_growth=None, *args, **kwargs):
 		""" Creates a new batch provider.
 
 			# Arguments
@@ -60,6 +62,27 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		if self.force:
 			logger.debug('Batch provider will force batches of exactly %d '
 				'samples.', self.batch_size)
+
+		if neighborhood_sort:
+			if self.keys is None:
+				raise ValueError('Cannot use "neighborhood_sort" with unnamed '
+					'sources.')
+			try:
+				neighborhood_data = self.sources[self.keys.index(neighborhood_sort)]
+			except ValueError:
+				raise ValueError('Could not find the "neighborhood_sort" key '
+					'"{}" in list of available sources: {}'
+					.format(neighborhood_sort, ', '.join(self.keys)))
+
+			if len(neighborhood_data) <= 0:
+				raise ValueError('Data sorting requires a finite source.')
+		else:
+			neighborhood_data = None
+
+		self.neighborhood_data = neighborhood_data
+		self.neighborhood_key = neighborhood_sort
+		self.neighborhood_size = neighborhood_size
+		self.neighborhood_growth = neighborhood_growth
 
 	###########################################################################
 	@property
@@ -209,5 +232,43 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 					break
 				result = [x[:smallest] for x in result]
 				yield self.wrap(result)
+
+	###########################################################################
+	def pre_iter(self):
+		""" Pre-iteration hook.
+		"""
+
+		if not self.randomize or \
+				self.shuffle_after or \
+				not self.neighborhood_key:
+			super().pre_iter()
+			return
+
+		logger.info('Calculating the nearest-neighbor shuffle indices using '
+			'data source %s.', self.neighborhood_key)
+
+		# Create a local, complete copy of the sort-by data.
+		# TODO: Can this safely be cached?
+		data = numpy.empty(
+			(len(self.neighborhood_data), ) + self.neighborhood_data.shape()
+		)
+		start = 0
+		for batch in self.neighborhood_data:
+			data[start:start+len(batch)] = batch[:]
+			start += len(batch)
+
+		# Determine the sort indices.
+		indices = neighbor_sort.argsort(
+			data,
+			self.batch_size,
+			self.neighborhood_size,
+			self.neighborhood_growth
+		)
+
+		# Apply the indices.
+		for source in self.sources:
+			source.shuffle(indices)
+
+		logger.debug('Finished shuffling.')
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
