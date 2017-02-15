@@ -196,6 +196,7 @@ def uber_model(a_backend):
 			# Force it to infer the shape from data.
 			{'input' : 'TEST_input'},
 			# Shape: (32, 32)
+			{'transpose' : [0, 1]},
 			{'expand' : -1},
 			{'debug' : 'hello world'},
 			# Shape: (32, 32, 1)
@@ -219,7 +220,9 @@ def uber_model(a_backend):
 			'batch_normalization',
 			{'reuse' : 'TEST_reuse'},
 			# Shape: (8, 10)
-			'flatten',
+			{'flatten' : None, 'name' : 'TEST_mark1'},
+			{'dense' : 80, 'name' : 'TEST_mark2'},
+			{'merge' : 'average', 'inputs' : ['TEST_mark1', 'TEST_mark2']},
 			# Shape: (80, )
 			{'output' : 'TEST_output'}
 		]
