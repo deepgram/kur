@@ -106,7 +106,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		"""
 
 		# Should always be the first call in __iter__
-		super().pre_iter()
+		self.pre_iter()
 
 		for source in self.sources:
 			if isinstance(source, ChunkSource):
