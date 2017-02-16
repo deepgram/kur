@@ -14,12 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import bisect
-
 import numpy
 
 from . import ChunkSource
-from ..utils import partial_sum
 
 ###############################################################################
 class StackSource(ChunkSource):
@@ -46,11 +43,11 @@ class StackSource(ChunkSource):
 		if not sources:
 			raise ValueError('Cannot stack zero sources.')
 
+		self.draw = None
+		self.accumulator = None
 		self.sources = []
 		for source in sources:
 			self.stack(source)
-		self.indices = None
-		self.draw = None
 
 	###########################################################################
 	def __len__(self):
@@ -73,7 +70,7 @@ class StackSource(ChunkSource):
 		"""
 		if source.is_derived():
 			raise ValueError('Cannot stack derived sources.')
-		if len(source) == 0:
+		if not source:
 			raise ValueError('Cannot stack sources with unknown lengths.')
 
 		if self.sources:
@@ -93,8 +90,20 @@ class StackSource(ChunkSource):
 							self.shape(), source.shape()
 						))
 
+		new_block = numpy.ones(len(source), dtype=numpy.int32) \
+			* len(self.sources)
+		if self.draw is None:
+			self.draw = new_block
+		else:
+			self.draw = numpy.concatenate((self.draw, new_block))
+
+		new_block = numpy.arange(len(source))
+		if self.accumulator is None:
+			self.accumulator = new_block
+		else:
+			self.accumulator = numpy.concatenate((self.accumulator, new_block))
+
 		self.sources.append(source)
-		self.indices = None
 
 	###########################################################################
 	def shape(self):
@@ -119,34 +128,20 @@ class StackSource(ChunkSource):
 			raise ValueError('Shuffleable was asked to apply permutation, but '
 				'the permutation is longer than the length of the data set.')
 
-		if self.indices is None:
-			self.indices = indices[:len(indices)]
-		else:
-			if len(self.indices) != len(indices):
-				raise ValueError('The number of shuffle indices has changed '
-					'unexpectedly. This can cause mis-aligned data and is not '
-					'permitted.')
-			self.indices = self.indices[indices]
+		indices = indices[:len(self)]
 
-		cutoffs = list(partial_sum(len(source) for source in self.sources))
+		self.draw = self.draw[indices]
+		ctr = self.accumulator[indices]
 
-		counters = [0 for _ in range(len(self.sources))]
 		sub_shuffles = [[None]*len(source) for source in self.sources]
-		draw = [None]*len(indices)
-		for i, index in enumerate(indices):
-			which = bisect.bisect(cutoffs, index)
-			offset = cutoffs[which-1] if which else 0
-			sub_shuffles[which][counters[which]] = index - offset
-			counters[which] += 1
-			draw[i] = which
+		counters = [0 for _ in range(len(self.sources))]
+		for i, draw in enumerate(self.draw):
+			self.accumulator[i] = counters[draw]
+			sub_shuffles[draw][counters[draw]] = ctr[i]
+			counters[draw] += 1
 
 		for i, x in enumerate(sub_shuffles):
 			self.sources[i].shuffle(x)
-		self.draw = draw
-
-		# 1. Figure out the shufflings for each source.
-		# 2. Shuffle the sources accordingly.
-		# 3. Figure out the ordering we need to draw from each source.
 
 	###########################################################################
 	def __iter__(self):
@@ -161,9 +156,7 @@ class StackSource(ChunkSource):
 		queues = [None]*len(self.sources)
 		iterators = [iter(source) for source in self.sources]
 
-		if self.draw is None:
-			self.draw = [i for i, source in enumerate(self.sources) \
-				for _ in range(len(source))]
+		assert self.draw is not None
 
 		if isinstance(self.chunk_size, int):
 			chunk_size = self.chunk_size
@@ -188,7 +181,7 @@ class StackSource(ChunkSource):
 					queues[which] = next(iterators[which])
 				result[i] = queues[which][0]
 				queues[which] = queues[which][1:]
-				if len(queues[which]) == 0:
+				if len(queues[which]) == 0:	 # pylint: disable=len-as-condition
 					queues[which] = None
 
 			yield numpy.array(result)
