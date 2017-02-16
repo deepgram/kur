@@ -433,6 +433,9 @@ class Executor:
 					'vanished: %s', saved_recent)
 				saved_recent = None
 				save_or_copy_weights(target)
+			elif os.path.samefile(target, saved_recent):
+				logger.debug('Recent weight file seems the same as the '
+					'soon-to-be-saved file. Skipping: %s', target)
 			else:
 				logger.debug('Copying weights from: %s', saved_recent)
 				with CriticalSection():
