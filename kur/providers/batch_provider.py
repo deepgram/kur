@@ -245,7 +245,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 			return
 
 		logger.info('Calculating the nearest-neighbor shuffle indices using '
-			'data source %s.', self.neighborhood_key)
+			'data source "%s".', self.neighborhood_key)
 
 		# Create a local, complete copy of the sort-by data.
 		# TODO: Can this safely be cached?
