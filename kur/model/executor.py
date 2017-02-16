@@ -158,6 +158,9 @@ class Executor:
 				except RetryException:
 					continue
 
+				if step and logger.isEnabledFor(logging.DEBUG):
+					print(prediction)
+
 				if first_batch is None:
 					first_batch = (prediction, batch)
 
@@ -579,10 +582,13 @@ class Executor:
 							num_batches, batch)
 
 					try:
-						_, batch_loss = train_func(
+						prediction, batch_loss = train_func(
 							model=self.model, data=batch)
 					except RetryException:
 						continue
+
+					if step and logger.isEnabledFor(logging.DEBUG):
+						print(prediction)
 
 					# We just modified the weights. Invalidate the name of the
 					# last weight file.
@@ -715,6 +721,9 @@ class Executor:
 					evaluated, _ = eval_func(model=self.model, data=batch)
 				except RetryException:
 					continue
+
+				if step and logger.isEnabledFor(logging.DEBUG):
+					print(evaluated)
 
 				batch_size = len(get_any_value(batch))
 
