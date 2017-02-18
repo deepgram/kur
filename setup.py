@@ -30,7 +30,7 @@ def error_message(msg):
 		'ERROR', '',
 		msg, ''
 		'See our troubleshooting page to get started:', '',
-		'https://kur.deepgram.com/troubleshooting.html#installation', '',
+		'http://kur.deepgram.com/troubleshooting.html#installation', '',
 		'='*line_width, '',
 		"Uh, oh. There was an error. Look up there ^^^^ and you'll be",
 		'training awesome models in no time!'
