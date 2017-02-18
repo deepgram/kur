@@ -17,7 +17,7 @@ When installing Kur, you may encounter this error::
                  Kur requires Python 3.4 or later.
             See our troubleshooting page to get started:
     
-     https://kur.deepgram.com/troubleshooting.html#installation
+     http://kur.deepgram.com/troubleshooting.html#installation
     
     ============================================================
     
