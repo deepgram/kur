@@ -182,7 +182,9 @@ only have Python 2, it's time to move into the future--let's install it!
 
 	   If everything worked, you should see the version of Python 3 you just
 	   installed appear on the screen. Great! And what's more, Homebrew also
-	   just installed ``pip`` for you---it's a package manager for Python.
+	   just installed ``pip3`` for you---it's a package manager for Python. To
+	   make sure you have it, type ``which pip3``. Make sure to invoke ``pip3``
+	   since ``pip`` may reference a different Python installation.
 
 - Linux. Installing Python 3 depends on your Linux distribution; most new Linux
   releases are including Python 3 installed as the default Python interpreter.
