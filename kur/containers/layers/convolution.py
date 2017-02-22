@@ -146,8 +146,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 			elif len(self.size) == 2:
 				func = L.Convolution2D
 				kwargs.update({
-					'nb_col' : self.size[0],
-					'nb_row' : self.size[1],
+					'nb_row' : self.size[0],
+					'nb_col' : self.size[1],
 					'subsample' : self.strides
 				})
 			elif len(self.size) == 3:
