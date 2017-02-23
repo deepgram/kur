@@ -144,7 +144,7 @@ train:
     #   utterance, utterance_length, transcript, transcript_length, duration
     - speech_recognition:
         <<: *data
-        url: "http://kur.deepgram.com/data/lsdc-train.tar.gz"
+        url: "https://kur.deepgram.com/data/lsdc-train.tar.gz"
         checksum: >-
           fc414bccf4de3964f895eaa9d0e245ea28810a94be3079b55505cf0eb1644f94
 
@@ -168,7 +168,7 @@ validate: &validate
   data:
     - speech_recognition:
         <<: *data
-        url: "http://kur.deepgram.com/data/lsdc-test.tar.gz"
+        url: "https://kur.deepgram.com/data/lsdc-test.tar.gz"
         checksum: >-
           e1c8cf9cd57e8c1ae952b6e4e40dcb5c8e3932c81ecd52c090e4a05c8ebbea2b
 

@@ -14,7 +14,7 @@
 .. _GitHub: http://www.github.com/deepgram/kur
 .. _KurHub: http://www.kurhub.com
 
-.. image:: http://kur.deepgram.com/images/logo.png
+.. image:: https://kur.deepgram.com/images/logo.png
    :width: 50%
    :align: center
    :target: https://deepgram.com

@@ -12,7 +12,7 @@
 .. _LinkedIn: https://www.linkedin.com/shareArticle?mini=true&url=https%3A//kur.deepgram.com&title=Kur%20-%20descriptive%20deep%20learning&summary=Kur%20is%20the%20future%20of%20deep%20learning%3A%20advanced%20AI%20without%20programming!&source=
 .. _Twitter: https://twitter.com/home?status=%40DeepgramAI%20has%20released%20the%20future%20of%20deep%20learning.%20https%3A//kur.deepgram.com%20%23Kur
 
-.. image:: http://kur.deepgram.com/images/logo-small.png
+.. image:: https://kur.deepgram.com/images/logo-small.png
    :align: center
    :target: https://deepgram.com
 
