@@ -47,12 +47,15 @@ class Supplier:
 		if not candidates:
 			raise ValueError('Missing the key naming the Supplier type from '
 				'an element of the "input" list. Valid keys are: {}'.format(
-				', '.join(Supplier.get_all_suppliers())
+				', '.join(
+					cls.get_name()
+					for cls in Supplier.get_all_suppliers()
+				)
 			))
 		if len(candidates) > 1:
 			raise ValueError('Ambiguous supplier type in an element of the '
 				'"input" list. Exactly one of the following keys must be '
-				'present: {}'.format(', '.join(Supplier.get_all_suppliers())))
+				'present: {}'.format(', '.join(candidates)))
 
 		name = candidates.pop()
 		params = spec[name]
