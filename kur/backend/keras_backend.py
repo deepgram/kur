@@ -665,7 +665,7 @@ class KerasBackend(Backend):
 
 			logger.info('Waiting for model to finish compiling...')
 			for batch in provider:
-				self.run_batch(model, batch, key)
+				self.run_batch(model, batch, key, False)
 
 		finally:
 			if weight_path and os.path.isdir(weight_path):
@@ -680,13 +680,15 @@ class KerasBackend(Backend):
 			shutil.rmtree(tempdir, ignore_errors=True)
 
 	###########################################################################
-	def run_batch(self, model, batch, key):
+	def run_batch(self, model, batch, key, is_train):
 		if model.compiled is None or key not in model.compiled:
 			raise ValueError('A model has not been compiled to: {}'
 				.format(key))
 
 		compiled = model.compiled[key]
 		raw = model.compiled['raw']
+
+		assert isinstance(is_train, bool)
 
 		def coerce_shape(data, shape, name):
 			if data.ndim < len(shape):
@@ -703,7 +705,7 @@ class KerasBackend(Backend):
 				compiled['shapes']['input'],
 				compiled['names']['input']
 			)
-		] + [True]
+		] + [is_train]
 
 		outputs = compiled['func'](inputs)
 		num_outputs = len(raw.outputs)
@@ -720,18 +722,18 @@ class KerasBackend(Backend):
 	def train(self, model, data):
 		""" Fits the given model on a batch of data.
 		"""
-		return self.run_batch(model, data, 'train')
+		return self.run_batch(model, data, 'train', True)
 
 	###########################################################################
 	def test(self, model, data):
 		""" Calculates the model loss on a batch of data.
 		"""
-		return self.run_batch(model, data, 'test')
+		return self.run_batch(model, data, 'test', False)
 
 	###########################################################################
 	def evaluate(self, model, data):
 		""" Evaluates the model on a batch of data.
 		"""
-		return self.run_batch(model, data, 'evaluate')
+		return self.run_batch(model, data, 'evaluate', False)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
