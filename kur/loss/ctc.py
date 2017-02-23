@@ -44,6 +44,8 @@ class ScaledSource(DerivedSource):
 	def derive(self, inputs):
 		# Break it apart
 		sizes, = inputs
+		if sizes.ndim < 2:
+			sizes = numpy.expand_dims(sizes, -1)
 		outputs = numpy.array(
 			[
 				self.model.get_shape_at_layer(
