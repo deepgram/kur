@@ -794,18 +794,17 @@ class Kurfile:
 			else:
 				return None
 
-		with ScopeStack(engine, stack):
+		with ScopeStack(engine, stack + [{key : self.data[key]}]):
 			evaluated = engine.evaluate(self.data[key], recursive=True)
 
-		if include_key:
-			stack.append({key : evaluated})
-		else:
+		if not include_key:
 			if evaluated is not None:
 				if not isinstance(evaluated, dict):
 					raise ValueError(
 						'Section "{}" should contain key/value pairs.'
 						.format(key))
 				stack.append(evaluated)
+		stack.append({key : evaluated})
 
 		# Now, just in case this was aliased, let's make sure we keep our
 		# naming scheme consistent.
