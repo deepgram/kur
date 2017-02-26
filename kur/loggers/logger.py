@@ -92,12 +92,12 @@ class Logger:
 		raise ValueError('No such logger with name "{}"'.format(name))
 
 	###########################################################################
-	def __init__(self, keep_batch=False, rate=None, **kwargs):
+	def __init__(self, keep_batch=True, rate=None, **kwargs):
 		""" Creates a new logger.
 
 			# Arguments
 
-			keep_batch: bool (default: False). If True, batch-level statistics
+			keep_batch: bool (default: True). If True, batch-level statistics
 				are kept. Otherwise, they are silently discarded. Setting this
 				to False can help with logging performance.
 			rate: int or None (default: None). If `keep_batch` is True, then
