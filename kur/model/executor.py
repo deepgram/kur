@@ -704,6 +704,47 @@ class Executor:
 		total = len(provider)
 		n_entries = 0
 
+		#######################################################################
+		def store_batch_unknown(batch, evaluated, batch_size):
+			""" Saves the batch if we do not know how many entries to expect.
+			"""
+			nonlocal truth, result
+
+			# We don't know how many entries there will be.
+			if result is None:
+				# This is our first batch.
+				result = {k : [] for k in self.model.outputs}
+			for k, v in evaluated.items():
+				result[k].extend(v)
+
+			if has_truth:
+				if truth is None:
+					truth = {k : [] for k in self.model.outputs}
+				for k in truth:
+					truth[k].extend(batch[k])
+
+		#######################################################################
+		def store_batch_known(batch, evaluated, batch_size):
+			""" Saves the batch if we know how many entries to expect.
+			"""
+			nonlocal truth, result
+
+			# We know how many entries there will be.
+			if result is None:
+				# This is our first batch.
+				result = {k : [None]*total for k in evaluated}
+			for k, v in evaluated.items():
+				result[k][n_entries:(n_entries+batch_size)] = v[:]
+
+			if has_truth:
+				if truth is None:
+					truth = {k : [None]*total for k in evaluated}
+				for k in truth:
+					truth[k][n_entries:(n_entries+batch_size)] = batch[k][:]
+
+		store_batch = store_batch_unknown if total is None \
+			else store_batch_known
+
 		eval_func = self.retry(self.model.backend.evaluate)
 
 		with tqdm.tqdm(
@@ -727,38 +768,13 @@ class Executor:
 
 				batch_size = len(get_any_value(batch))
 
+				# Check to see if we have truth data available.
 				if has_truth is None:
 					has_truth = all(k in batch for k in self.model.outputs)
 
 				if callback is None:
 					# There is no callback. We need to hang on to everything.
-					if total is None:
-						# We don't know how many entries there will be.
-						if result is None:
-							# This is our first batch.
-							result = {k : [] for k in self.model.outputs}
-						for k, v in evaluated.items():
-							result[k].extend(v)
-
-						if has_truth:
-							if truth is None:
-								truth = {k : [] for k in self.model.outputs}
-							for k in truth:
-								truth[k].extend(batch[k])
-					else:
-						# We know how many entries there will be.
-						if result is None:
-							# This is our first batch.
-							result = {k : [None]*total for k in evaluated}
-						for k, v in evaluated.items():
-							result[k][n_entries:(n_entries+batch_size)] = v[:]
-
-						if has_truth:
-							if truth is None:
-								truth = {k : [None]*total for k in evaluated}
-							for k in truth:
-								truth[k][n_entries:(n_entries+batch_size)] = \
-									batch[k][:]
+					store_batch(batch, evaluated, batch_size)
 				else:
 					callback(evaluated, truth)
 
@@ -768,11 +784,14 @@ class Executor:
 		if callback is not None:
 			return
 
-		if total is None:
-			for k, v in result.items():
-				result[k] = numpy.concatenate(v)
+		for data in (result, truth):
+			if data is not None:
+				for k, v in data.items():
+					data[k] = numpy.array(v)
+
+		if truth is not None:
 			for k, v in truth.items():
-				truth[k] = numpy.concatenate(v)
+				result[k] = numpy.reshape(result[k], v.shape)
 
 		return result, truth
 
