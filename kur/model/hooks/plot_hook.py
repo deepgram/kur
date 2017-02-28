@@ -37,11 +37,36 @@ class PlotHook(TrainingHook):
 		return 'plot'
 
 	###########################################################################
-	def __init__(self, path, *args, **kwargs):
+	def __init__(self, params=None, *args, **kwargs):
 		""" Creates a new plotting hook.
 		"""
 		super().__init__(*args, **kwargs)
-		self.path = os.path.expanduser(os.path.expandvars(path))
+
+		if isinstance(params, str):
+			plots = {
+				'loss_per_batch' : params,
+				'loss_per_time' : None,
+				'throughput_per_time' : None
+			}
+		elif isinstance(params, dict):
+			plots = {k : params.get(k) for k in (
+				'loss_per_batch',
+				'loss_per_time',
+				'throughput_per_time'
+			)}
+		elif params is None:
+			plots = {k : '{}.png'.format(k) for k in (
+				'loss_per_batch',
+				'loss_per_time',
+				'throughput_per_time'
+			)}
+		else:
+			raise ValueError('Unexpected value for "plot" hook: {}'
+				.format(params))
+
+		self.plots = plots
+		for k, v in self.plots.items():
+			self.plots[k] = os.path.expanduser(os.path.expandvars(v))
 
 		try:
 			import matplotlib					# pylint: disable=import-error
@@ -81,14 +106,12 @@ class PlotHook(TrainingHook):
 
 		log.flush()
 
-		plt.xlabel('Batch')
-		plt.ylabel('Loss')
-
-		batch, loss = log.load_statistic(
+		# Load the data
+		batch, time, loss = log.load_statistic(
 			Statistic(Statistic.Type.BATCH, 'loss', 'total')
 		)
 		if loss is None:
-			batch, loss = log.load_statistic(
+			batch, time, loss = log.load_statistic(
 				Statistic(Statistic.Type.TRAINING, 'loss', 'total')
 			)
 			if loss is None:
@@ -98,21 +121,72 @@ class PlotHook(TrainingHook):
 		else:
 			logger.debug('Using per-batch training statistics for plotting.')
 
-		if batch is None:
-			batch = numpy.arange(1, len(loss)+1)
-		t_line, = plt.plot(batch, loss, 'co-', label='Training Loss')
-
-		batch, loss = log.load_statistic(
+		vbatch, vtime, vloss = log.load_statistic(
 			Statistic(Statistic.Type.VALIDATION, 'loss', 'total')
 		)
-		if batch is None:
-			batch = numpy.arange(1, len(loss)+1)
-		v_line, = plt.plot(batch, loss, 'mo-', label='Validation Loss')
 
-		plt.legend(handles=[t_line, v_line])
-		plt.savefig(self.path, transparent=True, bbox_inches='tight')
-		plt.clf()
+		path = self.plots.get('loss_per_batch')
+		if path:
+			plt.xlabel('Batch')
+			plt.ylabel('Loss')
 
-		logger.debug('Plot saved to: %s', self.path)
+			if batch is None:
+				batch = numpy.arange(1, len(loss)+1)
+			t_line, = plt.plot(batch, loss, 'co-', label='Training Loss')
+
+			if vbatch is None:
+				vbatch = numpy.arange(1, len(vloss)+1)
+			v_line, = plt.plot(vbatch, vloss, 'mo-', label='Validation Loss')
+
+			plt.legend(handles=[t_line, v_line])
+			plt.savefig(path, transparent=True, bbox_inches='tight')
+			plt.clf()
+
+			logger.debug('Loss-per-batch plot saved to: %s', path)
+
+		path = self.plots.get('loss_per_time')
+		if path:
+			plt.xlabel('Time')
+			plt.ylabel('Loss')
+
+			if time is None:
+				logger.warning('No training timestamps available for '
+					'loss-per-time plot.')
+				t_line = None
+			else:
+				t_line, = plt.plot(time, loss, 'co-', label='Training Loss')
+
+			if vtime is None:
+				logger.warning('No validation timestamps available for '
+					'loss-per-time plot.')
+				v_line = None
+			else:
+				v_line, = plt.plot(vtime, vloss, 'mo-',
+					label='Validation Loss')
+
+			plt.legend(handles=[x for x in (t_line, v_line) if x is not None])
+			plt.savefig(path, transparent=True, bbox_inches='tight')
+			plt.clf()
+
+			logger.debug('Loss-per-time plot saved to: %s', path)
+
+		path = self.plots.get('throughput_per_time')
+		if path:
+			if time is None or batch is None:
+				logger.warning('No training timestamps or batches available '
+					'for throughput-per-time plot.')
+			else:
+				plt.xlabel('Time')
+				plt.ylabel('Throughput (Batches/Second)')
+
+				throughput = numpy.diff(batch) / numpy.diff(time)
+				t_line, = plt.plot(time[1:], throughput, 'co-',
+					label='Training Throughput')
+
+				plt.legend(handles=(t_line, ))
+				plt.savefig(path, transparent=True, bbox_inches='tight')
+				plt.clf()
+
+				logger.debug('Throughput-per-time plot saved to: %s', path)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
