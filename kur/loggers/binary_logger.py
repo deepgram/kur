@@ -201,7 +201,10 @@ class BinaryLogger(PersistentLogger):
 
 		path = os.path.expanduser(os.path.expandvars(self.path))
 		for filename in os.listdir(path):
-			if filename == self.SUMMARY or not os.path.isfile(filename):
+			if filename == self.SUMMARY:
+				continue
+
+			if not os.path.isfile(os.path.join(path, filename)):
 				continue
 
 			parts = filename.split('_', 2)
