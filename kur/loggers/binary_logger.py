@@ -78,7 +78,7 @@ class BinaryLogger(PersistentLogger):
 					logger.debug('Loading old-style binary logger.')
 					has_summary = False
 
-				_, training_loss = self.load_statistic(
+				_, _, training_loss = self.load_statistic(
 					Statistic(Statistic.Type.TRAINING, 'loss', 'total')
 				)
 				if training_loss is None:
@@ -90,7 +90,7 @@ class BinaryLogger(PersistentLogger):
 					if not has_summary:
 						self.epochs = len(training_loss)
 
-				_, validation_loss = self.load_statistic(
+				_, _, validation_loss = self.load_statistic(
 					Statistic(Statistic.Type.VALIDATION, 'loss', 'total')
 				)
 				if validation_loss is None:
@@ -231,18 +231,28 @@ class BinaryLogger(PersistentLogger):
 			statistic.data_type, statistic.tag
 		))
 
-		if values is not None and batches is not None:
-			if len(batches) < len(values):
-				if len(batches):
-					values = values[-len(batches):]
-				else:
-					values = values[0:0]
-			elif len(batches) > len(values):
-				if len(values):
-					batches = batches[-len(values):]
-				else:
-					batches = batches[0:0]
+		timestamps = BinaryLogger.load_column(path, '{}_{}_time'.format(
+			statistic.data_type, statistic.tag
+		))
 
-		return (batches, values)
+		lens = [len(x) for x in (values, batches, timestamps) if x is not None]
+		if not lens:
+			return (None, None, None)
+		keep = min(lens)
+
+		def modify(x):
+			""" Truncates the data series appropriately.
+			"""
+			if x is None:
+				return None
+			elif keep:
+				return x[-keep:]
+			else:
+				return x[0:0]
+
+		values, batches, timestamps = \
+			tuple(modify(x) for x in (values, batches, timestamps))
+
+		return (batches, timestamps, values)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

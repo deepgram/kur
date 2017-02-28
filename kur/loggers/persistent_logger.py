@@ -53,6 +53,12 @@ class PersistentLogger(Logger):
 	###########################################################################
 	def load_statistic(self, statistic):
 		""" Loads a particular statistic.
+
+			# Return value
+
+			A tuple of `(batch, timestamp, value)`. Each entry in the tuple may
+			be None. All non-None entries will be numpy arrays of the same
+			length, containing the respective data.
 		"""
 		raise NotImplementedError
 
