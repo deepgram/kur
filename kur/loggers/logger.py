@@ -130,6 +130,7 @@ class Logger:
 		self.epochs = 0
 		self.samples = 0
 		self.timer = Timer(started=False)
+		self.timestamper = Timer(started=False)
 
 		self._clear()
 
@@ -231,6 +232,8 @@ class Logger:
 			if 'total' not in data:
 				data['total'] = sum(data.values())
 		data['batch'] = self.batches
+		data['time'] = self.timestamper()
+		self.timestamper.resume()
 		self.data[data_type][tag].append(data)
 
 	###########################################################################

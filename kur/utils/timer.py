@@ -25,8 +25,8 @@ class Timer:
 	def __init__(self, started=True):
 		""" Creates a new Timer.
 		"""
-		self.duration = 0
-		self.mark = 0
+		self.duration = 0.
+		self.mark = 0.
 		self.started = False
 		if started:
 			self.restart()
@@ -47,7 +47,7 @@ class Timer:
 		""" Reset the current timer (zeros the accumulated time) without
 			changing its running state.
 		"""
-		self.duration = 0
+		self.duration = 0.
 
 	###########################################################################
 	def restart(self):
