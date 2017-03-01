@@ -37,32 +37,16 @@ class PlotHook(TrainingHook):
 		return 'plot'
 
 	###########################################################################
-	def __init__(self, params=None, *args, **kwargs):
+	def __init__(self, loss_per_batch=None, loss_per_time=None,
+		throughput_per_time=None, *args, **kwargs):
 		""" Creates a new plotting hook.
 		"""
 		super().__init__(*args, **kwargs)
 
-		if isinstance(params, str):
-			plots = {
-				'loss_per_batch' : params,
-				'loss_per_time' : None,
-				'throughput_per_time' : None
-			}
-		elif isinstance(params, dict):
-			plots = {k : params.get(k) for k in (
-				'loss_per_batch',
-				'loss_per_time',
-				'throughput_per_time'
-			)}
-		elif params is None:
-			plots = {k : '{}.png'.format(k) for k in (
-				'loss_per_batch',
-				'loss_per_time',
-				'throughput_per_time'
-			)}
-		else:
-			raise ValueError('Unexpected value for "plot" hook: {}'
-				.format(params))
+		plots = dict(zip(
+			('loss_per_batch', 'loss_per_time', 'throughput_per_time'),
+			(loss_per_batch, loss_per_time, throughput_per_time)
+		))
 
 		self.plots = plots
 		for k, v in self.plots.items():
