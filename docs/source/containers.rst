@@ -416,6 +416,26 @@ or::
 
 - ``COUNT``: An integer. The number of times to repeat in input vector.
 
+Embedding
+---------
+
+**Description**. A learnable embedding layer.
+
+**Purpose**. Embedding layers learn to map integer labels onto a
+higher-dimensional vocabulary.
+
+**Usage**::
+
+	embedding:
+	  vocab_size: VOCAB_SIZE
+	  size: SIZE
+
+- ``VOCAB_SIZE``: the size of the input vocabulary. An embedding layer takes
+  integer labels as inputs, corresponding to vocabulary words. Thus, the inputs
+  should be zero-based indices which are < ``VOCAB_SIZE``.
+- ``SIZE``: The dimensionality of the embedding layer to learn. Each input
+  label is mapped to a ``SIZE``-dimensional vector.
+
 Operators
 =========
 

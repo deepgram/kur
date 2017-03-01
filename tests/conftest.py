@@ -142,6 +142,36 @@ def simple_data():
 
 ###############################################################################
 @pytest.fixture
+def embedding_model(a_backend):
+	""" Returns a model which tests an embedding layer.
+	"""
+	return model_with_containers(
+		backend=a_backend,
+		containers=[
+			{'input' : {'shape' : [10]}, 'name' : 'TEST_input'},
+			{'embedding' : {'vocab_size' : 100, 'size': 64}},
+			'flatten',
+			{'dense' : 3},
+			{'output' : 'TEST_output'}
+		]
+	)
+
+###############################################################################
+@pytest.fixture
+def embedding_data():
+	""" Returns a small provider that can be used to train the
+		`embedding_model()`.
+	"""
+	return BatchProvider(
+		sources={
+			'TEST_input' : VanillaSource(
+				numpy.random.random_integers(0, 99, size=(5, 10))),
+			'TEST_output' : VanillaSource(numpy.random.uniform(size=(5, 3)))
+		}
+	)
+
+###############################################################################
+@pytest.fixture
 def ctc_model(a_backend):
 	""" Returns a model which uses the CTC loss function.
 	"""
@@ -251,7 +281,8 @@ def uber_data():
 @pytest.fixture(
 	params=[
 		(simple_model, simple_data),
-		(ctc_model, ctc_data)
+		(ctc_model, ctc_data),
+		(embedding_model, embedding_data)
 	]
 )
 def any_model_with_data(request, a_backend):

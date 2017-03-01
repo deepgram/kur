@@ -206,4 +206,45 @@ class TestExecutor:
 		)
 		evaluator.evaluate(provider=uber_data)
 
+	###########################################################################
+	def test_embedding_train(self, embedding_model, embedding_data, loss,
+		optimizer):
+		""" Tests that we can compile and train a model which has an Embedding.
+		"""
+		embedding_model.parse(None)
+		embedding_model.register_provider(embedding_data)
+		embedding_model.build()
+		trainer = Executor(
+			model=embedding_model,
+			loss=loss,
+			optimizer=optimizer
+		)
+		trainer.train(provider=embedding_data, epochs=1)
+
+	###########################################################################
+	def test_embedding_test(self, embedding_model, embedding_data, loss):
+		""" Tests that we can compile and test a model which has an Embedding.
+			function.
+		"""
+		embedding_model.parse(None)
+		embedding_model.register_provider(embedding_data)
+		embedding_model.build()
+		trainer = Executor(
+			model=embedding_model,
+			loss=loss
+		)
+		trainer.test(provider=embedding_data)
+
+	###########################################################################
+	def test_embedding_evaluating(self, embedding_model, embedding_data):
+		""" Tests that we can evaluate a model that has an Embedding.
+		"""
+		embedding_model.parse(None)
+		embedding_model.register_provider(embedding_data)
+		embedding_model.build()
+		evaluator = Executor(
+			model=embedding_model
+		)
+		evaluator.evaluate(provider=embedding_data)
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
