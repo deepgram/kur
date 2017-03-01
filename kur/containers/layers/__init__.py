@@ -31,5 +31,6 @@ from .output import Output
 from .transpose import Transpose
 from .merge import Merge
 from .dropout import Dropout
+from .repeat import Repeat
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

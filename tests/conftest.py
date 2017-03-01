@@ -215,7 +215,9 @@ def uber_model(a_backend):
 				{'dense' : {'size' : 10}, 'name' : 'TEST_reuse'}
 				# Shape: (8, 10)
 			]}},
-			{'recurrent' : {'size' : 32}},
+			{'recurrent' : {'size' : 32, 'sequence' : False}},
+			# Shape (32, )
+			{'repeat' : 8},
 			# Shape: (8, 32)
 			'batch_normalization',
 			{'reuse' : 'TEST_reuse'},

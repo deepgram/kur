@@ -395,6 +395,27 @@ or::
   of all inputs are specified. However, the shape is optional; if omitted, it
   will be inferred from the data source.
 
+Repeat
+------
+
+**Description**. Repeats an input vector a given number of times.
+
+**Purpose**. Repeat layers are great for taken 1D input (like the output of a
+``dense`` or ``flatten`` layer) and producing 2D output. It does this by simply
+duplicating the input a fixed number of times, taking input ``X`` and producing
+``[X, X, X, ..., X]``.
+
+**Usage**::
+
+	repeat: COUNT
+
+or::
+
+	repeat:
+	  count: COUNT
+
+- ``COUNT``: An integer. The number of times to repeat in input vector.
+
 Operators
 =========
 
