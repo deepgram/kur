@@ -21,5 +21,6 @@ from .cifar import CifarSupplier
 from .pickle_supplier import PickleSupplier
 from .speechrec import SpeechRecognitionSupplier
 from .csv_supplier import CsvSupplier
+from .jsonl_supplier import JSONLSupplier
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
