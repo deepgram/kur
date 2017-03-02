@@ -50,7 +50,8 @@ class PlotHook(TrainingHook):
 
 		self.plots = plots
 		for k, v in self.plots.items():
-			self.plots[k] = os.path.expanduser(os.path.expandvars(v))
+			if v is not None:
+				self.plots[k] = os.path.expanduser(os.path.expandvars(v))
 
 		try:
 			import matplotlib					# pylint: disable=import-error
