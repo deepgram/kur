@@ -1,0 +1,75 @@
+---
+
+settings:
+
+  vocab:
+    size: 30
+
+  rnn:
+    size: 128
+    depth: 3
+
+model:
+  - input: in_seq
+
+  - for:
+      range: "{{ rnn.depth - 1 }}"
+      iterate:
+        - recurrent:
+            size: "{{ rnn.size }}"
+            type: gru
+            sequence: yes
+            bidirectional: no
+        - batch_normalization
+
+  - recurrent:
+      size: "{{ rnn.size }}"
+      type: gru
+      sequence: no
+      bidirectional: no
+
+  - dense: "{{ vocab.size }}"
+
+  - activation: softmax
+
+  - output: out_char
+
+loss:
+  - target: out_char
+    name: categorical_crossentropy
+
+train:
+  data:
+    - jsonl: ../data/train.jsonl
+  epochs: 5
+  weights:
+    initial: inital.w.kur
+    best: best.w.kur
+    last: last.w.kur
+
+  log: log
+
+validate:
+  data:
+    - jsonl: ../data/validate.jsonl
+  weights:
+    initial: inital.w.kur
+    best: best.w.kur
+    last: last.w.kur
+
+
+test:
+  data:
+    - jsonl: ../data/test.jsonl
+  weights:
+    initial: inital.w.kur
+    best: best.w.kur
+    last: last.w.kur
+
+
+evaluate:
+  data:
+    - jsonl: ../data/evaluate.jsonl
+  weights: best.w.kur
+
+  destination: output.pkl
