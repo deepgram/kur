@@ -289,13 +289,23 @@ class Backend:
 		raise NotImplementedError
 
 	###########################################################################
-	def connect(self, inputs, target):
+	def create_data(self, model):
+		""" Requests a new set of model-specific data to be used during model
+			assembly.
+		"""
+		return None
+
+	###########################################################################
+	def connect(self, inputs, target, data):
 		""" Applies a tensor operation to a set of input tensors.
 
 			# Arguments
 
 			inputs: list. A list of input tensors.
 			target: object. The tensor operation to apply.
+			data: object. A backend-specific object, created by
+				`create_data()`, which can be used by the backend to maintain
+				state while constructing the model.
 
 			# Notes
 

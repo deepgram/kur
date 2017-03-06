@@ -229,7 +229,7 @@ class KerasBackend(Backend):
 		return 'keras'
 
 	###########################################################################
-	def connect(self, inputs, target):
+	def connect(self, inputs, target, data):
 		""" Use the Keras functional API to connect to layers
 
 			# Notes:

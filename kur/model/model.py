@@ -74,6 +74,7 @@ class Model:
 		self.additional_sources = {}
 
 		self.compiled = None
+		self.data = self.backend.create_data(self)
 
 	###########################################################################
 	def has_data_source(self, name):
@@ -336,7 +337,8 @@ class Model:
 					meat = True
 					value = self.backend.connect(
 						inputs=value,
-						target=layer
+						target=layer,
+						data=self.data
 					)
 
 				if meat:
@@ -365,7 +367,8 @@ class Model:
 					else:
 						value = self.backend.connect(
 							inputs=value,
-							target=layer
+							target=layer,
+							data=self.data
 						)
 				# Comments:
 				# - If your layer didn't produce anything, then `value` is
