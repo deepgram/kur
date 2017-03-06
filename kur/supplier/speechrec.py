@@ -425,8 +425,8 @@ class SpeechRecognitionSupplier(Supplier):
 
 	###########################################################################
 	def __init__(self, url=None, path=None, checksum=None, unpack=None, 
-		type=None, normalization=None, max_duration=None, max_frequency=None,
-		vocab=None, samples=None, *args, **kwargs):
+		type=None, normalization=None, min_duration=None, max_duration=None,
+		max_frequency=None, vocab=None, samples=None, *args, **kwargs):
 		""" Creates a new speech recognition supplier.
 
 			# Arguments
@@ -436,7 +436,7 @@ class SpeechRecognitionSupplier(Supplier):
 		if unpack is None:
 			unpack = SpeechRecognitionSupplier.DEFAULT_UNPACK
 		self.load_data(url=url, path=path, checksum=checksum, unpack=unpack,
-			max_duration=max_duration)
+			min_duration=min_duration, max_duration=max_duration)
 		self.downselect(samples)
 
 		logger.debug('Creating sources.')
@@ -573,7 +573,7 @@ class SpeechRecognitionSupplier(Supplier):
 
 	###########################################################################
 	def load_data(self, url=None, path=None, checksum=None, unpack=None,
-		max_duration=None):
+		min_duration=None, max_duration=None):
 		""" Loads the data for this supplier.
 		"""
 		local_path, is_packed = package.install(
@@ -601,11 +601,13 @@ class SpeechRecognitionSupplier(Supplier):
 		self.metadata, self.data = self.get_metadata(
 			manifest=manifest,
 			root=local_path,
+			min_duration=min_duration,
 			max_duration=max_duration
 		)
 
 	###########################################################################
-	def get_metadata(self, manifest=None, root=None, max_duration=None):
+	def get_metadata(self, manifest=None, root=None, 
+		min_duration=None, max_duration=None):
 		""" Scans the package for a metadata file, makes sure everything is in
 			order, and returns some information about the data set.
 		"""
@@ -673,6 +675,8 @@ class SpeechRecognitionSupplier(Supplier):
 					continue
 
 				duration = entry['duration_s']
+				if min_duration and duration < min_duration:
+					continue
 				if max_duration and duration > max_duration:
 					continue
 
