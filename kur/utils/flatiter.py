@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from collections import OrderedDict
+
 ###############################################################################
 def flatten(x):
 	""" Returns an iterator over flattened entries of a list-like data
@@ -22,7 +24,7 @@ def flatten(x):
 	for item in x:
 		try:
 			iter(item)
-			if isinstance(item, (str, bytes)):
+			if isinstance(item, (str, bytes, dict, OrderedDict)):
 				yield item
 			else:
 				yield from flatten(item)
