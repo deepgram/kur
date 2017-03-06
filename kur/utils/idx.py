@@ -149,7 +149,7 @@ def load(filename):
 				'file. Ignoring this data...')
 
 	result = numpy.fromstring(data, dtype='>{}'.format(entry_type))
-	result = result.reshape(shape)
+	result = result.reshape(shape).astype('={}'.format(entry_type))
 	return result
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
