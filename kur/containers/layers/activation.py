@@ -54,6 +54,32 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 				name=self.name
 			)
 
+		elif backend.get_name() == 'pytorch':
+
+			import torch.nn.functional as F		# pylint: disable=import-error
+			func = {
+				'relu' : F.relu,
+				'tanh' : F.tanh,
+				'sigmoid' : F.sigmoid,
+				'softmax' : F.log_softmax
+			}.get(self.type.lower())
+			if func is None:
+				raise ValueError('Unsupported activation function "{}" for '
+					'backend "{}".'.format(self.type, backend.get_name()))
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				assert len(inputs) == 1
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : model.data.add_operation(func)(
+						inputs[0]['layer']
+					)
+				}
+
+			yield connect
+
 		else:
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))

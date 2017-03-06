@@ -98,6 +98,26 @@ class Merge(Layer):					# pylint: disable=too-few-public-methods
 
 			yield merge
 
+		elif backend.get_name() == 'pytorch':
+
+			import torch						# pylint: disable=import-error
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				axis = self.axis
+				if axis < 0:
+					axis += len(inputs[0]['shape'])
+				axis += 1
+				return {
+					'shape' : self.shape([x['shape'] for x in inputs]),
+					'layer' : model.data.add_operation(
+						lambda *x: torch.cat(x, axis)
+					)(*[x['layer'] for x in inputs])
+				}
+
+			yield connect
+
 		else:
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend)

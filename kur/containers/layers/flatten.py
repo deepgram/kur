@@ -39,6 +39,23 @@ class Flatten(Layer):					# pylint: disable=too-few-public-methods
 				name=self.name
 			)
 
+		elif backend.get_name() == 'pytorch':
+
+			from kur.backend.pytorch.modules import flatten
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				assert len(inputs) == 1
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : model.data.add_operation(flatten)(
+						inputs[0]['layer']
+					)
+				}
+
+			yield connect
+
 		else:
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))

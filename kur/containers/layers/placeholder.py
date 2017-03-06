@@ -172,6 +172,14 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 				dtype=dtype
 			)
 
+		elif backend.get_name() == 'pytorch':
+
+			self._infer_shape(model)
+			yield {
+				'shape' : self._shape,
+				'layer' : model.data.placeholder(self.name)
+			}
+
 		else:
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))

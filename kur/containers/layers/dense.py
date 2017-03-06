@@ -85,6 +85,24 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 				name=self.name
 			)
 
+		elif backend.get_name() == 'pytorch':
+
+			import torch.nn as nn				# pylint: disable=import-error
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				assert len(inputs) == 1
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : model.data.add_layer(
+						self.name,
+						nn.Linear(inputs[0]['shape'][-1], self.size[-1])
+					)(inputs[0]['layer'])
+				}
+
+			yield connect
+
 		else:
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))

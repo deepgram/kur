@@ -86,6 +86,27 @@ class Expand(Layer):					# pylint: disable=too-few-public-methods
 				name=self.name
 			)
 
+		elif backend.get_name() == 'pytorch':
+
+			import torch						# pylint: disable=import-error
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				assert len(inputs) == 1
+				dim = self.dimension
+				if dim < 0:
+					dim += len(inputs[0]['shape']) + 1
+				dim += 1
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : model.data.add_operation(
+						lambda x: torch.unsqueeze(x, dim)
+					)(inputs[0]['layer'])
+				}
+
+			yield connect
+
 		else:
 			raise ValueError('Unknown or unsupported backend: {}'.format(backend))
 

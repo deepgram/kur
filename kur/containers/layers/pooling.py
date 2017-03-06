@@ -167,6 +167,55 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 
 			yield func(**kwargs)
 
+		elif backend.get_name() == 'pytorch':
+
+			import torch.nn as nn				# pylint: disable=import-error
+
+			from kur.backend.pytorch.modules import swap_channels
+
+			if self.pooltype == 'max':
+				func = {
+					1 : nn.MaxPool1d,
+					2 : nn.MaxPool2d,
+					3 : nn.MaxPool3d
+				}.get(len(self.size))
+			elif self.pooltype == 'average':
+				func = {
+					1 : nn.AvgPool1d,
+					2 : nn.AvgPool2d,
+					3 : nn.AvgPool3d
+				}.get(len(self.size))
+			else:
+				raise ValueError('Unhandled pool type "{}". This is a bug.',
+					self.pooltype)
+
+			def connect(inputs):
+				""" Connects the layers.
+				"""
+				assert len(inputs) == 1
+				output = model.data.add_operation(
+					swap_channels
+				)(inputs[0]['layer'])
+				output = model.data.add_layer(
+					self.name,
+					func(
+						self.size,
+						self.strides,
+						padding=0,
+						dilation=1,
+						ceil_mode=False
+					)
+				)(output)
+				output = model.data.add_operation(
+					swap_channels
+				)(output)
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : output
+				}
+
+			yield connect
+
 		else:
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))

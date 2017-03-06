@@ -166,6 +166,65 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 
 			yield func(**kwargs)
 
+		elif backend.get_name() == 'pytorch':
+
+			# pylint: disable=import-error
+			import torch.nn as nn
+			# pylint: enable=import-error
+
+			from kur.backend.pytorch.modules import swap_channels
+
+			func = {
+				1 : nn.Conv1d,
+				2 : nn.Conv2d,
+				3 : nn.Conv3d
+			}.get(len(self.size))
+			if not func:
+				raise ValueError('Unhandled convolution dimension: {}. This '
+					'is a bug.'.format(len(self.size)))
+
+			if self.border == 'valid':
+				padding = 0
+			else:
+				# "same" padding requires you to pad with P = S - 1 zeros
+				# total. However, PyTorch always pads both sides of the input
+				# tensor, implying that PyTorch only accepts padding P' such
+				# that P = 2P'. This unfortunately means that if S is even,
+				# then the desired padding P is odd, and so no P' exists.
+				if any(s % 2 == 0 for s in self.size):
+					raise ValueError('PyTorch convolutions cannot use "same" '
+						'border mode when the receptive field "size" is even.')
+				padding = tuple((s-1)//2 for s in self.size)
+
+			layer = lambda in_channels: func(
+				in_channels,
+				self.kernels,
+				tuple(self.size),
+				stride=tuple(self.strides),
+				padding=padding
+			)
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				assert len(inputs) == 1
+				output = model.data.add_operation(
+					swap_channels
+				)(inputs[0]['layer'])
+				output = model.data.add_layer(
+					self.name,
+					layer(inputs[0]['shape'][-1])
+				)(output)
+				output = model.data.add_operation(
+					swap_channels
+				)(output)
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : output
+				}
+
+			yield connect
+
 		else:
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))

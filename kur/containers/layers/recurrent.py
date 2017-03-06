@@ -15,6 +15,9 @@ limitations under the License.
 """
 
 import logging
+
+import numpy
+
 from . import Layer, ParsingError
 
 logger = logging.getLogger(__name__)
@@ -189,6 +192,70 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 			else:
 				kwargs['name'] = self.name
 				yield func(**kwargs)
+
+		elif backend.get_name() == 'pytorch':
+
+			# pylint: disable=import-error
+			import torch.nn as nn
+			# pylint: enable=import-error
+
+			func = {
+				'lstm' : nn.LSTM,
+				'gru' : nn.GRU
+			}.get(self.type)
+			if func is None:
+				raise ValueError('Unhandled RNN type: {}. This is a bug.'
+					.format(self.type))
+
+			if self.bidirectional and self.merge != 'concat':
+				raise ValueError('PyTorch backend currently only supports '
+					'"concat" mode for bidirectional RNNs.')
+
+			if self.activation:
+				raise ValueError('PyTorch backend currently only supports '
+					'the default "outer_activation" value for RNNs.')
+
+			def connect(inputs):
+				""" Constructs the RNN layer.
+				"""
+				assert len(inputs) == 1
+				size = self.size
+				if self.bidirectional:
+					if size % 2 != 0:
+						logger.warning('Recurrent layer "%s" has an odd '
+							'number for "size", but has a concat-type merge '
+							'strategy. We are going to reduce its size by '
+							'one.', self.name)
+						size -= 1
+					size //= 2
+
+				kwargs = {
+					'input_size' : inputs[0]['shape'][-1],
+					'hidden_size' : size,
+					'num_layers' : 1,
+					'batch_first' : True,
+					'bidirectional' : self.bidirectional,
+					'bias' : True
+				}
+
+				def layer_func(_, layer, *inputs):
+					""" Applies the RNN
+					"""
+					result, _ = layer(*(inputs + (None, )))
+					if not self.sequence:
+						return result[:, -1]
+					return result
+
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : model.data.add_layer(
+						self.name,
+						func(**kwargs),
+						func=layer_func
+					)(inputs[0]['layer'])
+				}
+
+			yield connect
 
 		else:
 			raise ValueError(

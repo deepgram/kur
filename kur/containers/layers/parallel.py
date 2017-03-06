@@ -63,6 +63,10 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 		""" Instantiate the container.
 		"""
 		backend = model.get_backend()
+
+		if backend.get_name() == 'pytorch':
+			from kur.backend.pytorch.modules import parallel
+
 		for child_index, child in enumerate(self.children):
 			for layer_index, layer in enumerate(child.build(model)):
 
@@ -74,6 +78,23 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 						name='{}_{}_{}_{}'.format(self.name, child.name,
 							child_index, layer_index)
 					)
+
+				elif backend.get_name() == 'pytorch':
+
+					def connect(inputs, layer=layer, child=child):
+						""" Connects the layer
+						"""
+						print(inputs)
+						return {
+							'shape' : (inputs[0]['shape'][0], ) + child.shape(
+								(inputs[0]['shape'][1:], )
+							),
+							'layer' : model.data.add_operation(
+								parallel(layer)
+							)(*[x['layer'] for x in inputs])
+						}
+
+					yield connect
 
 				else:
 					raise ValueError(
