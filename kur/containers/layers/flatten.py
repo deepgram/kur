@@ -54,6 +54,6 @@ class Flatten(Layer):					# pylint: disable=too-few-public-methods
 		result = 1
 		for x in input_shape:
 			result *= x
-		return result
+		return (result, )
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
