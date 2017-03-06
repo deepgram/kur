@@ -121,6 +121,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		else:
 			self.border = 'same'
 
+		assert self.border in ('same', 'valid')
+
 	###########################################################################
 	def _build(self, model):
 		""" Instantiates the layer with the given backend.
