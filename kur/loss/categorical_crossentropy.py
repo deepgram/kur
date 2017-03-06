@@ -34,6 +34,23 @@ class CategoricalCrossentropy(Loss):
 
 		if backend.get_name() == 'keras':
 			return keras_wrap(model, target, output, 'categorical_crossentropy')
+		elif backend.get_name() == 'pytorch':
+
+			# pylint: disable=import-error
+			import torch
+			import torch.nn as nn
+			# pylint: enable=import-error
+
+			loss = nn.NLLLoss()
+
+			return [
+				[
+					(target, model.data.placeholder(target))
+				],
+				lambda inputs, output: loss(
+					output, torch.max(inputs[0], 1)[1].squeeze(1)
+				)
+			]
 		else:
 			raise ValueError('Unsupported backend "{}" for loss function "{}"'
 				.format(backend.get_name(), self.get_name()))
