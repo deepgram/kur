@@ -601,13 +601,13 @@ class SpeechRecognitionSupplier(Supplier):
 		self.metadata, self.data = self.get_metadata(
 			manifest=manifest,
 			root=local_path,
-                        min_duration=min_duration,
+			min_duration=min_duration,
 			max_duration=max_duration
 		)
 
 	###########################################################################
 	def get_metadata(self, manifest=None, root=None, 
-                min_duration=None, max_duration=None):
+		min_duration=None, max_duration=None):
 		""" Scans the package for a metadata file, makes sure everything is in
 			order, and returns some information about the data set.
 		"""
