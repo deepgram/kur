@@ -161,8 +161,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 					'subsample' : self.strides
 				})
 			else:
-				raise ValueError('Unhandled convolution dimension: {}. This is '
-					'a bug.'.format(len(self.size)))
+				raise ValueError('Unhandled convolution dimension: {}. This '
+					'is a bug.'.format(len(self.size)))
 
 			yield func(**kwargs)
 
