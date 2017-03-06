@@ -426,7 +426,7 @@ class SpeechRecognitionSupplier(Supplier):
 	###########################################################################
 	def __init__(self, url=None, path=None, checksum=None, unpack=None, 
 		type=None, normalization=None, min_duration=None, max_duration=None,
-                max_frequency=None, vocab=None, samples=None, *args, **kwargs):
+		max_frequency=None, vocab=None, samples=None, *args, **kwargs):
 		""" Creates a new speech recognition supplier.
 
 			# Arguments
