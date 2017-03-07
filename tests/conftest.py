@@ -175,6 +175,9 @@ def embedding_data():
 def ctc_model(a_backend):
 	""" Returns a model which uses the CTC loss function.
 	"""
+	if a_backend.get_name() == 'pytorch':
+		pytest.xfail('Backend "{}" does not use a CTC loss function.'
+			.format(a_backend.get_name()))
 	output_timesteps = 10
 	vocab_size = 4
 	return model_with_containers(
