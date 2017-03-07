@@ -268,6 +268,8 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 		if len(input_shapes) > 1:
 			raise ValueError('Recurrent layers only take a single input.')
 		input_shape = input_shapes[0]
-		return input_shape[:-1] + (self.size, )
+		if self.sequence:
+			return input_shape[:-1] + (self.size, )
+		return (self.size, )
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
