@@ -65,7 +65,7 @@ class Flatten(Layer):					# pylint: disable=too-few-public-methods
 		""" Returns the output shape of this layer for a given input shape.
 		"""
 		if len(input_shapes) > 1:
-			raise ValueError('Activations only take a single input.')
+			raise ValueError('Flatten layers only take a single input.')
 		input_shape = input_shapes[0]
 
 		result = 1
