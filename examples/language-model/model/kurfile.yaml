@@ -43,8 +43,7 @@ train:
     - jsonl: ../data/train.jsonl
   epochs: 5
   weights:
-    initial: inital.w.kur
-    best: best.w.kur
+    initial: best.w.kur
     last: last.w.kur
 
   log: log
@@ -52,19 +51,15 @@ train:
 validate:
   data:
     - jsonl: ../data/validate.jsonl
-  weights:
-    initial: inital.w.kur
-    best: best.w.kur
-    last: last.w.kur
+  weights: best.w.kur
+   
 
 
 test:
   data:
     - jsonl: ../data/test.jsonl
-  weights:
-    initial: inital.w.kur
-    best: best.w.kur
-    last: last.w.kur
+  weights: best.w.kur
+    
 
 
 evaluate:
