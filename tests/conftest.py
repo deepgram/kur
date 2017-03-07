@@ -234,31 +234,35 @@ def uber_model(a_backend):
 			{'debug' : 'hello world'},
 			# Shape: (32, 32, 1)
 			{'for' : {'with_index' : 'idx', 'range' : 2, 'iterate' : [
-				{'convolution' : {'kernels' : '{{ 2*(idx+1) }}', 'size' : [2, 2]}},
-				# Shape: (32, 32, 2), (16, 16, 4)
+				{'convolution' : {
+					'kernels' : '{{ 2*(idx+1) }}',
+					'size' : [2, 2],
+					'border' : 'valid'
+				}},
+				# Shape: (31, 31, 2), (14, 14, 4)
 				{'activation' : 'relu'},
 				{'pool' : {'size' : [2, 2], 'strides' : 2}},
-				# Shape: (16, 16, 2), (8, 8, 4)
+				# Shape: (15, 15, 2), (7, 7, 4)
 				{'assert' : '{{ idx < 2 }}'}
 			]}},
 			{'dropout' : 0.2},
 			{'parallel' : {'apply' : [
 				'flatten',
-				# Shape: (8, 32)
+				# Shape: (7, 28)
 				{'dense' : {'size' : 10}, 'name' : 'TEST_reuse'}
-				# Shape: (8, 10)
+				# Shape: (7, 10)
 			]}},
-			{'recurrent' : {'size' : 32, 'sequence' : False}},
-			# Shape (32, )
-			{'repeat' : 8},
-			# Shape: (8, 32)
+			{'recurrent' : {'size' : 28, 'sequence' : False}},
+			# Shape (28, )
+			{'repeat' : 7},
+			# Shape: (7, 28)
 			'batch_normalization',
 			{'reuse' : 'TEST_reuse'},
-			# Shape: (8, 10)
+			# Shape: (7, 10)
 			{'flatten' : None, 'name' : 'TEST_mark1'},
-			{'dense' : 80, 'name' : 'TEST_mark2'},
-			{'merge' : 'average', 'inputs' : ['TEST_mark1', 'TEST_mark2']},
-			# Shape: (80, )
+			{'dense' : 70, 'name' : 'TEST_mark2'},
+			{'merge' : 'concat', 'inputs' : ['TEST_mark1', 'TEST_mark2']},
+			# Shape: (140, )
 			{'output' : 'TEST_output'}
 		]
 	)
@@ -275,7 +279,7 @@ def uber_data():
 				low=-1, high=1, size=(2, 32, 32)
 			)),
 			'TEST_output' : VanillaSource(numpy.random.uniform(
-				low=-1, high=1, size=(2, 80)
+				low=-1, high=1, size=(2, 140)
 			))
 		}
 	)
