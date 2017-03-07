@@ -22,7 +22,7 @@ class Merge(Layer):					# pylint: disable=too-few-public-methods
 	"""
 
 	MERGE_MODES = ('multiply', 'add', 'concat', 'average')
-	DEFAULT_MERGE_MODE = 'average'
+	DEFAULT_MERGE_MODE = 'concat'
 
 	DEFAULT_AXIS = -1
 
