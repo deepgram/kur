@@ -81,17 +81,21 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 
 				elif backend.get_name() == 'pytorch':
 
-					def connect(inputs, layer=layer, child=child):
+					def connect(inputs, inner_connect=layer, child=child):
 						""" Connects the layer
 						"""
-						print(inputs)
+						operation = inner_connect([{
+							'shape' : inputs[0]['shape'][1:],
+							'layer' : None
+						}])['layer'].op
+
 						return {
 							'shape' : (inputs[0]['shape'][0], ) + child.shape(
 								(inputs[0]['shape'][1:], )
 							),
 							'layer' : model.data.add_operation(
-								parallel(layer)
-							)(*[x['layer'] for x in inputs])
+								parallel(operation)
+							)(inputs[0]['layer'])
 						}
 
 					yield connect

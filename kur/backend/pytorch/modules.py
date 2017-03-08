@@ -242,7 +242,10 @@ class TorchModel:
 			"""
 
 			logger.debug('Connecting layers: %s feed into %s',
-				[x.name for x in lower_layers], name
+				[
+					x.name if hasattr(x, 'name') else 'unknown'
+					for x in lower_layers
+				], name
 			)
 
 			###################################################################
@@ -252,8 +255,10 @@ class TorchModel:
 				result = operation(*[x(*inputs) for x in lower_layers])
 				return result
 			calculate.name = name
+			calculate.op = operation
 
 			return calculate
+
 		stack.name = name
 
 		return stack
@@ -313,10 +318,10 @@ def swap_channels(x):
 def parallel(layer):
 	""" Creates a parallel operation (i.e., map/distributed operation).
 	"""
-	def func(*x):
+	def func(x):
 		""" The actual wrapped operation.
 		"""
-		return torch.cat(tuple(layer(X) for X in torch.unbind(x, 0)), 0)
+		return torch.stack(tuple(layer(X) for X in torch.unbind(x, 0)), 0)
 	return func
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
