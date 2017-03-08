@@ -182,6 +182,9 @@ class KerasBackend(Backend):
 						env['CUDA_VISIBLE_DEVICES'] = str(self.device_number)
 						logger.info('Requesting GPU %d', self.device_number)
 
+			if self.parallel > 1 and env['KERAS_BACKEND'] == 'tensorflow':
+				logger.info('Using %d GPUs', self.parallel)
+
 			# Supress the deluge of TensorFlow messages that we aren't
 			# interested in.
 			env['TF_CPP_MIN_LOG_LEVEL'] = '1'
@@ -583,6 +586,10 @@ class KerasBackend(Backend):
 			updates = optimizer.get_optimizer(self)(
 				compiled.trainable_weights, total_loss
 			)
+
+			if self.toolchain == 'tensorflow' and self.parallel > 1:
+				from ..utils.parallelism import make_parallel
+				compiled = make_parallel(compiled, self.parallel)
 
 			if not assemble_only:
 				func = K.function(
