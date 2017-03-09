@@ -68,6 +68,17 @@ class TorchModel:
 		self.outputs = None
 		self.layer_map = {}
 		self.gpu = gpu
+		self._reuse = False
+
+	###########################################################################
+	@property
+	def allow_reuse(self):
+		return self._reuse
+	
+	###########################################################################
+	@allow_reuse.setter
+	def allow_reuse(self, value):
+		self._reuse = value
 
 	###########################################################################
 	def set_outputs(self, outputs):
@@ -267,12 +278,16 @@ class TorchModel:
 	def add_variable(self, name, value):
 		""" Adds a new variable.
 		"""
-		if name in self.layer_map:
-			raise ValueError('Duplicate name found: {}'.format(name))
 		new_name = self.normalize_name(name)
-		self.layer_map[name] = new_name
+		if name in self.layer_map:
+			if not self.allow_reuse:
+				raise ValueError('Duplicate name found: {}'.format(name))
+			else:
+				value = getattr(self.model, new_name)
+		else:
+			self.layer_map[name] = new_name
+			setattr(self.model, new_name, value)
 
-		setattr(self.model, new_name, value)
 		return value
 
 	###########################################################################
@@ -286,7 +301,7 @@ class TorchModel:
 			  parameters.
 			- All learnable layers must be added using this function.
 		"""
-		self.add_variable(name, layer)
+		layer = self.add_variable(name, layer)
 
 		if func is None:
 			func = layer
