@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 import os
+import sys
+import io
 import re
 import logging
 from collections import OrderedDict
@@ -336,26 +338,36 @@ class PyTorchBackend(Backend):
 			model.compiled[key] = result
 
 		if logger.isEnabledFor(logging.DEBUG):
-			fill = lambda x, w: x[:min(w, len(x))].ljust(w)
-			num_param = 0
-			logger.debug('%s-+-%s-+-%s', '-'*30, '-'*20, '-'*10)
-			logger.debug('%s | %s | %s',
-				fill('Layer Name', 30),
-				fill('Shape', 20),
-				fill('Parameters', 10)
-			)
-			logger.debug('%s-+-%s-+-%s', '-'*30, '-'*20, '-'*10)
-			for k, v in model.data.model.state_dict().items():
-				logger.debug('%s | %s | %s',
-					fill(k, 30),
-					fill(str(tuple(v.size())), 20),
-					fill(str(v.numel()), 10)
-				)
-				logger.debug('%s-+-%s-+-%s', '-'*30, '-'*20, '-'*10)
-				num_param += v.numel()
-			logger.debug('Total parameters: %d', num_param)
+			x = io.StringIO()
+			self.summary(model, x)
+			for line in x.getvalue().split('\n'):
+				logger.debug(line)
 
 		return result
+
+	###########################################################################
+	def summary(self, model, file=None):
+		""" Prints a model summary
+		"""
+		file = file or sys.stdout
+		fill = lambda x, w: x[:min(w, len(x))].ljust(w)
+		num_param = 0
+		print('{}-+-{}-+-{}'.format('-'*30, '-'*20, '-'*10), file=file)
+		print('{} | {} | {}'.format(
+			fill('Layer Name', 30),
+			fill('Shape', 20),
+			fill('Parameters', 10)
+		), file=file)
+		print('{}-+-{}-+-{}'.format('-'*30, '-'*20, '-'*10), file=file)
+		for k, v in model.data.model.state_dict().items():
+			print('{} | {} | {}'.format(
+				fill(k, 30),
+				fill(str(tuple(v.size())), 20),
+				fill(str(v.numel()), 10)
+			), file=file)
+			print('{}-+-{}-+-{}'.format('-'*30, '-'*20, '-'*10), file=file)
+			num_param += v.numel()
+		print('Total parameters: {}'.format(num_param), file=file)
 
 	###########################################################################
 	def train(self, model, data):
