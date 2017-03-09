@@ -190,7 +190,9 @@ class PyTorchBackend(Backend):
 			assembly.
 		"""
 		from .pytorch.modules import TorchModel
-		return TorchModel(gpu=self.device == 'gpu')
+		data = TorchModel(gpu=self.device == 'gpu')
+		data.allow_reuse = True
+		return data
 
 	###########################################################################
 	def connect(self, inputs, target, data):
