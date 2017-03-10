@@ -658,7 +658,7 @@ class KerasBackend(Backend):
 
 		provider = BatchProvider(
 			sources=dict(zip(model.provider.keys, model.provider.sources)),
-			batch_size=2,
+			batch_size=2*self.parallel,
 			num_batches=1,
 			randomize=False
 		)
