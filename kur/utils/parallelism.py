@@ -57,7 +57,7 @@ def make_parallel(model, gpu_count):
 				# Slice each input into a piece 
 				# for processing on this GPU
 				for x in model.inputs:
-					input_shape = tuple(x.get_shape().as_list())[1:]
+					input_shape = (None,) + tuple(x.get_shape().as_list())[1:]
 					slice_n = Lambda(slice_batch, 
 						lambda shape: input_shape, 
 						arguments={'n_gpus':gpu_count, 'part':i})(x)
