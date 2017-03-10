@@ -533,6 +533,10 @@ class KerasBackend(Backend):
 				output=[node.value for node in model.outputs.values()]
 			)
 
+			if self.toolchain == 'tensorflow' and self.parallel > 1:
+				from ..utils.parallelism import make_parallel
+				compiled = make_parallel(compiled, self.parallel)
+
 			if logger.isEnabledFor(logging.DEBUG):
 				x = io.StringIO()
 				with contextlib.redirect_stdout(x):
@@ -586,10 +590,6 @@ class KerasBackend(Backend):
 			updates = optimizer.get_optimizer(self)(
 				compiled.trainable_weights, total_loss
 			)
-
-			if self.toolchain == 'tensorflow' and self.parallel > 1:
-				from ..utils.parallelism import make_parallel
-				compiled = make_parallel(compiled, self.parallel)
 
 			if not assemble_only:
 				func = K.function(
