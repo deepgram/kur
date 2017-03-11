@@ -182,6 +182,9 @@ class KerasBackend(Backend):
 						env['CUDA_VISIBLE_DEVICES'] = str(self.device_number)
 						logger.info('Requesting GPU %d', self.device_number)
 
+			if self.parallel > 1 and env['KERAS_BACKEND'] == 'tensorflow':
+				logger.info('Using %d GPUs', self.parallel)
+
 			# Supress the deluge of TensorFlow messages that we aren't
 			# interested in.
 			env['TF_CPP_MIN_LOG_LEVEL'] = '1'
@@ -530,6 +533,10 @@ class KerasBackend(Backend):
 				output=[node.value for node in model.outputs.values()]
 			)
 
+			if self.toolchain == 'tensorflow' and self.parallel > 1:
+				from ..utils.parallelism import make_parallel
+				compiled = make_parallel(compiled, self.parallel)
+
 			if logger.isEnabledFor(logging.DEBUG):
 				x = io.StringIO()
 				with contextlib.redirect_stdout(x):
@@ -651,7 +658,7 @@ class KerasBackend(Backend):
 
 		provider = BatchProvider(
 			sources=dict(zip(model.provider.keys, model.provider.sources)),
-			batch_size=2,
+			batch_size=2*self.parallel,
 			num_batches=1,
 			randomize=False
 		)
