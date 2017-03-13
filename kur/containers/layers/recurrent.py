@@ -238,7 +238,7 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 					'bias' : True
 				}
 
-				def layer_func(_, layer, *inputs):
+				def layer_func(layer, *inputs):
 					""" Applies the RNN
 					"""
 					result, _ = layer(*(inputs + (None, )))

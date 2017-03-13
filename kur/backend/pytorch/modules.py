@@ -17,7 +17,6 @@ limitations under the License.
 import re
 import logging
 from collections import OrderedDict
-from functools import partial
 
 # pylint: disable=import-error
 import torch
@@ -51,7 +50,42 @@ class BYOM(nn.Module):				# pylint: disable=too-few-public-methods
 		""" Performs the forward pass.
 		"""
 		assert self.func is not None
-		return self.func(*inputs)
+		return self.func(self, *inputs)
+
+###############################################################################
+class Layer:
+	""" Holds a PyTorch "layer". This is important because PyTorch copies the
+		Modules for each GPU; that is, you cannot hold on to Module refernces,
+		or even layer references, since they may change. This Layer class
+		abstracts that away by dynamically grabbing the correct layer instance
+		during the forward pass.
+	"""
+
+	###########################################################################
+	def __init__(self, name, func=None):
+		""" Creates a new layer.
+		"""
+		self.name = name
+		self.func = func
+
+	###########################################################################
+	def __call__(self, module, *x):
+		""" Grab the instantiated layer and evaluate it.
+		"""
+		operation = getattr(module, self.name)
+		if self.func:
+			return self.func(operation, *x)
+		return operation(*x)
+
+	###########################################################################
+	@staticmethod
+	def resolve(value):
+		""" Convenience function for calling either Layers or standard PyTorch
+			operations.
+		"""
+		if isinstance(value, Layer):
+			return value
+		return lambda _, *args: value(*args)
 
 ###############################################################################
 class TorchModel:
@@ -69,12 +103,17 @@ class TorchModel:
 		self.layer_map = {}
 		self.gpu = gpu
 		self._reuse = False
+		self.final_model = None
 
 	###########################################################################
 	@property
 	def allow_reuse(self):
+		""" Getter for the `allow_reuse` property, which, if enabled, causes
+			`add_layer` calls to reuse existing layer when possible, rather
+			than raising an exception about duplicate names.
+		"""
 		return self._reuse
-	
+
 	###########################################################################
 	@allow_reuse.setter
 	def allow_reuse(self, value):
@@ -96,8 +135,19 @@ class TorchModel:
 		self.model.func = self.add_operation(bundle)(
 			*self.outputs.values()
 		)
-		if self.gpu:
-			self.model.cuda()
+		self.final_model = self.parallelize()
+
+	###########################################################################
+	def parallelize(self):
+		""" Applies any parallelism requested.
+		"""
+		if not self.gpu:
+			return self.model
+		if isinstance(self.gpu, bool):
+			devices = None
+		else:
+			devices = self.gpu
+		return nn.DataParallel(self.model, devices).cuda()
 
 	###########################################################################
 	def to_torch(self, tensor):
@@ -130,7 +180,7 @@ class TorchModel:
 			Variable(self.to_torch(data[k]))
 			for k in self.inputs
 		)
-		return self.model(*inputs)
+		return self.final_model(*inputs)
 
 	###########################################################################
 	def cpu(self, x):
@@ -157,16 +207,16 @@ class TorchModel:
 				output to compare against.
 		"""
 		inputs = tuple(
-			Variable(self.to_torch(data[k])) \
+			Variable(self.to_torch(data[k]))
 			for k in self.inputs
 		)
-		predictions = self.model(*inputs)
+		predictions = self.final_model(*inputs)
 
 		#######################################################################
 		def get_loss(loss, prediction):
 			""" Calculates the loss given a loss specification.
 			"""
-			loss_inputs = [x[1](*inputs) for x in loss[0]]
+			loss_inputs = [x[1](None, *inputs) for x in loss[0]]
 			return loss[1](loss_inputs, prediction)
 
 		losses = [
@@ -199,7 +249,7 @@ class TorchModel:
 			self.inputs.append(name)
 
 		#######################################################################
-		def calculate(*inputs):
+		def calculate(_, *inputs):
 			""" Applies the layer.
 			"""
 			if index >= len(inputs):
@@ -225,20 +275,6 @@ class TorchModel:
 		new_name = re.sub(r'^[^a-zA-Z_]|[^a-zA-Z0-9_]', r'_', name)
 		new_name = 'layer_{}'.format(new_name)
 		return new_name
-
-	###########################################################################
-	def get_layer(self, name):
-		""" Retrieves a layer in the model by name.
-
-			# Return value
-
-			The PyTorch module with that name, or None if it does not exist.
-		"""
-		new_name = self.normalize_name(name)
-		result = self.layer_map.get(new_name)
-		if result is None:
-			return self.placeholder(name, create=False)
-		return result
 
 	###########################################################################
 	def backprop(self, losses):
@@ -276,10 +312,13 @@ class TorchModel:
 			)
 
 			###################################################################
-			def calculate(*inputs):
+			def calculate(module, *inputs):
 				""" Applies the layer.
 				"""
-				result = operation(*[x(*inputs) for x in lower_layers])
+				result = Layer.resolve(operation)(
+					module,
+					*[x(module, *inputs) for x in lower_layers]
+				)
 				return result
 			calculate.name = name
 			calculate.op = operation
@@ -291,20 +330,18 @@ class TorchModel:
 		return stack
 
 	###########################################################################
-	def add_variable(self, name, value):
+	def add_variable(self, name, value, func=None):
 		""" Adds a new variable.
 		"""
 		new_name = self.normalize_name(name)
 		if name in self.layer_map:
 			if not self.allow_reuse:
 				raise ValueError('Duplicate name found: {}'.format(name))
-			else:
-				value = getattr(self.model, new_name)
 		else:
 			self.layer_map[name] = new_name
 			setattr(self.model, new_name, value)
 
-		return value
+		return Layer(new_name, func)
 
 	###########################################################################
 	def add_layer(self, name, layer, func=None):
@@ -317,14 +354,8 @@ class TorchModel:
 			  parameters.
 			- All learnable layers must be added using this function.
 		"""
-		layer = self.add_variable(name, layer)
-
-		if func is None:
-			func = layer
-		else:
-			func = partial(func, self, layer)
-
-		return self.add_operation(func, name=name)
+		layer = self.add_variable(name, layer, func)
+		return self.add_operation(layer, name=name)
 
 ###############################################################################
 def flatten(x):

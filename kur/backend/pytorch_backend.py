@@ -192,7 +192,11 @@ class PyTorchBackend(Backend):
 			assembly.
 		"""
 		from .pytorch.modules import TorchModel
-		data = TorchModel(gpu=self.device == 'gpu')
+		if self.device == 'gpu':
+			gpu = list(range(self.parallel))
+		else:
+			gpu = False
+		data = TorchModel(gpu=gpu)
 		data.allow_reuse = True
 		return data
 
