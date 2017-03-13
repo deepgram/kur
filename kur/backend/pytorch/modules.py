@@ -133,6 +133,14 @@ class TorchModel:
 		return self.model(*inputs)
 
 	###########################################################################
+	def cpu(self, x):
+		""" Moves a tensor (or list/tuple of tensors) back to the CPU.
+		"""
+		if isinstance(x, (list, tuple)):
+			return tuple(X.cpu() for X in x)
+		return x.cpu()
+
+	###########################################################################
 	def test(self, data, loss):
 		""" Performs a forward pass and calculates loss.
 
@@ -167,6 +175,14 @@ class TorchModel:
 		]
 
 		return predictions, losses
+
+	###########################################################################
+	def move(self, module):
+		""" Moves a module to the GPU, if the GPU is enabled.
+		"""
+		if self.gpu:
+			return module.cuda()
+		return module
 
 	###########################################################################
 	def placeholder(self, name, create=True):

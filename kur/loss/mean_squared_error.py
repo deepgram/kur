@@ -41,7 +41,7 @@ class MeanSquaredError(Loss):
 			import torch.nn as nn
 			# pylint: enable=import-error
 
-			loss = nn.MSELoss()
+			loss = model.data.move(nn.MSELoss())
 
 			return [
 				[

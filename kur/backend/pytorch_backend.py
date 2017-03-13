@@ -88,7 +88,7 @@ class PyTorchBackend(Backend):
 				'{}+{}.kur'.format(layer_name, name)
 			)
 
-			idx.save(target, v.numpy())
+			idx.save(target, v.cpu().numpy())
 
 	###########################################################################
 	def restore(self, model, filename):
@@ -400,12 +400,12 @@ class PyTorchBackend(Backend):
 		optimizer.step()
 
 		metrics = {
-			k : loss.data.numpy().squeeze(-1)
+			k : loss.data.cpu().numpy().squeeze(-1)
 			for k, loss in zip(model.outputs, losses)
 		}
 
 		predictions = {
-			k : v.data.numpy() for k, v in zip(model.outputs, predictions)
+			k : v.data.cpu().numpy() for k, v in zip(model.outputs, predictions)
 		}
 
 		return (predictions, metrics)
@@ -433,12 +433,12 @@ class PyTorchBackend(Backend):
 		predictions, losses = torch_model.test(data, losses)
 
 		metrics = {
-			k : loss.data.numpy().squeeze(-1)
+			k : loss.data.cpu().numpy().squeeze(-1)
 			for k, loss in zip(model.outputs, losses)
 		}
 
 		predictions = {
-			k : v.data.numpy() for k, v in zip(model.outputs, predictions)
+			k : v.data.cpu().numpy() for k, v in zip(model.outputs, predictions)
 		}
 
 		return (predictions, metrics)
@@ -452,7 +452,7 @@ class PyTorchBackend(Backend):
 		predictions = torch_model.predict(data)
 
 		predictions = {
-			k : v.data.numpy() for k, v in zip(model.outputs, predictions)
+			k : v.data.cpu().numpy() for k, v in zip(model.outputs, predictions)
 		}
 
 		return (predictions, {})

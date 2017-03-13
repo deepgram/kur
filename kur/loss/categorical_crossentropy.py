@@ -41,7 +41,7 @@ class CategoricalCrossentropy(Loss):
 			import torch.nn as nn
 			# pylint: enable=import-error
 
-			loss = nn.NLLLoss()
+			loss = model.data.move(nn.NLLLoss())
 
 			def do_loss(truth, prediction):
 				""" Calculates CCE loss.
