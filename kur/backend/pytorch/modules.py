@@ -85,6 +85,8 @@ class Layer:
 		"""
 		if isinstance(value, Layer):
 			return value
+		elif hasattr(value, 'pure') and value.pure:
+			return value
 		return lambda _, *args: value(*args)
 
 ###############################################################################
@@ -339,6 +341,8 @@ class TorchModel:
 				raise ValueError('Duplicate name found: {}'.format(name))
 		else:
 			self.layer_map[name] = new_name
+			logger.debug('Adding new layer: %s (internal: "%s")',
+				name, new_name)
 			setattr(self.model, new_name, value)
 
 		return Layer(new_name, func)
@@ -380,10 +384,14 @@ def swap_channels(x):
 def parallel(layer):
 	""" Creates a parallel operation (i.e., map/distributed operation).
 	"""
-	def func(x):
+	def func(module, x):
 		""" The actual wrapped operation.
 		"""
-		return torch.stack(tuple(layer(X) for X in torch.unbind(x, 0)), 0)
+		return torch.stack(
+			tuple(Layer.resolve(layer)(module, X) for X in torch.unbind(x, 0)),
+			0
+		)
+	func.pure = True
 	return func
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

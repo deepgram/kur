@@ -91,7 +91,10 @@ class Embedding(Layer):				# pylint: disable=too-few-public-methods
 					'shape' : self.shape([inputs[0]['shape']]),
 					'layer' : model.data.add_layer(
 						self.name,
-						nn.Embedding
+						lambda *x: nn.Embedding(
+							self.vocab_size,
+							self.size
+						)(*[X.long() for X in x])
 					)(inputs[0]['layer'])
 				}
 

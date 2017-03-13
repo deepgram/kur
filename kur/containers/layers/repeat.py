@@ -71,11 +71,11 @@ class Repeat(Layer):				# pylint: disable=too-few-public-methods
 				assert len(inputs) == 1
 
 				ndim = len(inputs[0]['shape'])
-				sizes = (self.count, ) + (1, )*ndim
+				sizes = (1, self.count) + (1, )*ndim
 				return {
 					'shape' : self.shape([inputs[0]['shape']]),
 					'layer' : model.data.add_operation(
-						lambda x: x.unsqueeze(0).repeat(*sizes)
+						lambda x: x.unsqueeze(1).repeat(*sizes)
 					)(inputs[0]['layer'])
 				}
 

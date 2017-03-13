@@ -232,7 +232,7 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 				.format(input_shape))
 
 		output_shape = tuple(
-			(input_shape[i] + self.strides[i] - 1) // self.strides[i]
+			(input_shape[i] - self.size[i]) // self.strides[i] + 1
 			for i in range(len(self.size))
 		) + (input_shape[-1], )
 		return output_shape

@@ -241,14 +241,15 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 				.format(input_shape))
 
 		def apply_border(input_shape, size):
+			""" Resolves output shape differences caused by border mode.
+			"""
 			if self.border == 'same':
 				return input_shape
-			else:
-				return input_shape - size + 1
+			return input_shape - size + 1
 
 		output_shape = tuple(
-			(apply_border(input_shape[i], self.size[i]) \
-				+ self.strides[i] - 1) // self.strides[i]
+			(apply_border(input_shape[i], self.size[i]) + self.strides[i] - 1) \
+				// self.strides[i] if input_shape[i] else None
 			for i in range(len(self.size))
 		) + (self.kernels, )
 		return output_shape
