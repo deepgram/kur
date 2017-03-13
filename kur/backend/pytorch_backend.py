@@ -22,8 +22,9 @@ import logging
 from collections import OrderedDict
 
 from . import Backend
-from ..utils import can_import, idx
+from ..utils import can_import, idx, DisableLogging
 from ..loss import Loss
+from ..providers import BatchProvider
 
 logger = logging.getLogger(__name__)
 
@@ -338,16 +339,51 @@ class PyTorchBackend(Backend):
 			'model' : model.data
 		})
 
-		if not assemble_only:
-			model.compiled[key] = result
-
 		if logger.isEnabledFor(logging.DEBUG):
 			x = io.StringIO()
 			self.summary(model, x)
 			for line in x.getvalue().split('\n'):
 				logger.debug(line)
 
+		if not assemble_only:
+			model.compiled[key] = result
+			if blocking:
+				self.wait_for_compile(model, key)
+
 		return result
+
+	###########################################################################
+	def wait_for_compile(self, model, key):
+		""" Waits for the PyTorch model to be ready to roll.
+
+			# Notes:
+
+			PyTorch models are not compiled in the same way Theano/TensorFlow
+			models are prepared. However, if you are using the GPU, then there
+			is still overhead associated with spinning up CUDA. Theano and
+			TensorFlow do this shortly after being initialized, but PyTorch
+			waits until the last necessary minute. So although this call might
+			more accurately be called `wait_for_cuda_devices`, we keep the name
+			`wait_for_compile` to keep the API similar to, e.g., the Keras
+			backend.
+		"""
+		if model.provider is None:
+			logger.warning('No data provider available, so we cannot reliably '
+				'wait for compiling to finish.')
+			return
+
+		with DisableLogging():
+			provider = BatchProvider(
+				sources=dict(zip(model.provider.keys, model.provider.sources)),
+				batch_size=2*self.parallel,
+				num_batches=1,
+				randomize=False
+			)
+		model.supplement_provider(provider)
+
+		logger.info('Waiting for model to be ready to use...')
+		for batch in provider:
+			model.data.predict(batch)
 
 	###########################################################################
 	def summary(self, model, file=None):
