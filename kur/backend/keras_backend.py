@@ -28,7 +28,8 @@ import numpy
 from . import Backend
 from .. import __homepage__
 from ..loss import Loss
-from ..utils import can_import, EnvironmentalVariable, redirect_stderr, idx
+from ..utils import can_import, EnvironmentalVariable, redirect_stderr, \
+	idx, DisableLogging
 from ..providers import BatchProvider
 
 logger = logging.getLogger(__name__)
@@ -656,12 +657,13 @@ class KerasBackend(Backend):
 				'wait for compiling to finish.')
 			return
 
-		provider = BatchProvider(
-			sources=dict(zip(model.provider.keys, model.provider.sources)),
-			batch_size=2*self.parallel,
-			num_batches=1,
-			randomize=False
-		)
+		with DisableLogging():
+			provider = BatchProvider(
+				sources=dict(zip(model.provider.keys, model.provider.sources)),
+				batch_size=2*self.parallel,
+				num_batches=1,
+				randomize=False
+			)
 		model.supplement_provider(provider)
 
 		weight_path = None
