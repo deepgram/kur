@@ -400,7 +400,7 @@ class RawTranscript(ChunkSource):
 		"""
 		result = [None]*len(data)
 		for i, row in enumerate(data):
-			result[i] = [self.vocab.get(word) for word in row]
+			result[i] = [self.vocab.get(word.lower()) for word in row]
 			result[i] = [x for x in result[i] if x is not None]
 		return result
 
