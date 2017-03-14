@@ -257,7 +257,9 @@ def uber_model(a_backend):
 			{'repeat' : 7},
 			# Shape: (7, 28)
 			'batch_normalization',
-			{'reuse' : 'TEST_reuse'},
+			{'parallel' : {'apply' : [
+				{'reuse' : 'TEST_reuse'}
+			]}},
 			# Shape: (7, 10)
 			{'flatten' : None, 'name' : 'TEST_mark1'},
 			{'dense' : 70, 'name' : 'TEST_mark2'},
