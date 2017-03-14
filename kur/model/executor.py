@@ -40,9 +40,10 @@ class Executor:
 	"""
 
 	MAX_RETRIES = 3
+	DEFAULT_RETRY_ENABLED = False
 
 	###########################################################################
-	def __init__(self, model, loss=None, optimizer=None):
+	def __init__(self, model, loss=None, optimizer=None, auto_retry=None):
 		""" Creates a new executor.
 
 			# Arguments
@@ -54,6 +55,10 @@ class Executor:
 		self.model = model
 		self.loss = loss
 		self.optimizer = optimizer
+
+		if auto_retry is None:
+			auto_retry = self.DEFAULT_RETRY_ENABLED
+		self.auto_retry = auto_retry
 
 	###########################################################################
 	def compile(self, target=None, recompile=False, with_provider=None,
@@ -138,7 +143,10 @@ class Executor:
 		test_loss = None
 		n_entries = 0
 		first_batch = None
-		test_func = self.retry(self.model.backend.test)
+		test_func = self.retry(
+			self.model.backend.test,
+			self.auto_retry
+		)
 		with tqdm.tqdm(
 					total=len(provider),
 					unit='samples',
@@ -373,7 +381,10 @@ class Executor:
 		last_checkpoint = session.copy()
 
 		epoch = completed_epochs - 1
-		train_func = self.retry(self.model.backend.train)
+		train_func = self.retry(
+			self.model.backend.train,
+			self.auto_retry
+		)
 
 		#######################################################################
 		def run_validation(num_batches=None):
@@ -745,7 +756,10 @@ class Executor:
 		store_batch = store_batch_unknown if total is None \
 			else store_batch_known
 
-		eval_func = self.retry(self.model.backend.evaluate)
+		eval_func = self.retry(
+			self.model.backend.evaluate,
+			self.auto_retry
+		)
 
 		with tqdm.tqdm(
 					total=total,
@@ -811,7 +825,7 @@ class Executor:
 		input('Press ENTER to continue...')
 
 	###########################################################################
-	def retry(self, func):
+	def retry(self, func, enabled=True):
 		""" Creates a wrapper that implements some retry semantics.
 		"""
 
@@ -823,6 +837,9 @@ class Executor:
 
 			# Catch Exception so that we don't catch KeyboardInterrupt.
 			except Exception:
+				if not try_func.enabled:
+					raise
+
 				try_func.counter += 1
 				if try_func.counter > Executor.MAX_RETRIES:
 					logger.exception(
@@ -836,6 +853,7 @@ class Executor:
 				try_func.counter = 0
 				return result
 		try_func.counter = 0
+		try_func.enabled = enabled
 
 		return try_func
 
