@@ -135,8 +135,10 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 		"""
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
-
-			import keras.layers as L			# pylint: disable=import-error
+			if backend.keras_version() == 1:
+				import keras.layers as L		# pylint: disable=import-error
+			else:
+				import keras.layers.recurrent as L # pylint: disable=import-error
 
 			func = {
 				'lstm' : L.LSTM,
@@ -146,24 +148,29 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 				raise ValueError('Unhandled RNN type: {}. This is a bug.'
 					.format(self.type))
 
+			if backend.keras_version() == 1:
+				size_key = 'output_dim'
+			else:
+				size_key = 'units'
+
 			kwargs = {
 				'activation' : self.activation or 'relu',
-				'output_dim' : self.size,
 				'return_sequences' : self.sequence,
-				'go_backwards' : False
+				'go_backwards' : False,
+				size_key : self.size
 			}
 
 			if self.bidirectional:
 				kwargs['name'] = self.name + '_fwd'
 
 				if self.merge in ('concat', ):
-					if kwargs['output_dim'] % 2 != 0:
+					if kwargs[size_key] % 2 != 0:
 						logger.warning('Recurrent layer "%s" has an odd '
 							'number for "size", but has a concat-type merge '
 							'strategy. We are going to reduce its size by '
 							'one.', self.name)
-						kwargs['output_dim'] -= 1
-					kwargs['output_dim'] //= 2
+						kwargs[size_key] -= 1
+					kwargs[size_key] //= 2
 
 				forward = func(**kwargs)
 
@@ -174,19 +181,33 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 				def merge(tensor):
 					""" Returns a bidirectional RNN.
 					"""
-					return L.merge(
-						[forward(tensor), backward(tensor)],
-						mode={
-							'multiply' : 'mul',
-							'add' : 'sum',
-							'concat' : 'concat',
-							'average' : 'ave'
-						}.get(self.merge),
-						name=self.name,
-						**{
-							'concat' : {'concat_axis' : -1}
-						}.get(self.merge, {})
-					)
+					import keras.layers as L 	# pylint: disable=import-error
+					if backend.keras_version() == 1:
+						return L.merge(
+							[forward(tensor), backward(tensor)],
+							mode={
+								'multiply' : 'mul',
+								'add' : 'sum',
+								'concat' : 'concat',
+								'average' : 'ave'
+							}.get(self.merge),
+							name=self.name,
+							**{
+								'concat' : {'concat_axis' : -1}
+							}.get(self.merge, {})
+						)
+					else:
+						func = {
+							'multiply' : L.multiply,
+							'add' : L.add,
+							'concat' : L.concatenate,
+							'average' : L.average
+						}.get(self.merge)
+						return func(
+							[forward(tensor), backward(tensor)],
+							axis=-1,
+							name=self.name
+						)
 
 				yield merge
 			else:

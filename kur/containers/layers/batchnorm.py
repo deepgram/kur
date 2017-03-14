@@ -55,12 +55,21 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
-			import keras.layers as L			# pylint: disable=import-error
-			yield L.BatchNormalization(
-				mode=2,
-				axis=-1 if self.axis is None else self.axis,
-				name=self.name
-			)
+			if backend.keras_version() == 1:
+				import keras.layers as L		# pylint: disable=import-error
+				yield L.BatchNormalization(
+					mode=2,
+					axis=-1 if self.axis is None else self.axis,
+					name=self.name
+				)
+			else:
+				import keras.layers.normalization as L # pylint: disable=import-error
+				yield L.BatchNormalization(
+					axis=-1 if self.axis is None else self.axis,
+					center=True,
+					scale=True,
+					name=self.name
+				)
 
 		elif backend.get_name() == 'pytorch':
 

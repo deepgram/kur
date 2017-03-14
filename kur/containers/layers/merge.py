@@ -82,19 +82,33 @@ class Merge(Layer):					# pylint: disable=too-few-public-methods
 				# Keras "merge" requires more than one layer.
 				if len(inputs) == 1:
 					return inputs[0]
-				return L.merge(
-					inputs,
-					mode={
-						'multiply' : 'mul',
-						'add' : 'sum',
-						'concat' : 'concat',
-						'average' : 'ave'
-					}.get(self.mode),
-					name=self.name,
-					**{
-						'concat' : {'concat_axis' : self.axis}
-					}.get(self.mode, {})
-				)
+
+				if backend.keras_version() == 1:
+					return L.merge(
+						inputs,
+						mode={
+							'multiply' : 'mul',
+							'add' : 'sum',
+							'concat' : 'concat',
+							'average' : 'ave'
+						}.get(self.mode),
+						name=self.name,
+						**{
+							'concat' : {'concat_axis' : self.axis}
+						}.get(self.mode, {})
+					)
+				else:
+					func = {
+						'multiply' : L.multiply,
+						'add' : L.add,
+						'concat' : L.concatenate,
+						'average' : L.average
+					}.get(self.mode)
+					return func(
+						inputs,
+						axis=self.axis,
+						name=self.name
+					)
 
 			yield merge
 

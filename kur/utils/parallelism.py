@@ -16,13 +16,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from keras.layers import merge
+import keras.layers as L
 from keras.layers.core import Lambda
-from keras.models import Model
 from keras import backend as K
 
 import tensorflow as tf
-
+from ..backend import KerasBackend
 
 def make_parallel(model, gpu_count):
 	""" Allows a model to run on multiple GPUs.
@@ -77,7 +76,12 @@ def make_parallel(model, gpu_count):
 	with tf.device('/cpu:0'):
 		merged = []
 
-		for outputs in all_outputs:
-			merged.append(merge(outputs, mode='concat', concat_axis=0))
+		if KerasBackend.keras_version() == 1:
+			func = lambda x: L.merge(x, mode='concat', concat_axis=0)
+		else:
+			func = lambda x: L.concatenate(x, axis=0)
 
-	return Model(input=model.inputs, output=merged)
+		for outputs in all_outputs:
+			merged.append(func(outputs))
+
+	return KerasBackend.make_model(inputs=model.inputs, outputs=merged)

@@ -130,41 +130,70 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
-			import keras.layers as L			# pylint: disable=import-error
+			if backend.keras_version() == 1:
+				import keras.layers as L			# pylint: disable=import-error
 
-			kwargs = {
-				'nb_filter' : self.kernels,
-				'activation' : self.activation or 'linear',
-				'border_mode' : self.border,
-				'name' : self.name
-			}
+				kwargs = {
+					'nb_filter' : self.kernels,
+					'activation' : self.activation or 'linear',
+					'border_mode' : self.border,
+					'name' : self.name
+				}
 
-			if len(self.size) == 1:
-				func = L.Convolution1D
-				kwargs.update({
-					'filter_length' : self.size[0],
-					'subsample_length' : self.strides[0]
-				})
-			elif len(self.size) == 2:
-				func = L.Convolution2D
-				kwargs.update({
-					'nb_row' : self.size[0],
-					'nb_col' : self.size[1],
-					'subsample' : self.strides
-				})
-			elif len(self.size) == 3:
-				func = L.Convolution3D
-				kwargs.update({
-					'kernel_dim1' : self.size[0],
-					'kernel_dim2' : self.size[1],
-					'kernel_dim3' : self.size[2],
-					'subsample' : self.strides
-				})
+				if len(self.size) == 1:
+					func = L.Convolution1D
+					kwargs.update({
+						'filter_length' : self.size[0],
+						'subsample_length' : self.strides[0]
+					})
+				elif len(self.size) == 2:
+					func = L.Convolution2D
+					kwargs.update({
+						'nb_row' : self.size[0],
+						'nb_col' : self.size[1],
+						'subsample' : self.strides
+					})
+				elif len(self.size) == 3:
+					func = L.Convolution3D
+					kwargs.update({
+						'kernel_dim1' : self.size[0],
+						'kernel_dim2' : self.size[1],
+						'kernel_dim3' : self.size[2],
+						'subsample' : self.strides
+					})
+				else:
+					raise ValueError('Unhandled convolution dimension: {}. This '
+						'is a bug.'.format(len(self.size)))
+
+				yield func(**kwargs)
+
 			else:
-				raise ValueError('Unhandled convolution dimension: {}. This '
-					'is a bug.'.format(len(self.size)))
 
-			yield func(**kwargs)
+				import keras.layers.convolutional as L # pylint: disable=import-error
+
+				kwargs = {
+					'filters' : self.kernels,
+					'activation' : self.activation or 'linear',
+					'padding' : self.border,
+					'name' : self.name,
+					'kernel_size' : self.size,
+					'strides' : self.strides
+				}
+
+				if len(self.size) == 1:
+					func = L.Conv1D
+				elif len(self.size) == 2:
+					func = L.Conv2D
+				elif len(self.size) == 3:
+					func = L.Conv3D
+				else:
+					raise ValueError('Unhandled convolution dimension: {}. This '
+						'is a bug.'.format(len(self.size)))
+
+				if len(self.size) > 1:
+					kwargs['data_format'] = 'channels_last'
+
+				yield func(**kwargs)
 
 		elif backend.get_name() == 'pytorch':
 

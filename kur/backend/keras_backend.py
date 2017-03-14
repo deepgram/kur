@@ -23,6 +23,7 @@ import tempfile
 import shutil
 import logging
 import functools
+import warnings
 from collections import OrderedDict
 import numpy
 from . import Backend
@@ -241,19 +242,47 @@ class KerasBackend(Backend):
 			- You will need input placeholders in place before doing this,
 			  otherwise Keras's shape-checking will fail.
 		"""
-		if not isinstance(inputs, list):
-			inputs = [inputs]
-		return target(inputs)
+		if self.keras_version() == 1:
+			if not isinstance(inputs, list):
+				inputs = [inputs]
+		else:
+			if isinstance(inputs, (list, tuple)):
+				if len(inputs) == 1:
+					inputs = inputs[0]
+
+		with warnings.catch_warnings():
+			warnings.filterwarnings(
+				'ignore',
+				message='.*tensor.nnet.abstract_conv.conv2d.*',
+				module='.*theano_backend.*'
+			)
+			return target(inputs)
+
+	###########################################################################
+	@staticmethod
+	def keras_version():
+		""" Retrieves the Keras major version.
+		"""
+		from keras import __version__			# pylint: disable=import-error
+		return int(__version__.split('.')[0])
+
+	###########################################################################
+	@staticmethod
+	def make_model(inputs, outputs):
+		""" Compiles a Keras model in a version-agnostic way.
+		"""
+		import keras.models as M				# pylint: disable=import-error
+		if KerasBackend.keras_version() == 1:
+			return M.Model(input=inputs, output=outputs)
+		return M.Model(inputs=inputs, outputs=outputs)
 
 	###########################################################################
 	def save(self, model, filename):
 		""" Saves the model weights to the given filename.
 		"""
-		import keras.models as M				# pylint: disable=import-error
-
-		keras_model = M.Model(
-			input=[node.value for node in model.inputs.values()],
-			output=[node.value for node in model.outputs.values()]
+		keras_model = self.make_model(
+			inputs=[node.value for node in model.inputs.values()],
+			outputs=[node.value for node in model.outputs.values()]
 		)
 
 		self._save_keras(keras_model, filename)
@@ -289,6 +318,7 @@ class KerasBackend(Backend):
 				)
 
 			for name, val in zip(weight_names, weight_values):
+				name = name.replace('/', '_')
 				target = os.path.join(
 					path,
 					'{}+{}.kur'.format(layer_name, name)
@@ -314,11 +344,9 @@ class KerasBackend(Backend):
 	def restore(self, model, filename):
 		""" Load the model weights from the given filename.
 		"""
-		import keras.models as M				# pylint: disable=import-error
-
-		keras_model = M.Model(
-			input=[node.value for node in model.inputs.values()],
-			output=[node.value for node in model.outputs.values()]
+		keras_model = self.make_model(
+			inputs=[node.value for node in model.inputs.values()],
+			outputs=[node.value for node in model.outputs.values()]
 		)
 
 		try:
@@ -395,6 +423,7 @@ class KerasBackend(Backend):
 						symbolic_weights
 					)
 				for i, name in enumerate(weight_names):
+					name = name.replace('/', '_')
 					weight_value_tuples.append((symbolic_weights[i], weights[name]))
 
 		# Assign all the weights in one batch (for efficiency).
@@ -466,7 +495,7 @@ class KerasBackend(Backend):
 			loss: Loss instance, list/tuple of Loss instances, or a dictionary
 				of model layer names mapped to Loss instances.
 		"""
-		import keras.backend as K
+		import keras.backend as K				# pylint: disable=import-error
 
 		if loss is None:
 			num_outputs = len(model.outputs)
@@ -527,11 +556,10 @@ class KerasBackend(Backend):
 			model.compiled = {}
 
 		if 'raw' not in model.compiled:
-			import keras.models as M			# pylint: disable=import-error
 			logger.debug('Instantiating a Keras model.')
-			compiled = M.Model(
-				input=[node.value for node in model.inputs.values()],
-				output=[node.value for node in model.outputs.values()]
+			compiled = self.make_model(
+				inputs=[node.value for node in model.inputs.values()],
+				outputs=[node.value for node in model.outputs.values()]
 			)
 
 			if self.toolchain == 'tensorflow' and self.parallel > 1:

@@ -80,8 +80,13 @@ class Expand(Layer):					# pylint: disable=too-few-public-methods
 					dim += len(input_shape) + 1
 				return input_shape[:dim] + (1,) + input_shape[dim:]
 
+			if backend.keras_version() == 1:
+				func = lambda x: K.expand_dims(x, dim=target_dim)
+			else:
+				func = lambda x: K.expand_dims(x, axis=target_dim)
+
 			yield L.Lambda(
-				lambda x: K.expand_dims(x, dim=target_dim),
+				func,
 				expand_shape,
 				name=self.name
 			)

@@ -131,14 +131,30 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
-			import keras.layers as L			# pylint: disable=import-error
+			if backend.keras_version() == 1:
+				import keras.layers as L		# pylint: disable=import-error
+				kwargs = {
+					'pool_size' : self.size,
+					'strides' : self.strides,
+					'border_mode' : 'valid',
+					'name' : self.name
+				}
+				if len(self.size) == 1:
+					kwargs['pool_length'] = kwargs.pop('pool_size')
+					kwargs['stride'] = kwargs.pop('strides')
 
-			kwargs = {
-				'pool_size' : self.size,
-				'strides' : self.strides,
-				'border_mode' : 'valid',
-				'name' : self.name
-			}
+			else:
+				import keras.layers.pooling as L # pylint: disable=import-error
+				kwargs = {
+					'pool_size' : self.size,
+					'strides' : self.strides,
+					'padding' : 'valid',
+					'name' : self.name
+				}
+				if len(self.size) == 1:
+					kwargs['pool_size'] = kwargs.pop('pool_size')[0]
+				else:
+					kwargs['data_format'] = 'channels_last'
 
 			if self.pooltype == 'max':
 				func = {
@@ -155,10 +171,6 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 			else:
 				raise ValueError('Unhandled pool type "{}". This is a bug.',
 					self.pooltype)
-
-			if len(self.size) == 1:
-				kwargs['pool_length'] = kwargs.pop('pool_size')
-				kwargs['stride'] = kwargs.pop('strides')
 
 			if func is None:
 				raise ValueError('Invalid pool function for pool type "{}" '
