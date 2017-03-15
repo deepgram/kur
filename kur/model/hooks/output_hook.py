@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import pickle
+import csv
 import logging
 from . import EvaluationHook
 
@@ -45,6 +46,37 @@ class OutputHook(EvaluationHook):
 			pickle.dump(result, fh)
 
 	###########################################################################
+	@staticmethod
+	def _save_as_csv(target, data, truth=None):
+		""" Saves a file as a CSV.
+		"""
+		logger.info('Saving model output as csv: %s', target)
+
+		with open(target, 'w') as file_handle:
+			csv_file = csv.writer(file_handle)
+
+			# Only generate data for the first output
+			first_output = next(iter(data))
+
+			# Output CSV headers
+			row = list(data)
+			if truth is not None:
+				actuals = list(truth)
+				row += [actual + ' expected' for actual in actuals]
+			csv_file.writerow(row)
+
+			# For each row of data, output a CSV row
+			for index in range(len(data[first_output])):
+				row = []
+				for output in data.keys():
+					row += [data[output][index][0]]
+				if truth is not None:
+					for output in data.keys():
+						row += [truth[output][index]]
+
+				csv_file.writerow(row)
+
+	###########################################################################
 	def __init__(self, path=None, format=None, **kwargs): \
 		# pylint: disable=redefined-builtin
 		""" Creates a new output hook.
@@ -60,7 +92,8 @@ class OutputHook(EvaluationHook):
 		format = format or 'pkl'
 		savers = {
 			'pkl' : OutputHook._save_as_pickle,
-			'pickle' : OutputHook._save_as_pickle
+			'pickle' : OutputHook._save_as_pickle,
+			'csv' : OutputHook._save_as_csv
 		}
 
 		self.saver = savers.get(format)
