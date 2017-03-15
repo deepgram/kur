@@ -21,6 +21,7 @@ import pytest
 
 from kur.kurfile import Kurfile
 from kur.loss import Ctc
+from kur.model import Executor
 
 from modkurfile import modify_kurfile
 from example import example
@@ -71,6 +72,7 @@ class TestExample:
 		if 'train' not in kurfile.data:
 			pytest.skip('No training section defined for this Kurfile.')
 		func = kurfile.get_training_function()
+		Executor.NAN_IS_FATAL = False
 		func()
 
 	@example

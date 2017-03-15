@@ -41,6 +41,7 @@ class Executor:
 
 	MAX_RETRIES = 3
 	DEFAULT_RETRY_ENABLED = False
+	NAN_IS_FATAL = True
 
 	###########################################################################
 	def __init__(self, model, loss=None, optimizer=None, auto_retry=None):
@@ -656,7 +657,8 @@ class Executor:
 								'different algorithms/implementations '
 								'work better than others, so you can try '
 								'switching optimizers or backend.', k)
-							raise ValueError('Model loss is NaN.')
+							if self.NAN_IS_FATAL:
+								raise ValueError('Model loss is NaN.')
 
 			# END: Train one epoch
 			###################################################################
