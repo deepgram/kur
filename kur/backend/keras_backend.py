@@ -250,13 +250,37 @@ class KerasBackend(Backend):
 				if len(inputs) == 1:
 					inputs = inputs[0]
 
+		pool_2d = None
+		if self.get_toolchain() == 'theano':
+			import theano						# pylint: disable=import-error
+			if theano.__version__ < '0.9':
+				# We need to patch Theano
+				from theano.tensor.signal import pool # pylint: disable=import-error
+				original_pool = pool.pool_2d
+				def pool_2d(input, ws=None, ignore_border=None, stride=None,
+						pad=(0, 0), mode='max', ds=None, st=None,
+						padding=None):
+					return original_pool(
+						input=input,
+						ds=ds if ds is not None else ws,
+						ignore_border=ignore_border,
+						st=st if st is not None else stride,
+						padding=padding if padding is not None else pad,
+						mode=mode
+					)
+
 		with warnings.catch_warnings():
 			warnings.filterwarnings(
 				'ignore',
 				message='.*tensor.nnet.abstract_conv.conv2d.*',
 				module='.*theano_backend.*'
 			)
-			return target(inputs)
+			if pool_2d is None:
+				return target(inputs)
+			else:
+				from unittest.mock import patch
+				with patch('theano.tensor.signal.pool.pool_2d', pool_2d):
+					return target(inputs)
 
 	###########################################################################
 	@staticmethod
