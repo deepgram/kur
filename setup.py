@@ -129,7 +129,7 @@ setup(
 		'tqdm>=4.10.0',
 
 		# Keras - the default backend (with Theano)
-		'keras>=1.1.2',
+		'keras>=1.2.2',
 		'theano>=0.8.2',
 
 		'scipy>=0.18.1',
