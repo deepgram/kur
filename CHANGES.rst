@@ -4,6 +4,22 @@ CHANGES
 master (unreleased)
 -------------------
 
+0.4.0rc0 (2017.03.15)
+
+- New backend: PyTorch
+- Multi-GPU support for PyTorch and TensorFlow.
+- Compatibility updates to play nicely with Keras 2.0 and Theano 0.8/0.9.
+- Character language model example.
+- New layers (dropout, repeat,embedding)
+- New sort options (i.e., neighborhood sort).
+- Loop fill mode for the speech recognition supplier.
+- Various bug and linting fixes.
+- Code factoring in the Executor.
+- Improved hooks (e.g., Slack hook with file uploads) and new hooks (plotting).
+- Additional debug functionality (--step, --monitor, 'dump')
+- Added checkpointing.
+- Several fixes to the evaluation function.
+
 0.3.0 (2017.01.25)
 
 - New data supplier for CSV data!
