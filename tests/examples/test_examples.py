@@ -26,6 +26,9 @@ from kur.model import Executor
 from modkurfile import modify_kurfile
 from example import example
 
+Executor.NAN_IS_FATAL = False
+Executor.DEFAULT_RETRY_ENABLED = False
+
 def replacement_ctc(self, model, target, output):
 	""" Patch method on the CTC loss function.
 	"""
@@ -72,7 +75,6 @@ class TestExample:
 		if 'train' not in kurfile.data:
 			pytest.skip('No training section defined for this Kurfile.')
 		func = kurfile.get_training_function()
-		Executor.NAN_IS_FATAL = False
 		func()
 
 	@example

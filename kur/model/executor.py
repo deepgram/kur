@@ -40,7 +40,7 @@ class Executor:
 	"""
 
 	MAX_RETRIES = 3
-	DEFAULT_RETRY_ENABLED = False
+	DEFAULT_RETRY_ENABLED = True
 	NAN_IS_FATAL = True
 
 	###########################################################################
