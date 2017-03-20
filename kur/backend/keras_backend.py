@@ -434,10 +434,6 @@ class KerasBackend(Backend):
 
 				# Get the symbolic weights.
 				symbolic_weights = layer.weights
-				if len(weights) != len(symbolic_weights):
-					raise ValueError('Layer "%s" expected %d weights, but we '
-						'found %d on disk.', layer_name, len(symbolic_weights),
-						len(weights))
 
 				# Get the associated names (so we know what order to assign the
 				# weights in.
@@ -445,6 +441,20 @@ class KerasBackend(Backend):
 					self._get_weight_names_and_values_from_symbolic(
 						symbolic_weights
 					)
+
+				available = set(weights.keys())
+				needed = set(name.replace('/', '_') for name in weight_names)
+				if available ^ needed:
+					logger.error('Weight discrepancy in the weights we are '
+						'supposed to load.')
+					logger.error('These weights are on-disk, but not '
+						'requested: %s', ', '.join(available - needed))
+					logger.error('These weights were requested, but not '
+						'available: %s', ', '.join(needed - available))
+					raise ValueError('Layer "{}" expected {} weights, but we '
+						'found {} on disk.'.format(layer_name,
+						len(needed), len(available)))
+
 				for i, name in enumerate(weight_names):
 					name = name.replace('/', '_')
 					weight_value_tuples.append((symbolic_weights[i], weights[name]))
