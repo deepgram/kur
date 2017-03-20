@@ -19,6 +19,7 @@ import logging
 import numpy
 
 from . import Provider
+from ..utils import DisableLogging
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +102,7 @@ class ShuffleProvider(Provider): \
 						'entirely by setting `randomize` to False.')
 				self._shuffle_len = self.entries
 			elif isinstance(randomize, int):
-				self._shuffle_len = randomize # pylint: disable=redefined-variable-type
+				self._shuffle_len = randomize
 			else:
 				raise ValueError('`randomize` must be True/False or an '
 					'integer, but we received: {}'.format(randomize))
@@ -127,9 +128,6 @@ class ShuffleProvider(Provider): \
 				raise ValueError('Could not find the "sort_by" key "{}" in '
 					'list of available sources: {}'
 					.format(sort_by, ', '.join(self.keys)))
-
-			if len(sort_data) <= 0:
-				raise ValueError('Data sorting requires a finite source.')
 		else:
 			sort_data = None
 		self.sort_by = sort_by
@@ -169,11 +167,36 @@ class ShuffleProvider(Provider): \
 					n = numpy.empty(
 						(len(self.sort_data), ) + self.sort_data.shape()
 					)
-					start = 0
-					for batch in self.sort_data:
-						n[start:start+len(batch)] = batch[:]
-						start += len(batch)
-					indices = numpy.argsort(n)
+					if self.sort_data.is_derived():
+						from . import BatchProvider
+						from ..utils import parallelize
+
+						subset = self.get_requirements_for_source(
+							self.sort_by,
+							self.sort_data
+						)
+						with DisableLogging():
+							provider = BatchProvider(
+								sources=subset,
+								batch_size=1024,
+								randomize=False
+							)
+							start = 0
+							for batch in parallelize(provider):
+								batch = batch[self.sort_by]
+								n[start:start+len(batch)] = batch[:]
+								start += len(batch)
+					else:
+						start = 0
+						for batch in self.sort_data:
+							n[start:start+len(batch)] = batch[:]
+							start += len(batch)
+
+					indices = numpy.argsort(n, axis=0)
+					if indices.ndim > 1:
+						indices = numpy.array(
+							[numpy.ravel(x)[0] for x in indices]
+						)
 					for source in self.sources:
 						source.shuffle(indices)
 
