@@ -56,6 +56,7 @@ def get_hash(path):
 def download(url, target):
 	""" Downloads a URL.
 	"""
+	logger.debug('Trying to download: %s', url)
 	response = urllib.request.urlopen(url)
 	with open(target, 'wb') as fh:
 		with tqdm.tqdm(

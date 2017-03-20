@@ -22,7 +22,7 @@ class Adam(Optimizer):
 	"""
 
 	###########################################################################
-	def __init__(self, learning_rate=None, *args, **kwargs):
+	def __init__(self, learning_rate=None, decay=None, *args, **kwargs):
 		""" Create a new Adam optimizer.
 
 			# Arguments
@@ -32,6 +32,7 @@ class Adam(Optimizer):
 		super().__init__(*args, **kwargs)
 
 		self.learning_rate = learning_rate or 0.001
+		self.decay = decay or 0
 		self.optimizer = None
 
 	###########################################################################
@@ -42,9 +43,19 @@ class Adam(Optimizer):
 			import keras.optimizers as O		# pylint: disable=import-error
 			self.optimizer = self.optimizer or O.Adam(
 				lr=self.learning_rate,
+				decay=self.decay,
 				**keras_clip(self)
 			)
 			return keras_wrap(self.optimizer)
+		elif backend.get_name() == 'pytorch':
+			import torch.optim as optim			# pylint: disable=import-error
+			if self.optimizer is None:
+				self.optimizer = lambda params: optim.Adam(
+					params,
+					lr=self.learning_rate,
+					weight_decay=self.decay
+				)
+			return self.optimizer
 		else:
 			raise ValueError('Unsupported backend "{}" for optimizer "{}"'
 				.format(backend.get_name(), self.get_name()))

@@ -55,12 +55,66 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
-			import keras.layers as L			# pylint: disable=import-error
-			yield L.BatchNormalization(
-				mode=2,
-				axis=-1 if self.axis is None else self.axis,
-				name=self.name
-			)
+			if backend.keras_version() == 1:
+				import keras.layers as L		# pylint: disable=import-error
+				yield L.BatchNormalization(
+					mode=2,
+					axis=-1 if self.axis is None else self.axis,
+					name=self.name
+				)
+			else:
+				import keras.layers.normalization as L # pylint: disable=import-error
+				yield L.BatchNormalization(
+					axis=-1 if self.axis is None else self.axis,
+					center=True,
+					scale=True,
+					name=self.name
+				)
+
+		elif backend.get_name() == 'pytorch':
+
+			import torch.nn as nn				# pylint: disable=import-error
+			from kur.backend.pytorch.modules import swap_channels
+
+			def connect(inputs):
+				""" Connects the layer
+				"""
+				assert len(inputs) == 1
+
+				ndim = len(inputs[0]['shape'])
+				func = {
+					0 : nn.BatchNorm1d,
+					1 : nn.BatchNorm1d,
+					2 : nn.BatchNorm2d,
+					3 : nn.BatchNorm3d
+				}.get(ndim-1)
+				if func is None:
+					raise ValueError('Unsupported dimensionality: {}'
+						.format(ndim))
+
+				output = inputs[0]['layer']
+
+				if ndim != 1:
+					output = model.data.add_operation(
+						swap_channels
+					)(output)
+
+				output = model.data.add_layer(
+					self.name,
+					func(inputs[0]['shape'][-1], affine=True)
+				)(output)
+
+				if ndim != 1:
+					output = model.data.add_operation(
+						swap_channels
+					)(output)
+
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : output
+				}
+
+			yield connect
 
 		else:
 			raise ValueError(

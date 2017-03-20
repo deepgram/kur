@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 import logging
+from collections import deque
+
 from ..utils import get_subclasses
 
 logger = logging.getLogger(__name__)
@@ -341,5 +343,40 @@ class Provider:						# pylint: disable=too-few-public-methods
 					'find any, this may be a bug.')
 
 		return result
+
+	###########################################################################
+	def get_requirements_for_source(self, name, source):
+		""" Returns the minimum sources required to produce the given source.
+
+			# Arguments
+
+			name: str. The name of the source to gather requirements for.
+			source: Source instance. The source to gather requirements for.
+
+			# Return value
+
+			A dictionary whose keys are source names and whose values are the
+			Sources themselves. This dictionary implicitly defines the sources
+			necessary to produce the given source, including the source itself.
+		"""
+		required_sources = set()
+		to_parse = deque(source.requires())
+		logger.debug('Inferring minimum requirements for derived source: %s',
+			name)
+		while to_parse:
+			this = to_parse.popleft()
+			required_sources.add(this)
+			this_src = self.sources[self.keys.index(this)]
+			if this_src.is_derived():
+				to_parse.extend(this_src.requires())
+		subset = {
+			k : v for k, v in zip(self.keys, self.sources)
+			if k in required_sources
+		}
+		logger.debug('Minimum requirements: %s',
+			', '.join(subset))
+
+		subset[name] = source
+		return subset
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -26,7 +26,7 @@ class Backend:
 	"""
 
 	###########################################################################
-	def __init__(self, variant=None, device=None):
+	def __init__(self, variant=None, device=None, parallel=None):
 		""" Create a new backend.
 
 			Part of this call should be to ensure that all the necessary
@@ -76,6 +76,8 @@ class Backend:
 			raise ValueError('Invalid device specification: {}. If a '
 				'device is explicitly specified, it must be "cpu", "gpu" '
 				'or "gpuX" where "X" is an integer.'.format(device))
+
+		self.parallel = parallel or 1
 
 		logger.info('Creating backend: %s', self.get_name())
 		logger.info('Backend variants: %s',
@@ -289,13 +291,23 @@ class Backend:
 		raise NotImplementedError
 
 	###########################################################################
-	def connect(self, inputs, target):
+	def create_data(self, model):
+		""" Requests a new set of model-specific data to be used during model
+			assembly.
+		"""
+		return None
+
+	###########################################################################
+	def connect(self, inputs, target, data):
 		""" Applies a tensor operation to a set of input tensors.
 
 			# Arguments
 
 			inputs: list. A list of input tensors.
 			target: object. The tensor operation to apply.
+			data: object. A backend-specific object, created by
+				`create_data()`, which can be used by the backend to maintain
+				state while constructing the model.
 
 			# Notes
 

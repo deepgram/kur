@@ -22,7 +22,7 @@ class Merge(Layer):					# pylint: disable=too-few-public-methods
 	"""
 
 	MERGE_MODES = ('multiply', 'add', 'concat', 'average')
-	DEFAULT_MERGE_MODE = 'average'
+	DEFAULT_MERGE_MODE = 'concat'
 
 	DEFAULT_AXIS = -1
 
@@ -82,21 +82,55 @@ class Merge(Layer):					# pylint: disable=too-few-public-methods
 				# Keras "merge" requires more than one layer.
 				if len(inputs) == 1:
 					return inputs[0]
-				return L.merge(
-					inputs,
-					mode={
-						'multiply' : 'mul',
-						'add' : 'sum',
-						'concat' : 'concat',
-						'average' : 'ave'
-					}.get(self.mode),
-					name=self.name,
-					**{
-						'concat' : {'concat_axis' : self.axis}
-					}.get(self.mode, {})
-				)
+
+				if backend.keras_version() == 1:
+					return L.merge(
+						inputs,
+						mode={
+							'multiply' : 'mul',
+							'add' : 'sum',
+							'concat' : 'concat',
+							'average' : 'ave'
+						}.get(self.mode),
+						name=self.name,
+						**{
+							'concat' : {'concat_axis' : self.axis}
+						}.get(self.mode, {})
+					)
+				else:
+					func = {
+						'multiply' : L.multiply,
+						'add' : L.add,
+						'concat' : L.concatenate,
+						'average' : L.average
+					}.get(self.mode)
+					return func(
+						inputs,
+						axis=self.axis,
+						name=self.name
+					)
 
 			yield merge
+
+		elif backend.get_name() == 'pytorch':
+
+			import torch						# pylint: disable=import-error
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				axis = self.axis
+				if axis < 0:
+					axis += len(inputs[0]['shape'])
+				axis += 1
+				return {
+					'shape' : self.shape([x['shape'] for x in inputs]),
+					'layer' : model.data.add_operation(
+						lambda *x: torch.cat(x, axis)
+					)(*[x['layer'] for x in inputs])
+				}
+
+			yield connect
 
 		else:
 			raise ValueError(

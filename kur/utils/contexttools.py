@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
 import contextlib
 import sys
 
@@ -38,5 +39,28 @@ def redirect_stderr(x):
 			sys.stder = old_stderr
 
 	return result(x)
+
+###############################################################################
+class DisableLogging:				# pylint: disable=too-few-public-methods
+	""" Context manager that disables logging temporarily.
+	"""
+
+	###########################################################################
+	def __init__(self, level=logging.DEBUG):
+		""" Suppresses all logging at `level` and below.
+		"""
+		self.level = level
+
+	###########################################################################
+	def __enter__(self):
+		""" Start suppression.
+		"""
+		logging.disable(self.level)
+
+	###########################################################################
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		""" Resume regular logging.
+		"""
+		logging.disable(logging.NOTSET)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

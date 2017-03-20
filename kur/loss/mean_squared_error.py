@@ -35,6 +35,22 @@ class MeanSquaredError(Loss):
 
 		if backend.get_name() == 'keras':
 			return keras_wrap(model, target, output, 'mean_squared_error')
+		elif backend.get_name() == 'pytorch':
+
+			# pylint: disable=import-error
+			import torch.nn as nn
+			# pylint: enable=import-error
+
+			loss = model.data.move(nn.MSELoss())
+
+			return [
+				[
+					(target, model.data.placeholder(target))
+				],
+				lambda inputs, output: loss(
+					output, inputs[0]
+				)
+			]
 		else:
 			raise ValueError('Unsupported backend "{}" for loss function "{}"'
 				.format(backend.get_name(), self.get_name()))

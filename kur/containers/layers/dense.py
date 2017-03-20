@@ -77,13 +77,36 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 			if self.auto_flatten:
 				yield L.Flatten()
 
-			for v in self.size[:-1]:
-				yield L.Dense(output_dim=v)
+			if backend.keras_version() == 1:
+				func = lambda x, **kwargs: L.Dense(output_dim=x, **kwargs)
+			else:
+				func = lambda x, **kwargs: L.Dense(units=x, **kwargs)
 
-			yield L.Dense(
-				output_dim=self.size[-1],
+			for v in self.size[:-1]:
+				yield func(v)
+
+			yield func(
+				self.size[-1],
 				name=self.name
 			)
+
+		elif backend.get_name() == 'pytorch':
+
+			import torch.nn as nn				# pylint: disable=import-error
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				assert len(inputs) == 1
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : model.data.add_layer(
+						self.name,
+						nn.Linear(inputs[0]['shape'][-1], self.size[-1])
+					)(inputs[0]['layer'])
+				}
+
+			yield connect
 
 		else:
 			raise ValueError(

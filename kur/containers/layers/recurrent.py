@@ -15,6 +15,9 @@ limitations under the License.
 """
 
 import logging
+
+import numpy
+
 from . import Layer, ParsingError
 
 logger = logging.getLogger(__name__)
@@ -132,8 +135,10 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 		"""
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
-
-			import keras.layers as L			# pylint: disable=import-error
+			if backend.keras_version() == 1:
+				import keras.layers as L		# pylint: disable=import-error
+			else:
+				import keras.layers.recurrent as L # pylint: disable=import-error
 
 			func = {
 				'lstm' : L.LSTM,
@@ -143,24 +148,29 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 				raise ValueError('Unhandled RNN type: {}. This is a bug.'
 					.format(self.type))
 
+			if backend.keras_version() == 1:
+				size_key = 'output_dim'
+			else:
+				size_key = 'units'
+
 			kwargs = {
 				'activation' : self.activation or 'relu',
-				'output_dim' : self.size,
 				'return_sequences' : self.sequence,
-				'go_backwards' : False
+				'go_backwards' : False,
+				size_key : self.size
 			}
 
 			if self.bidirectional:
 				kwargs['name'] = self.name + '_fwd'
 
 				if self.merge in ('concat', ):
-					if kwargs['output_dim'] % 2 != 0:
+					if kwargs[size_key] % 2 != 0:
 						logger.warning('Recurrent layer "%s" has an odd '
 							'number for "size", but has a concat-type merge '
 							'strategy. We are going to reduce its size by '
 							'one.', self.name)
-						kwargs['output_dim'] -= 1
-					kwargs['output_dim'] //= 2
+						kwargs[size_key] -= 1
+					kwargs[size_key] //= 2
 
 				forward = func(**kwargs)
 
@@ -171,24 +181,102 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 				def merge(tensor):
 					""" Returns a bidirectional RNN.
 					"""
-					return L.merge(
-						[forward(tensor), backward(tensor)],
-						mode={
-							'multiply' : 'mul',
-							'add' : 'sum',
-							'concat' : 'concat',
-							'average' : 'ave'
-						}.get(self.merge),
-						name=self.name,
-						**{
-							'concat' : {'concat_axis' : -1}
-						}.get(self.merge, {})
-					)
+					import keras.layers as L 	# pylint: disable=import-error
+					if backend.keras_version() == 1:
+						return L.merge(
+							[forward(tensor), backward(tensor)],
+							mode={
+								'multiply' : 'mul',
+								'add' : 'sum',
+								'concat' : 'concat',
+								'average' : 'ave'
+							}.get(self.merge),
+							name=self.name,
+							**{
+								'concat' : {'concat_axis' : -1}
+							}.get(self.merge, {})
+						)
+					else:
+						func = {
+							'multiply' : L.multiply,
+							'add' : L.add,
+							'concat' : L.concatenate,
+							'average' : L.average
+						}.get(self.merge)
+						return func(
+							[forward(tensor), backward(tensor)],
+							axis=-1,
+							name=self.name
+						)
 
 				yield merge
 			else:
 				kwargs['name'] = self.name
 				yield func(**kwargs)
+
+		elif backend.get_name() == 'pytorch':
+
+			# pylint: disable=import-error
+			import torch.nn as nn
+			# pylint: enable=import-error
+
+			func = {
+				'lstm' : nn.LSTM,
+				'gru' : nn.GRU
+			}.get(self.type)
+			if func is None:
+				raise ValueError('Unhandled RNN type: {}. This is a bug.'
+					.format(self.type))
+
+			if self.bidirectional and self.merge != 'concat':
+				raise ValueError('PyTorch backend currently only supports '
+					'"concat" mode for bidirectional RNNs.')
+
+			if self.activation:
+				raise ValueError('PyTorch backend currently only supports '
+					'the default "outer_activation" value for RNNs.')
+
+			def connect(inputs):
+				""" Constructs the RNN layer.
+				"""
+				assert len(inputs) == 1
+				size = self.size
+				if self.bidirectional:
+					if size % 2 != 0:
+						logger.warning('Recurrent layer "%s" has an odd '
+							'number for "size", but has a concat-type merge '
+							'strategy. We are going to reduce its size by '
+							'one.', self.name)
+						size -= 1
+					size //= 2
+
+				kwargs = {
+					'input_size' : inputs[0]['shape'][-1],
+					'hidden_size' : size,
+					'num_layers' : 1,
+					'batch_first' : True,
+					'bidirectional' : self.bidirectional,
+					'bias' : True
+				}
+
+				def layer_func(layer, *inputs):
+					""" Applies the RNN
+					"""
+					result, _ = layer(*(inputs + (None, )))
+					if not self.sequence:
+						return result[:, -1]
+					return result
+
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : model.data.add_layer(
+						self.name,
+						func(**kwargs),
+						func=layer_func
+					)(inputs[0]['layer'])
+				}
+
+			yield connect
 
 		else:
 			raise ValueError(
@@ -201,6 +289,8 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 		if len(input_shapes) > 1:
 			raise ValueError('Recurrent layers only take a single input.')
 		input_shape = input_shapes[0]
-		return input_shape[:-1] + (self.size, )
+		if self.sequence:
+			return input_shape[:-1] + (self.size, )
+		return (self.size, )
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

@@ -39,6 +39,23 @@ class Flatten(Layer):					# pylint: disable=too-few-public-methods
 				name=self.name
 			)
 
+		elif backend.get_name() == 'pytorch':
+
+			from kur.backend.pytorch.modules import flatten
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				assert len(inputs) == 1
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : model.data.add_operation(flatten)(
+						inputs[0]['layer']
+					)
+				}
+
+			yield connect
+
 		else:
 			raise ValueError(
 				'Unknown or unsupported backend: {}'.format(backend))
@@ -48,12 +65,12 @@ class Flatten(Layer):					# pylint: disable=too-few-public-methods
 		""" Returns the output shape of this layer for a given input shape.
 		"""
 		if len(input_shapes) > 1:
-			raise ValueError('Activations only take a single input.')
+			raise ValueError('Flatten layers only take a single input.')
 		input_shape = input_shapes[0]
 
 		result = 1
 		for x in input_shape:
 			result *= x
-		return result
+		return (result, )
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

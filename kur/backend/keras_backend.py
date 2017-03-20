@@ -23,12 +23,14 @@ import tempfile
 import shutil
 import logging
 import functools
+import warnings
 from collections import OrderedDict
 import numpy
 from . import Backend
 from .. import __homepage__
 from ..loss import Loss
-from ..utils import can_import, EnvironmentalVariable, redirect_stderr, idx
+from ..utils import can_import, EnvironmentalVariable, redirect_stderr, \
+	idx, DisableLogging
 from ..providers import BatchProvider
 
 logger = logging.getLogger(__name__)
@@ -182,6 +184,9 @@ class KerasBackend(Backend):
 						env['CUDA_VISIBLE_DEVICES'] = str(self.device_number)
 						logger.info('Requesting GPU %d', self.device_number)
 
+			if self.parallel > 1 and env['KERAS_BACKEND'] == 'tensorflow':
+				logger.info('Using %d GPUs', self.parallel)
+
 			# Supress the deluge of TensorFlow messages that we aren't
 			# interested in.
 			env['TF_CPP_MIN_LOG_LEVEL'] = '1'
@@ -229,7 +234,7 @@ class KerasBackend(Backend):
 		return 'keras'
 
 	###########################################################################
-	def connect(self, inputs, target):
+	def connect(self, inputs, target, data):
 		""" Use the Keras functional API to connect to layers
 
 			# Notes:
@@ -237,19 +242,71 @@ class KerasBackend(Backend):
 			- You will need input placeholders in place before doing this,
 			  otherwise Keras's shape-checking will fail.
 		"""
-		if not isinstance(inputs, list):
-			inputs = [inputs]
-		return target(inputs)
+		if self.keras_version() == 1:
+			if not isinstance(inputs, list):
+				inputs = [inputs]
+		else:
+			if isinstance(inputs, (list, tuple)):
+				if len(inputs) == 1:
+					inputs = inputs[0]
+
+		pool_2d = None
+		if self.get_toolchain() == 'theano':
+			import theano						# pylint: disable=import-error
+			if theano.__version__ < '0.9':
+				# We need to patch Theano
+				from theano.tensor.signal import pool # pylint: disable=import-error
+				original_pool = pool.pool_2d
+				def pool_2d(input, ws=None, ignore_border=None, stride=None,
+						pad=(0, 0), mode='max', ds=None, st=None,
+						padding=None):
+					return original_pool(
+						input=input,
+						ds=ds if ds is not None else ws,
+						ignore_border=ignore_border,
+						st=st if st is not None else stride,
+						padding=padding if padding is not None else pad,
+						mode=mode
+					)
+
+		with warnings.catch_warnings():
+			warnings.filterwarnings(
+				'ignore',
+				message='.*tensor.nnet.abstract_conv.conv2d.*',
+				module='.*theano_backend.*'
+			)
+			if pool_2d is None:
+				return target(inputs)
+			else:
+				from unittest.mock import patch
+				with patch('theano.tensor.signal.pool.pool_2d', pool_2d):
+					return target(inputs)
+
+	###########################################################################
+	@staticmethod
+	def keras_version():
+		""" Retrieves the Keras major version.
+		"""
+		from keras import __version__			# pylint: disable=import-error
+		return int(__version__.split('.')[0])
+
+	###########################################################################
+	@staticmethod
+	def make_model(inputs, outputs):
+		""" Compiles a Keras model in a version-agnostic way.
+		"""
+		import keras.models as M				# pylint: disable=import-error
+		if KerasBackend.keras_version() == 1:
+			return M.Model(input=inputs, output=outputs)
+		return M.Model(inputs=inputs, outputs=outputs)
 
 	###########################################################################
 	def save(self, model, filename):
 		""" Saves the model weights to the given filename.
 		"""
-		import keras.models as M				# pylint: disable=import-error
-
-		keras_model = M.Model(
-			input=[node.value for node in model.inputs.values()],
-			output=[node.value for node in model.outputs.values()]
+		keras_model = self.make_model(
+			inputs=[node.value for node in model.inputs.values()],
+			outputs=[node.value for node in model.outputs.values()]
 		)
 
 		self._save_keras(keras_model, filename)
@@ -285,6 +342,7 @@ class KerasBackend(Backend):
 				)
 
 			for name, val in zip(weight_names, weight_values):
+				name = name.replace('/', '_')
 				target = os.path.join(
 					path,
 					'{}+{}.kur'.format(layer_name, name)
@@ -310,11 +368,9 @@ class KerasBackend(Backend):
 	def restore(self, model, filename):
 		""" Load the model weights from the given filename.
 		"""
-		import keras.models as M				# pylint: disable=import-error
-
-		keras_model = M.Model(
-			input=[node.value for node in model.inputs.values()],
-			output=[node.value for node in model.outputs.values()]
+		keras_model = self.make_model(
+			inputs=[node.value for node in model.inputs.values()],
+			outputs=[node.value for node in model.outputs.values()]
 		)
 
 		try:
@@ -391,6 +447,7 @@ class KerasBackend(Backend):
 						symbolic_weights
 					)
 				for i, name in enumerate(weight_names):
+					name = name.replace('/', '_')
 					weight_value_tuples.append((symbolic_weights[i], weights[name]))
 
 		# Assign all the weights in one batch (for efficiency).
@@ -462,7 +519,7 @@ class KerasBackend(Backend):
 			loss: Loss instance, list/tuple of Loss instances, or a dictionary
 				of model layer names mapped to Loss instances.
 		"""
-		import keras.backend as K
+		import keras.backend as K				# pylint: disable=import-error
 
 		if loss is None:
 			num_outputs = len(model.outputs)
@@ -523,12 +580,15 @@ class KerasBackend(Backend):
 			model.compiled = {}
 
 		if 'raw' not in model.compiled:
-			import keras.models as M			# pylint: disable=import-error
 			logger.debug('Instantiating a Keras model.')
-			compiled = M.Model(
-				input=[node.value for node in model.inputs.values()],
-				output=[node.value for node in model.outputs.values()]
+			compiled = self.make_model(
+				inputs=[node.value for node in model.inputs.values()],
+				outputs=[node.value for node in model.outputs.values()]
 			)
+
+			if self.toolchain == 'tensorflow' and self.parallel > 1:
+				from ..utils.parallelism import make_parallel
+				compiled = make_parallel(compiled, self.parallel)
 
 			if logger.isEnabledFor(logging.DEBUG):
 				x = io.StringIO()
@@ -649,12 +709,13 @@ class KerasBackend(Backend):
 				'wait for compiling to finish.')
 			return
 
-		provider = BatchProvider(
-			sources=dict(zip(model.provider.keys, model.provider.sources)),
-			batch_size=2,
-			num_batches=1,
-			randomize=False
-		)
+		with DisableLogging():
+			provider = BatchProvider(
+				sources=dict(zip(model.provider.keys, model.provider.sources)),
+				batch_size=2*self.parallel,
+				num_batches=1,
+				randomize=False
+			)
 		model.supplement_provider(provider)
 
 		weight_path = None

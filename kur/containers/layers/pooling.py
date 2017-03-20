@@ -131,14 +131,30 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
-			import keras.layers as L			# pylint: disable=import-error
+			if backend.keras_version() == 1:
+				import keras.layers as L		# pylint: disable=import-error
+				kwargs = {
+					'pool_size' : self.size,
+					'strides' : self.strides,
+					'border_mode' : 'valid',
+					'name' : self.name
+				}
+				if len(self.size) == 1:
+					kwargs['pool_length'] = kwargs.pop('pool_size')
+					kwargs['stride'] = kwargs.pop('strides')
 
-			kwargs = {
-				'pool_size' : self.size,
-				'strides' : self.strides,
-				'border_mode' : 'valid',
-				'name' : self.name
-			}
+			else:
+				import keras.layers.pooling as L # pylint: disable=import-error
+				kwargs = {
+					'pool_size' : self.size,
+					'strides' : self.strides,
+					'padding' : 'valid',
+					'name' : self.name
+				}
+				if len(self.size) == 1:
+					kwargs['pool_size'] = kwargs.pop('pool_size')[0]
+				else:
+					kwargs['data_format'] = 'channels_last'
 
 			if self.pooltype == 'max':
 				func = {
@@ -156,16 +172,61 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 				raise ValueError('Unhandled pool type "{}". This is a bug.',
 					self.pooltype)
 
-			if len(self.size) == 1:
-				kwargs['pool_length'] = kwargs.pop('pool_size')
-				kwargs['stride'] = kwargs.pop('strides')
-
 			if func is None:
 				raise ValueError('Invalid pool function for pool type "{}" '
 					'the supplied pool parameters. This is a bug.'
 					.format(self.pooltype))
 
 			yield func(**kwargs)
+
+		elif backend.get_name() == 'pytorch':
+
+			import torch.nn as nn				# pylint: disable=import-error
+
+			from kur.backend.pytorch.modules import swap_channels
+
+			if self.pooltype == 'max':
+				func = {
+					1 : nn.MaxPool1d,
+					2 : nn.MaxPool2d,
+					3 : nn.MaxPool3d
+				}.get(len(self.size))
+			elif self.pooltype == 'average':
+				func = {
+					1 : nn.AvgPool1d,
+					2 : nn.AvgPool2d,
+					3 : nn.AvgPool3d
+				}.get(len(self.size))
+			else:
+				raise ValueError('Unhandled pool type "{}". This is a bug.',
+					self.pooltype)
+
+			def connect(inputs):
+				""" Connects the layers.
+				"""
+				assert len(inputs) == 1
+				output = model.data.add_operation(
+					swap_channels
+				)(inputs[0]['layer'])
+				output = model.data.add_layer(
+					self.name,
+					func(
+						self.size,
+						self.strides,
+						padding=0,
+						dilation=1,
+						ceil_mode=False
+					)
+				)(output)
+				output = model.data.add_operation(
+					swap_channels
+				)(output)
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : output
+				}
+
+			yield connect
 
 		else:
 			raise ValueError(
@@ -183,7 +244,7 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 				.format(input_shape))
 
 		output_shape = tuple(
-			(input_shape[i] + self.strides[i] - 1) // self.strides[i]
+			(input_shape[i] - self.size[i]) // self.strides[i] + 1
 			for i in range(len(self.size))
 		) + (input_shape[-1], )
 		return output_shape

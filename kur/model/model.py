@@ -74,6 +74,7 @@ class Model:
 		self.additional_sources = {}
 
 		self.compiled = None
+		self.data = self.backend.create_data(self)
 
 	###########################################################################
 	def has_data_source(self, name):
@@ -334,10 +335,20 @@ class Model:
 					if layer is None:
 						continue
 					meat = True
-					value = self.backend.connect(
-						inputs=value,
-						target=layer
-					)
+					try:
+						value = self.backend.connect(
+							inputs=value,
+							target=layer,
+							data=self.data
+						)
+					except:
+						logger.error('Failed to connect node "%s" to its '
+							'inputs: %s', node.container.name, ', '.join(
+							x.container.name for x in node.inputs))
+						logger.error('The input values are:')
+						for i, v in zip(node.inputs, value):
+							logger.error('%s = %s', i.container.name, v)
+						raise
 
 				if meat:
 					node.value = value
@@ -365,7 +376,8 @@ class Model:
 					else:
 						value = self.backend.connect(
 							inputs=value,
-							target=layer
+							target=layer,
+							data=self.data
 						)
 				# Comments:
 				# - If your layer didn't produce anything, then `value` is

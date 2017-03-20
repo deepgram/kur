@@ -14,12 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
+
 from . import Layer, ParsingError
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 class Dropout(Layer):	# pylint: disable=too-few-public-methods
 	""" A dropout layer.
 	"""
+
+	DEFAULT_INDEPENDENT = True
 
 	###########################################################################
 	def __init__(self, *args, **kwargs):
@@ -27,6 +33,7 @@ class Dropout(Layer):	# pylint: disable=too-few-public-methods
 		"""
 		super().__init__(*args, **kwargs)
 		self.dropout = None
+		self.independent = None
 
 	###########################################################################
 	def _parse(self, engine):
@@ -44,8 +51,17 @@ class Dropout(Layer):	# pylint: disable=too-few-public-methods
 			else:
 				raise ParsingError('Missing required key "fraction" for '
 					'Dropout layer.')
+
+			if 'independent' in self.args:
+				self.independent = engine.evaluate(self.args['independent'],
+					recursive=True)
+				if not isinstance(self.independent, bool):
+					raise ParsingError('"independent" must be boolean.')
+			else:
+				self.independent = self.DEFAULT_INDEPENDENT
 		elif isinstance(self.args, (int, float)):
 			self.dropout = self.args
+			self.independent = self.DEFAULT_INDEPENDENT
 		else:
 			raise ParsingError('Dropout layer requires a single '
 				'floating-point argument argument. Instead we received: {}'
@@ -62,11 +78,55 @@ class Dropout(Layer):	# pylint: disable=too-few-public-methods
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
+			if not self.independent:
+				logger.warning('Keras backend only supports independent '
+					'dropout. Pretending that "independent" is True.')
+
 			import keras.layers as L			# pylint: disable=import-error
 			yield L.Dropout(
 				self.dropout,
 				name=self.name
 			)
+
+		elif backend.get_name() == 'pytorch':
+
+			import torch.nn as nn				# pylint: disable=import-error
+			from kur.backend.pytorch.modules import swap_channels
+
+			def connect(inputs):
+				""" Connects the layer
+				"""
+				assert len(inputs) == 1
+
+				ndim = len(inputs[0]['shape'])
+				func = nn.Dropout if self.independent else {
+					2 : nn.Dropout2d,
+					3 : nn.Dropout3d
+				}.get(ndim-1, nn.Dropout)
+
+				output = inputs[0]['layer']
+
+				if func is not nn.Dropout:
+					output = model.data.add_operation(
+						swap_channels
+					)(output)
+
+				output = model.data.add_layer(
+					self.name,
+					func(self.dropout)
+				)(output)
+
+				if func is not nn.Dropout:
+					output = model.data.add_operation(
+						swap_channels
+					)(output)
+
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : output
+				}
+
+			yield connect
 
 		else:
 			raise ValueError(

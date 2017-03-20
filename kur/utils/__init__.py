@@ -25,7 +25,7 @@ from .critical import CriticalSection
 from . import idx
 from . import mergetools
 from .environtools import EnvironmentalVariable
-from .contexttools import redirect_stderr
+from .contexttools import redirect_stderr, DisableLogging
 from .package import unpack, canonicalize, install
 from .filetools import count_lines
 from .audiotools import load_audio, get_audio_features

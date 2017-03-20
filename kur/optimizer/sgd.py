@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
+
 from . import Optimizer, keras_clip, keras_wrap
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 class SGD(Optimizer):
@@ -56,6 +60,19 @@ class SGD(Optimizer):
 				**keras_clip(self)
 			)
 			return keras_wrap(self.optimizer)
+		elif backend.get_name() == 'pytorch':
+			import torch.optim as optim			# pylint: disable=import-error
+			if self.nesterov:
+				logger.warning('The PyTorch backend does not use Nesterov '
+					'momentum. Ignoring it...')
+			if self.optimizer is None:
+				self.optimizer = lambda params: optim.SGD(
+					params,
+					lr=self.learning_rate,
+					momentum=self.momentum,
+					weight_decay=self.decay
+				)
+			return self.optimizer
 		else:
 			raise ValueError('Unsupported backend "{}" for optimizer "{}"'
 				.format(backend.get_name(), self.get_name()))

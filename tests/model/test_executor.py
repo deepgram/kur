@@ -21,6 +21,8 @@ from kur.optimizer import Adam
 from kur.model import Executor
 from kur.providers import BatchProvider
 
+Executor.DEFAULT_RETRY_ENABLED = False
+
 ###############################################################################
 @pytest.fixture
 def ctc_eval_data(ctc_data):

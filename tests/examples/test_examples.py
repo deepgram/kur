@@ -15,13 +15,27 @@ limitations under the License.
 """
 
 import os
+from unittest.mock import patch
 
 import pytest
 
 from kur.kurfile import Kurfile
+from kur.loss import Ctc
+from kur.model import Executor
 
 from modkurfile import modify_kurfile
 from example import example
+
+Executor.NAN_IS_FATAL = False
+Executor.DEFAULT_RETRY_ENABLED = False
+
+def replacement_ctc(self, model, target, output):
+	""" Patch method on the CTC loss function.
+	"""
+	if model.get_backend().get_name() == 'pytorch':
+		pytest.xfail('Backend "pytorch" does not use a CTC loss function.')
+	return replacement_ctc.original(self, model, target, output)
+replacement_ctc.original = Ctc.get_loss
 
 @pytest.fixture
 def example_directory():
@@ -53,6 +67,7 @@ def kurfile(request, example_directory, jinja_engine):
 	result.parse()
 	return result
 
+@patch('kur.loss.Ctc.get_loss', replacement_ctc)
 class TestExample:
 
 	@example

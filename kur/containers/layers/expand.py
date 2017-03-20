@@ -80,11 +80,37 @@ class Expand(Layer):					# pylint: disable=too-few-public-methods
 					dim += len(input_shape) + 1
 				return input_shape[:dim] + (1,) + input_shape[dim:]
 
+			if backend.keras_version() == 1:
+				func = lambda x: K.expand_dims(x, dim=target_dim)
+			else:
+				func = lambda x: K.expand_dims(x, axis=target_dim)
+
 			yield L.Lambda(
-				lambda x: K.expand_dims(x, dim=target_dim),
+				func,
 				expand_shape,
 				name=self.name
 			)
+
+		elif backend.get_name() == 'pytorch':
+
+			import torch						# pylint: disable=import-error
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				assert len(inputs) == 1
+				dim = self.dimension
+				if dim < 0:
+					dim += len(inputs[0]['shape']) + 1
+				dim += 1
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : model.data.add_operation(
+						lambda x: torch.unsqueeze(x, dim)
+					)(inputs[0]['layer'])
+				}
+
+			yield connect
 
 		else:
 			raise ValueError('Unknown or unsupported backend: {}'.format(backend))

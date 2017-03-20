@@ -121,6 +121,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		else:
 			self.border = 'same'
 
+		assert self.border in ('same', 'valid')
+
 	###########################################################################
 	def _build(self, model):
 		""" Instantiates the layer with the given backend.
@@ -128,41 +130,129 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
-			import keras.layers as L			# pylint: disable=import-error
+			if backend.keras_version() == 1:
+				import keras.layers as L			# pylint: disable=import-error
 
-			kwargs = {
-				'nb_filter' : self.kernels,
-				'activation' : self.activation or 'linear',
-				'border_mode' : self.border,
-				'name' : self.name
-			}
+				kwargs = {
+					'nb_filter' : self.kernels,
+					'activation' : self.activation or 'linear',
+					'border_mode' : self.border,
+					'name' : self.name
+				}
 
-			if len(self.size) == 1:
-				func = L.Convolution1D
-				kwargs.update({
-					'filter_length' : self.size[0],
-					'subsample_length' : self.strides[0]
-				})
-			elif len(self.size) == 2:
-				func = L.Convolution2D
-				kwargs.update({
-					'nb_row' : self.size[0],
-					'nb_col' : self.size[1],
-					'subsample' : self.strides
-				})
-			elif len(self.size) == 3:
-				func = L.Convolution3D
-				kwargs.update({
-					'kernel_dim1' : self.size[0],
-					'kernel_dim2' : self.size[1],
-					'kernel_dim3' : self.size[2],
-					'subsample' : self.strides
-				})
+				if len(self.size) == 1:
+					func = L.Convolution1D
+					kwargs.update({
+						'filter_length' : self.size[0],
+						'subsample_length' : self.strides[0]
+					})
+				elif len(self.size) == 2:
+					func = L.Convolution2D
+					kwargs.update({
+						'nb_row' : self.size[0],
+						'nb_col' : self.size[1],
+						'subsample' : self.strides
+					})
+				elif len(self.size) == 3:
+					func = L.Convolution3D
+					kwargs.update({
+						'kernel_dim1' : self.size[0],
+						'kernel_dim2' : self.size[1],
+						'kernel_dim3' : self.size[2],
+						'subsample' : self.strides
+					})
+				else:
+					raise ValueError('Unhandled convolution dimension: {}. This '
+						'is a bug.'.format(len(self.size)))
+
+				yield func(**kwargs)
+
 			else:
-				raise ValueError('Unhandled convolution dimension: {}. This is '
-					'a bug.'.format(len(self.size)))
 
-			yield func(**kwargs)
+				import keras.layers.convolutional as L # pylint: disable=import-error
+
+				kwargs = {
+					'filters' : self.kernels,
+					'activation' : self.activation or 'linear',
+					'padding' : self.border,
+					'name' : self.name,
+					'kernel_size' : self.size,
+					'strides' : self.strides
+				}
+
+				if len(self.size) == 1:
+					func = L.Conv1D
+				elif len(self.size) == 2:
+					func = L.Conv2D
+				elif len(self.size) == 3:
+					func = L.Conv3D
+				else:
+					raise ValueError('Unhandled convolution dimension: {}. This '
+						'is a bug.'.format(len(self.size)))
+
+				if len(self.size) > 1:
+					kwargs['data_format'] = 'channels_last'
+
+				yield func(**kwargs)
+
+		elif backend.get_name() == 'pytorch':
+
+			# pylint: disable=import-error
+			import torch.nn as nn
+			# pylint: enable=import-error
+
+			from kur.backend.pytorch.modules import swap_channels
+
+			func = {
+				1 : nn.Conv1d,
+				2 : nn.Conv2d,
+				3 : nn.Conv3d
+			}.get(len(self.size))
+			if not func:
+				raise ValueError('Unhandled convolution dimension: {}. This '
+					'is a bug.'.format(len(self.size)))
+
+			if self.border == 'valid':
+				padding = 0
+			else:
+				# "same" padding requires you to pad with P = S - 1 zeros
+				# total. However, PyTorch always pads both sides of the input
+				# tensor, implying that PyTorch only accepts padding P' such
+				# that P = 2P'. This unfortunately means that if S is even,
+				# then the desired padding P is odd, and so no P' exists.
+				if any(s % 2 == 0 for s in self.size):
+					raise ValueError('PyTorch convolutions cannot use "same" '
+						'border mode when the receptive field "size" is even.')
+				padding = tuple((s-1)//2 for s in self.size)
+
+			layer = lambda in_channels: func(
+				in_channels,
+				self.kernels,
+				tuple(self.size),
+				stride=tuple(self.strides),
+				padding=padding
+			)
+
+			def connect(inputs):
+				""" Connects the layer.
+				"""
+				assert len(inputs) == 1
+				output = model.data.add_operation(
+					swap_channels
+				)(inputs[0]['layer'])
+				output = model.data.add_layer(
+					self.name,
+					layer(inputs[0]['shape'][-1])
+				)(output)
+				output = model.data.add_operation(
+					swap_channels
+				)(output)
+				return {
+					'shape' : self.shape([inputs[0]['shape']]),
+					'layer' : output
+				}
+
+			yield connect
 
 		else:
 			raise ValueError(
@@ -180,14 +270,15 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 				.format(input_shape))
 
 		def apply_border(input_shape, size):
+			""" Resolves output shape differences caused by border mode.
+			"""
 			if self.border == 'same':
 				return input_shape
-			else:
-				return input_shape - size + 1
+			return input_shape - size + 1
 
 		output_shape = tuple(
-			(apply_border(input_shape[i], self.size[i]) \
-				+ self.strides[i] - 1) // self.strides[i]
+			(apply_border(input_shape[i], self.size[i]) + self.strides[i] - 1) \
+				// self.strides[i] if input_shape[i] else None
 			for i in range(len(self.size))
 		) + (self.kernels, )
 		return output_shape

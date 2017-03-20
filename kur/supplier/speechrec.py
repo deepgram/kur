@@ -32,6 +32,43 @@ from ..utils import Normalize
 logger = logging.getLogger(__name__)
 
 ###############################################################################
+def loop_copy(src, dest):
+	""" Copies a source array into a destination array, looping
+		through the source array until the entire destination array
+		is written.
+
+		# Arguments
+
+		src: numpy array. The source array.
+		dest: numpy array. The destination array.
+
+		# Return value
+
+		The destination array.
+
+		# Notes
+
+		If the source array is longer than the destination array, then
+		only the first N entries of the source array are copied into the
+		destination, where N is the length of the destination array.
+
+		If the source array is shorter than, or of equal length with, the
+		destination array, then it will be copied into the destination array
+		and repeated, back-to-back, until the destination is filled up (almost
+		tiling the destination, if you will).
+	"""
+	if len(src) > len(dest):
+		dest[:] = src[:len(dest)]
+	else:
+		i = 0
+		while i < len(dest):
+			entries_to_copy = min(len(dest) - i, len(src))
+			dest[i:i+entries_to_copy] = src[:entries_to_copy]
+			i += len(src)
+
+	return dest
+
+###############################################################################
 class UtteranceLength(DerivedSource):
 	""" Data source for audio lengths.
 	"""
@@ -52,18 +89,33 @@ class Utterance(DerivedSource):
 		ensures that all data products are rectangular tensors (rather than
 		ragged arrays).
 	"""
-	def __init__(self, source, raw):
+	def __init__(self, source, raw, fill=None):
 		super().__init__()
 		self.source = source
 		self.raw = raw
+		self.fill = fill or 'zero'
+		assert isinstance(self.fill, str) and self.fill in ('zero', 'loop')
+		logger.debug('Utterance source is using fill mode "%s".', self.fill)
 	def derive(self, inputs):
 		utterances, = inputs
 		max_len = max(len(x) for x in utterances)
-		output = numpy.zeros(
-			shape=(len(utterances), max_len, self.raw.features)
-		)
-		for i, row in enumerate(utterances):
-			output[i][:len(row)] = row
+
+		if self.fill == 'zero':
+			output = numpy.zeros(
+				shape=(len(utterances), max_len, self.raw.features)
+			)
+			for i, row in enumerate(utterances):
+				output[i][:len(row)] = row
+		elif self.fill == 'loop':
+			output = numpy.empty(
+				shape=(len(utterances), max_len, self.raw.features)
+			)
+			for i, row in enumerate(utterances):
+				loop_copy(row, output[i])
+		else:
+			raise ValueError('Unhandled fill type: "{}". This is a bug.'
+				.format(self.fill))
+
 		return output
 	def shape(self):
 		return (None, self.raw.features)
@@ -348,7 +400,7 @@ class RawTranscript(ChunkSource):
 		"""
 		result = [None]*len(data)
 		for i, row in enumerate(data):
-			result[i] = [self.vocab.get(word) for word in row]
+			result[i] = [self.vocab.get(word.lower()) for word in row]
 			result[i] = [x for x in result[i] if x is not None]
 		return result
 
@@ -425,8 +477,9 @@ class SpeechRecognitionSupplier(Supplier):
 
 	###########################################################################
 	def __init__(self, url=None, path=None, checksum=None, unpack=None, 
-		type=None, normalization=None, max_duration=None, max_frequency=None,
-		vocab=None, samples=None, *args, **kwargs):
+		type=None, normalization=None, min_duration=None, max_duration=None,
+		max_frequency=None, vocab=None, samples=None, fill=None, *args,
+		**kwargs):
 		""" Creates a new speech recognition supplier.
 
 			# Arguments
@@ -436,7 +489,7 @@ class SpeechRecognitionSupplier(Supplier):
 		if unpack is None:
 			unpack = SpeechRecognitionSupplier.DEFAULT_UNPACK
 		self.load_data(url=url, path=path, checksum=checksum, unpack=unpack,
-			max_duration=max_duration)
+			min_duration=min_duration, max_duration=max_duration)
 		self.downselect(samples)
 
 		logger.debug('Creating sources.')
@@ -455,7 +508,7 @@ class SpeechRecognitionSupplier(Supplier):
 			'transcript' : Transcript('transcript_raw'),
 			'utterance_raw' : utterance_raw,
 			'utterance_length' : UtteranceLength('utterance_raw'),
-			'utterance' : Utterance('utterance_raw', utterance_raw),
+			'utterance' : Utterance('utterance_raw', utterance_raw, fill=fill),
 			'duration' : VanillaSource(numpy.array(self.data['duration'])),
 			'audio_source' : VanillaSource(numpy.array(self.data['audio']))
 		}
@@ -573,7 +626,7 @@ class SpeechRecognitionSupplier(Supplier):
 
 	###########################################################################
 	def load_data(self, url=None, path=None, checksum=None, unpack=None,
-		max_duration=None):
+		min_duration=None, max_duration=None):
 		""" Loads the data for this supplier.
 		"""
 		local_path, is_packed = package.install(
@@ -601,11 +654,13 @@ class SpeechRecognitionSupplier(Supplier):
 		self.metadata, self.data = self.get_metadata(
 			manifest=manifest,
 			root=local_path,
+			min_duration=min_duration,
 			max_duration=max_duration
 		)
 
 	###########################################################################
-	def get_metadata(self, manifest=None, root=None, max_duration=None):
+	def get_metadata(self, manifest=None, root=None, 
+		min_duration=None, max_duration=None):
 		""" Scans the package for a metadata file, makes sure everything is in
 			order, and returns some information about the data set.
 		"""
@@ -673,6 +728,8 @@ class SpeechRecognitionSupplier(Supplier):
 					continue
 
 				duration = entry['duration_s']
+				if min_duration and duration < min_duration:
+					continue
 				if max_duration and duration > max_duration:
 					continue
 
