@@ -32,10 +32,11 @@ Welcome to Kur! You've found the future of deep learning!
 
 - Install Kur easily with ``pip install kur``.
 - Design, train, and evaluate models *without ever needing to code*.
-- Describe your model with easily understandable concepts, rather than trudge
-  through programming.
+- Describe your model with easily understandable concepts.
 - Quickly explore better versions of your model with the power of `Jinja2
   <http://jinja.pocoo.org>`_ to automate Kurfile specification.
+- Supports Theano, TensorFlow, and PyTorch, and supports **multi-GPU**
+  out-of-the-box.
 - Kur is open source and available at GitHub_
 - **COMING SOON**: Share your models on KurHub_, making it incredibly
   easy to collaborate on models and learn from others.
@@ -134,6 +135,7 @@ Contents:
    getting_started
    specification
    containers
+   api
    faq
    troubleshooting
    misc

@@ -103,7 +103,7 @@ Recurrent (RNN)
   which learns both the forward and backward sequences of data).
 - ``MERGE``: if ``BIDIRECTIONAL`` is true, then this determines how the outputs
   of the forward and backward RNNs is merged. If bidirectional is not set, then
-  "merge" cannot be used. The default value is ``average``.
+  "merge" cannot be used. The default value is ``concat``.
 - ``ACTIVATION``: an activation to apply within the RNN (it is not equivalent
   to simply following the RNN layer with an Activation layer). Defaults to
   "relu".
@@ -353,10 +353,13 @@ or::
 	- ``average``: Computes the mean of the input tensors.
 	- ``multiply``: Computes the product of the input tensors.
 	- ``add``: Computes the sum of the input tensors.
-	- ``concat``: Concatenates the data tensors along ``AXIS`` axis.
+	- ``concat``: Concatenates the data tensors along ``AXIS`` axis. This is
+	  the default.
 
 - ``AXIS``: the axis to concatenate input tensors along. Only used if ``MODE``
   is ``concat``. Defaults to -1 (the last axis).
+
+.. _ref_placeholder:
 
 Placeholder
 -----------
@@ -435,6 +438,23 @@ higher-dimensional vocabulary.
   should be zero-based indices which are < ``VOCAB_SIZE``.
 - ``SIZE``: The dimensionality of the embedding layer to learn. Each input
   label is mapped to a ``SIZE``-dimensional vector.
+
+Dropout
+-------
+
+**Description**. A dropout layer which drops a random set of activations on the
+previous layer during every forward/backward pass.
+
+**Purpose**. Dropout layers help to control overtraining by forcing the network
+to use different "neural pathways" to solve the problem. It is similar to
+generating a large number of superimposed models.
+
+**Usage**::
+
+	dropout: FRACTION
+
+- ``FRACTION``: float between 0 and 1. The fraction of activations to drop at
+  each pass.
 
 Operators
 =========
