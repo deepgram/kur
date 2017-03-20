@@ -125,7 +125,7 @@ class OriginalSource(Source):				# pylint: disable=abstract-method
 
 ###############################################################################
 class DerivedSource(Source):	# pylint: disable=abstract-method
-	""" A source which is not derived.
+	""" A source which is derived.
 	"""
 
 	###########################################################################
