@@ -38,7 +38,10 @@ def keras_mock(cls, backend, deps, **kwargs):
 		backend. It is used to force certain variations of the Keras backend to
 		get tested.
 	"""
-	result = lambda: cls(backend=backend, **kwargs)
+	def result(**more_kwargs):
+		x = dict(kwargs)
+		x.update(more_kwargs)
+		return cls(backend=backend, **x)
 	setattr(result, 'is_supported',
 		lambda: cls.is_supported() and all(can_import(dep) for dep in deps))
 	setattr(result, 'get_name',
@@ -77,7 +80,7 @@ def a_backend(request):
 	if not cls.is_supported():
 		pytest.xfail('Backend {} is not installed and cannot be tested.'
 			.format(cls.get_name()))
-	return cls()
+	return cls(device='cpu')
 
 ###############################################################################
 @pytest.fixture(
