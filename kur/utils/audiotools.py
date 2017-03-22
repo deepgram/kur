@@ -112,6 +112,12 @@ def get_mime_type(filename):
 		ftype = mime_magic.from_file(filename)
 		if isinstance(ftype, bytes):
 			ftype = ftype.decode('utf-8')
+
+		# If we are dealing with a symlink, read the link
+		# and try again with the target file.
+		if ftype == 'inode/symlink':
+			ftype = mime_magic.from_file(os.readlink(filename))
+			ftype = ftype.decode('utf-8') if isinstance(ftype, bytes) else ftype
 		return ftype
 
 get_mime_type.warn = True
