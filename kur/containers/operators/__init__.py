@@ -21,5 +21,6 @@ from .debug import Debug
 from .for_loop import ForLoop
 from .for_each import ForEach
 from .assertion import Assertion
+from .meta import Meta
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

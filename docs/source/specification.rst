@@ -33,6 +33,9 @@ All Kur specifications support these top-level sections:
 	include:
 
 	# Optional
+	templates:
+
+	# Optional
 	settings:
 
 	# Required
@@ -313,6 +316,37 @@ The container ``layer_1`` is one of the model outputs. It is also an input to
 so it still gets its input from the most recently declared container.) And if
 ``layer_2`` is the last layer in the model, then model will have a second
 output named ``layer_2``.
+
+.. _template_spec:
+
+Templates
+=========
+
+The ``templates`` section is where *templates* can be defined. Templates are
+essentially user-defined meta-containers, like macros, that can be used to
+streamline the development of complex models. The ``templates`` section should
+contain a dictionary of template definitions like this:
+
+.. code-block:: yaml
+
+	templates:
+
+	  my_first_template:
+	    # ... template definition
+
+	  my_second_template:
+	    # ... template definition
+
+	  # Other templates
+
+Each template definition is a list of containers that it should be replaced
+with, which may themselves contain other templates. These templates may
+reference arguments that are explicitly passed to them during the template
+instantiation, as well as any other values which happen to be "in scope".
+Additionally, all meta-containers also have access to an ``args`` value which
+is itself a dictionary of all parameters passed to the template instantiation.
+
+For more information, see the :ref:`meta_containers` section.
 
 Settings
 ========

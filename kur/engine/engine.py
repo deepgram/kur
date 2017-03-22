@@ -92,6 +92,21 @@ class Engine:
 			'layers' : []
 		}
 		self._scope = ChainMap(self.state)
+		self._templates = {}
+
+	###########################################################################
+	def register_templates(self, templates):
+		self._templates = {}
+		for k, v in templates.items():
+			if not isinstance(v, (list, tuple)):
+				v = [v]
+			self._templates[k] = v
+		logger.info('Registering the following templates: %s', ', '.join(
+			self._templates.keys()))
+
+	###########################################################################
+	def get_template(self, name):
+		return self._templates.get(name)
 
 	###########################################################################
 	def scope(self, **kwargs):

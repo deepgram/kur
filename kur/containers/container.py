@@ -69,7 +69,22 @@ class Container:
 		""" Factory method for creating containers.
 		"""
 		cls = Container.find_container_for_data(data)
-		return cls(data, **kwargs)
+		if cls:
+			return cls(data, **kwargs)
+
+		from .operators.meta import Meta
+		return Meta(data, **kwargs)
+
+	###########################################################################
+	@staticmethod
+	def get_container_for_name(name):
+		""" Finds a class object with the given name.
+		"""
+		name = name.lower()
+		for cls in get_subclasses(Container):
+			if cls.get_container_name() == name:
+				return cls
+		return None
 
 	###########################################################################
 	@staticmethod
@@ -79,7 +94,7 @@ class Container:
 		for cls in get_subclasses(Container):
 			if cls.get_container_name() in data:
 				return cls
-		raise ValueError('No such container for data: {}'.format(data))
+		return None
 
 	###########################################################################
 	def __init__(self, data):
