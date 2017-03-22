@@ -130,3 +130,53 @@ Why does Kur take so long to run?
 It doesn't. It's actually the compiler running in the background, something
 that all deep learning libraries must do to increase performance. See
 :ref:`this answer <looks_stuck>` for more information.
+
+
+How to play with Kur source code?
+---------------------------------
+
+First, why source code? Because no matter how extensive a documentation can be, the source code always provide you with more. There is no better way to understand how Kur work than playing the code.
+
+Here are two simple methods of playing: one, use a lot of `logger.debug` or `logger.info` to a function for example; the other, if you want to execute a function as a standalone piece of code, just [mocking](https://docs.python.org/3/library/unittest.mock.html) the "missing" pieces (including things like args, self, etc.)
+
+For the first method, for example, you can go to `__main__.py` to hack `kur -v --version` by inserting the line marked with `###` below:
+
+```python
+def version(args):							# pylint: disable=unused-argument
+	""" Prints the Kur version and exits.
+	"""
+	print('Kur, by Deepgram -- deep learning made easy')
+	print('Version: {}'.format(__version__))
+	print('Homepage: {}'.format(__homepage__))
+	logger.info("I am hacking here") ###
+```
+
+then, save this file, and run `kur -v --version` to see.
+
+
+How to save log info into a file?
+---------------------------------
+you can save all the output on the console into a log file at the current directory:
+
+```python
+kur -v build mnist.yml 2>&1 | tee my.log
+```
+
+
+How to create a separate playground for experimenting Kur?
+-----------------------------------------------------------
+First, to create a new environment with [pip](http://kur.deepgram.com/install.html#virtual-environments) or with [conda create](https://conda.io/docs/commands.html#annotations:pVd2GOU9EeayizfLDoFKRw) and git clone and install Kur again in a different directory.
+
+Second, make sure the previous Kur path is not inside your new environment `sys.path`. To check, remove and add new path to Kur, play with the following code:
+
+```
+# inside your new environment
+python  # enter python
+import sys
+sys.path  # check all your paths
+sys.path.remove('your previous path to Kur')
+sys.path.append('your new path to Kur')
+# exit, back to console, and try
+kur -v --version
+# you shall see the previous hack log message is gone
+```
