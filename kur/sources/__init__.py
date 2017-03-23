@@ -17,7 +17,9 @@ limitations under the License.
 from .source import Source, DerivedSource, OriginalSource
 from .chunk import ChunkSource
 from .vanilla import VanillaSource
+from .jsonl import JSONLSource
 from .repeat import RepeatSource
 from .stack_source import StackSource
+from .text import TextSource, TextLength, RawText
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

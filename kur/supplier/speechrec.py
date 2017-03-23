@@ -548,7 +548,7 @@ class SpeechRecognitionSupplier(Supplier):
 
 			- As evidenced by the examples above, Kur follows Python in using
 			  ranges that exclude the upper bound (e.g., "10" means "0 .. 9"
-			  and "10-20" means "0..19").
+			  and "10-20" means "10..19").
 		"""
 		if samples is None:
 			logger.debug('Using all available data.')
