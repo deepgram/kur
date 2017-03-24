@@ -51,9 +51,11 @@ def parse_kurfile(filename, engine):
 def dump(args):
 	""" Dumps the Kurfile to stdout as a JSON blob.
 	"""
-	logger.info("Hack! execute dump()")
+	logger.info("execute dump(args) ....")
 	spec = parse_kurfile(args.kurfile, args.engine)
-	print(json.dumps(spec.data, sort_keys=True, indent=4))
+	# import json; json.dumps?
+	# todo: remove one of `evaluate` and 'evaluation', and etc
+	print(json.dumps(spec.data, sort_keys=False, indent=4))
 
 ###############################################################################
 def train(args):
@@ -84,32 +86,11 @@ def evaluate(args):
 def build(args):
 	""" Builds a model.
 	"""
-	logger.info("Hack! Build, start to parse kurfile: -------")
-	spec = parse_kurfile(args.kurfile, args.engine)
-	logger.info("Hack! from spec we can access details of kurfile: -------")
-	logger.info("Hack! by now, args of console input can be accessed too: -------")
-	# to explore spec
-	# logger.info("what is stored inside `spec = parse_kurfile(args.kurfile, args.engine)`: -----------")
-	# logger.info("spec: %s", dir(spec))
-	# logger.info("spec.DEFAULT_OPTIMIZER: %s", spec.DEFAULT_OPTIMIZER)
-	# logger.info("spec.filename: %s", spec.filename)
-	# logger.info("spec.backend: %s", spec.backend)
-	# logger.info("spec.get_backend: %s", spec.get_backend)
-	# logger.info("spec.get_evaluation_function: %s", spec.get_evaluation_function)
-	# logger.info("spec.get_trainer: %s", spec.get_trainer)
-	# logger.info("spec.containers: %s", spec.containers)
-	# logger.info("spec.data: %s", spec.data)
-	# logger.info("spec.engine: %s", spec.engine)
-	# logger.info("spec.get_evaluator: %s", spec.get_evaluator)
-	# logger.info("spec.get_loss: %s", spec.get_loss)
-	# logger.info("spec.get_model: %s", spec.get_model)
-	# logger.info("spec.model: %s", spec.model)
-	# logger.info("spec.parse: %s", spec.parse)
-	# logger.info("spec.parse_source: %s", spec.parse_source)
+	
+	logger.info("Executing build(args) ...  ")
 
-	#### explore args produced by args = parse_args() in main():
-	logger.info("what args contain: ----------------------")
-	logger.info("args:   %s", args)
+	spec = parse_kurfile(args.kurfile, args.engine)
+
 
 	# if build compile option is set to auto
 	if args.compile == 'auto':
@@ -227,9 +208,8 @@ def prepare_data(args):
 def version(args):							# pylint: disable=unused-argument
 	""" Prints the Kur version and exits.
 	"""
-	logger.info("simply print a string")
+	logger.info("version(args) is running ...")
 	print('Kur, by Deepgram -- deep learning made easy')
-	logger.info("print('Version: {}'.format(__version__))")
 	print('Version: {}'.format(__version__))
 	print('Homepage: {}'.format(__homepage__))
 
@@ -424,59 +404,57 @@ def main():
 				reset='' if args.no_color else '$RESET'
 			)
 	)
-	logger.info("Hack! Is everything starting at `def main():` first?")
-	logger.info("Hack! Now we have args from console: ------")
+
+
+	logger.info("Step1: get console inputs or args into py-script")
 	logger.info("args = parse_args(): %s", args)
 
 
-	# If capture is true, redirect all warnings to the logging package.
+	# in ipython, try:
+	# import logging; logging.captureWarnings?
 	logging.captureWarnings(True)
 
 
 
-	logger.info("Hack!: run at do_monitor(args)")
+	logger.info("Step2: if args will, do_monitor(args) will run next")
 	# do monitor here, but why?
 	do_monitor(args)
 
 
-	logger.info("Hack!: run at `if args.version:`")
+	logger.info("Step3: if args.version True, kur version will show up")
 	# if console receive `--version`, then args.version == True
 	if args.version:
 		# set args.func = version, version is a function defined above
 		args.func = version
 
 
-	### what to output when not action is given after `kur   `
-	# if  args.func == none or null
+
+
 	elif not hasattr(args, 'func'):
-		logger.info("Hack!: run at `kur and nothing`")
-		## sys.stderr
-		# A file like object that publishes the stream to a 0MQ PUB socket.
-		# Output is handed off to an IO Thread
+		logger.info("Step4: if no args.func is given, print out the following")
+		## import sys; sys.stderr?
 		print('Nothing to do!', file=sys.stderr)
 		print('For usage information, try: kur --help', file=sys.stderr)
 		print('Or visit our homepage: {}'.format(__homepage__))
-		## sys.exit()
-		# Exit the interpreter by raising SystemExit(status).
-		# If the status is omitted or None, it defaults to zero (i.e., success).
-		# If the status is an integer, it will be used as the system exit status.
-		# If it is another kind of object, it will be printed and the system
-		# exit status will be one (i.e., failure).
+		## import sys; sys.exit?
+		# exit as failure?
 		sys.exit(1)
 
-	# JinjiaEngine()
-	# An evaluation engine which uses Jinja2 for templating.
+	# import kur; from kur.engine import JinjaEngine; JinjaEngine.__dict__
 	# Creates a new Jinja2 templating engine.
+	logger.info("Step5: create a JinjiaEngine object")
 	engine = JinjaEngine()
 
 	# setattr(x, 'y', v) is equivalent to ``x.y = v''
 	# set args.engine to be engine defined above
+	logger.info("Step6: set args.engine to be a real engine object")
 	setattr(args, 'engine', engine)
 
 
 	### This line of code is crucial: it runs all functions as user want expressed as inputs from console
 	# comment it out, nothing will actually get done
 	# with this line of code, system run the functions and exit with success.
+	logger.info("Step7: run relevant funcions with args: it can be version(), train(), evaluate(), test(), dump(), build(), prepare_data(), then exit the program as success")
 	sys.exit(args.func(args) or 0)
 
 ###############################################################################
