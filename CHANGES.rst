@@ -4,6 +4,15 @@ CHANGES
 master (unreleased)
 -------------------
 
+0.4.0 (2017.03.23)
+
+- Improved GPU selection
+- Documentation updates
+- Better JSONL loading
+- Couple minor bug fixes
+- New layer: for_each
+- Added templating and meta-containers
+
 0.4.0rc0 (2017.03.15)
 
 - New backend: PyTorch
