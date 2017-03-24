@@ -13,12 +13,12 @@ the required sections that every Kur model needs.
 
 .. note::
 
-	Out of the box, Kur understands YAML files and JSON files, although other
-	formats may be added in the future. For details of the YAML syntax, take a
-	look at the `Ansible overview
-	<https://docs.ansible.com/ansible/YAMLSyntax.html>`_.  Here, we will give
-	our examples in YAML, since the concepts should port fairly directly to
-	other data languages (like JSON).
+  Out of the box, Kur understands YAML files and JSON files, although other
+  formats may be added in the future. For details of the YAML syntax, take a
+  look at the `Ansible overview
+  <https://docs.ansible.com/ansible/YAMLSyntax.html>`_.  Here, we will give
+  our examples in YAML, since the concepts should port fairly directly to
+  other data languages (like JSON).
 
 Top-level Sections
 ==================
@@ -333,14 +333,14 @@ The Kur backend can be chosen like this:
 
   settings:
 
-	  backend:
-	    name: NAME
-	    variant: VARIANT
-	    device: DEVICE
-      parallel: PARALLEL
-	    PARAM_KEY: PARAM_VALUE
-	    PARAM_KEY: PARAM_VALUE
-	    ...
+    backend:
+      name: NAME
+      variant: VARIANT
+      device: DEVICE
+    parallel: PARALLEL
+      PARAM_KEY: PARAM_VALUE
+      PARAM_KEY: PARAM_VALUE
+      ...
 
 The ``NAME``, ``VARIANT``, ``DEVICE``, ``PARALLEL``, and ``PARAM_`` fields are
 all optional.
@@ -361,8 +361,8 @@ devices. For more refined control of GPU devices, Kur can take more advanced
 selection criteria. This is best illustrated by examples: 
 
 - ``gpu2``: use GPU 2 only (all indices are zero-based).
-- ``gpu2, gpu4``: use GPUs 2 and 4 only.
-- ``gpu2-6, gpu!3``: use GPUs 2 through 6, but not GPU 3.
+- ``gpu2,gpu4``: use GPUs 2 and 4 only.
+- ``gpu2-6,gpu!3``: use GPUs 2 through 6, but not GPU 3.
 
 If ``DEVICE`` is not present, then Kur will try to use GPUs if they are
 available.
@@ -373,24 +373,24 @@ many GPUs as possible.
 
 .. note::
 
-	What's the difference between ``DEVICE`` and ``PARALLEL``? ``DEVICE`` tells
-	Kur **which** devices it is **allowed** to use, and ``PARALLEL`` tells Kur
-	**how many** devices it should use. Kur will look at all the allowed
-	devices (as specified by ``DEVICE``), and then automatically select
-	``PARALLEL`` devices that do not seem to be in use. This is very useful
-	when you have many GPUs but you want to start several, separate Kur jobs.
-	In this case, you might leave ``DEVICE`` empty but set ``PARALLEL`` to 2.
-	Or if you want to reserve GPU 0 for some other process (maybe some
-	on-the-side PyTorch testing?), then you can set ``DEVICE`` to ``gpu!0`` and
-	leave ``PARALLEL`` blank (which tells Kur to use as many GPUs as possible,
-	except for GPU 0).
+  What's the difference between ``DEVICE`` and ``PARALLEL``? ``DEVICE`` tells
+  Kur **which** devices it is **allowed** to use, and ``PARALLEL`` tells Kur
+  **how many** devices it should use. Kur will look at all the allowed
+  devices (as specified by ``DEVICE``), and then automatically select
+  ``PARALLEL`` devices that do not seem to be in use. This is very useful
+  when you have many GPUs but you want to start several, separate Kur jobs.
+  In this case, you might leave ``DEVICE`` empty but set ``PARALLEL`` to 2.
+  Or if you want to reserve GPU 0 for some other process (maybe some
+  on-the-side PyTorch testing?), then you can set ``DEVICE`` to ``gpu!0`` and
+  leave ``PARALLEL`` blank (which tells Kur to use as many GPUs as possible,
+  except for GPU 0).
 
 .. note::
 
-	When ``PARALLEL`` is specified, the batch size will be **reinterpretted**
-	as a *global* batch size. Thus, leaving ``PARALLEL`` blank might lead to
-	unexpected batch sizes being distributed. This may be changed in the
-	future.
+  When ``PARALLEL`` is specified, the batch size will be **reinterpretted**
+  as a *global* batch size. Thus, leaving ``PARALLEL`` blank might lead to
+  unexpected batch sizes being distributed. This may be changed in the
+  future.
 
 The remaining ``PARAM_KEY``, ``PARAM_VALUE`` fields are just key/value pairs
 that the backend uses to configure itself. Their meaning is backend specific.
@@ -429,26 +429,26 @@ can do things like:
 
 .. note::
 
-	**Advanced usage**. The ``settings`` section is available to other sections
-	for templating and variable substitution. Is it available to the
-	``settings`` section itself? Yes! However, you need to prepend the variable
-	field with ``settings``. For example, if you want to use multiple GPUs, and
-	want the local (per-GPU) batch size to be constant, you might do this:
+  **Advanced usage**. The ``settings`` section is available to other sections
+  for templating and variable substitution. Is it available to the
+  ``settings`` section itself? Yes! However, you need to prepend the variable
+  field with ``settings``. For example, if you want to use multiple GPUs, and
+  want the local (per-GPU) batch size to be constant, you might do this:
 
-	.. code-block:: yaml
+  .. code-block:: yaml
 
-		settings:
-		  backend:
-		    parallel: 4
-		  local_batch_size: 16
-		  batch_size: "{{ settings.backend.parallel * settings.local_batch_size }}"
+    settings:
+      backend:
+        parallel: 4
+      local_batch_size: 16
+      batch_size: "{{ settings.backend.parallel * settings.local_batch_size }}"
 
-		train:
-		  provider:
-		    batch_size: "{{ batch_size }}"
+    train:
+      provider:
+        batch_size: "{{ batch_size }}"
 
-	Additionally, recursive use of ``settings`` variables from within the
-	``settings`` block itself is not allowed.
+  Additionally, recursive use of ``settings`` variables from within the
+  ``settings`` block itself is not allowed.
 
 Hyperparameters
 ---------------
@@ -749,8 +749,8 @@ is used.
 
 .. note::
 
-	The ``rmsprop`` optimizer and gradient clipping are not currently available
-	for the PyTorch backend.
+  The ``rmsprop`` optimizer and gradient clipping are not currently available
+  for the PyTorch backend.
 
 .. _weights_train:
 
@@ -1069,7 +1069,7 @@ Valid loss functions (choices for ``name``) are:
 
 .. note::
 
-	The CTC loss function is not available for the PyTorch backend.
+  The CTC loss function is not available for the PyTorch backend.
 
 Using CTC Loss
 --------------
@@ -1262,10 +1262,10 @@ Valid suppliers are:
   example. In addition to standard :ref:`package_specification`, you can also
   specify:
 
-	- ``parts``: Which parts of the data set to load. CIFAR-10 splits the data
-	  sets into 6 pieces, named: 1, 2, 3, 4, 5, and "test". If ``parts`` is not
-	  specified, all six pieces are loaded by the supplier; otherwise,
-	  ``parts`` can be a single piece to load, or a list of pieces to load.
+  - ``parts``: Which parts of the data set to load. CIFAR-10 splits the data
+    sets into 6 pieces, named: 1, 2, 3, 4, 5, and "test". If ``parts`` is not
+    specified, all six pieces are loaded by the supplier; otherwise,
+    ``parts`` can be a single piece to load, or a list of pieces to load.
 
 - ``pickle``: Loads a pickled Python data structure. The pickled file is
   expected to contain a dictionary whose keys are strings naming the respective
@@ -1301,7 +1301,7 @@ Valid suppliers are:
   pig latin to english. E.g., 'ellohay iway amway away omputercay' --> 'hello i am a computer'.
   Your data file ``data.jsonl`` could look like this:
 
-  .. code-block:: json
+  .. code-block:: javascript
 
     {"pig_latin":["e", "l", "l", "o", "h", "a", "y", " ", "i", "w", "a", "y", " ", "a", "m", "w", "a", "y", " ", "a", "w", "a", "y", " ", "o", "m", "p", "u", "t", "e", "r", "c", "a", "y"], "english":["h", "e", "l", "l", "o", " ", "i", " ", "a", "m", " ", "a", " ", "c", "o", "m", "p", "u", "t", "e", "r"]}
     {"pig_latin":["a", "p", "p", "l", "e", "w", "a", "y"], "english":["a", "p", "p", "l", "e"]}
@@ -1344,6 +1344,7 @@ Valid suppliers are:
   output is finished and the model should output '<done>' symbols to signal that its
   job is done.
 
+
 - ``csv``: This supplier loads CSV data. If you only give it a filename, then
   it will try to load a local file, and it assumes that the first row of the
   file is a header row. Alternatively, you can given it a dictionary of
@@ -1352,12 +1353,12 @@ Valid suppliers are:
 
   .. code-block:: yaml
 
-    csv:
-      format:
-        delimiter: DELIMITER
-      quote: QUOTE_CHARACTER
-      header: HEADER
-      # ... also uses standard packaging
+  csv:
+    format:
+      delimiter: DELIMITER
+    quote: QUOTE_CHARACTER
+    header: HEADER
+    # ... also uses standard packaging
 
   ``DELIMITER`` is the delimiter character. Normally, it is autodetected, but
   you can override it here. Similarly, the ``QUOTE_CHARACTER`` indicates the
@@ -1385,53 +1386,53 @@ Valid suppliers are:
   speech recognition (ASR, also known as transcription). It takes the standard
   :ref:`package_specification`, in addition to these other optional parameters:
 
-	- ``unpack``: bool (default: True). If set, and if the source file is
-	  compressed (e.g., ``.tar.gz``), then Kur will first unpack the file
-	  before using the dataset.
-	- ``type``: str, either ``spec`` or ``mfcc`` (default: ``spec``).
-	  Determines the type of audio features to present to the model, either
-	  spectrograms (for ``spec``) or Mel-frequency cepstral coefficients
-	  (``mfcc``).
-	- ``normalization``: None, string, or dictionary (default: None). Indicates
-	  how data should be normalized. If None, speech data is automatically
-	  normalized on a per-dataset basis, but the normalization is **not** saved
-	  between training sessions. You should only do this if you are
-	  experimenting, and not in a production setting. If this is a string, it
-	  is interpretted as a filename where a previous normalization is stored.
-	  If this file doesn't exist, it will be created and normalization
-	  statistics from the dataset will be stored in it. If it is a dictionary,
-	  then more advanced normalization settings can be specified. Valid
-	  dictionary keys are ``path`` (the file to store/load the normalization
-	  in/from, or null to use per-session data only), ``center`` (boolean
-	  indicating whether or not to mean-subtract the data, ``scale`` (boolean
-	  indicating whether or not to scale the data), ``rotate`` (boolean
-	  indicating whether or not to perform a ZCA rotation on the data; or one
-	  of the strings ``zca``, ``pca`` to indicate the rotation to perform), and
-	  ``depth`` (an integer indicating how many data samples to use in
-	  calculating the normalization statistics).
-	- ``min_duration``: float (default: None). Only keeps audio utterances that
-	  are longer than ``min_duration`` seconds; if unspecified or ``null``, it
-	  keeps all utterances.
-	- ``max_duration``: float (default: None). Only keeps audio utterances that
-	  are shorter than ``max_duration`` seconds; if unspecified or ``null``, it
-	  keeps all utterances.
-	- ``max_frequency``: float (default: None). Only keep frequency components
-	  that are less than ``max_frequency`` Hertz; if unspecified or ``null``,
-	  it keeps all frequencies.
-	- ``vocab``: str, list, or None (default: None). The vocabulary to use in
-	  preparing transcripts. If None, it auto-detects the vocabulary from the
-	  dataset (**note**: this is *only* recommended for testing). If a string,
-	  it is a JSON file containing a single JSON list; each element in the list
-	  is treated as a case-insensitive vocabulary word. If a list, each element
-	  of the list is treated as a case-insensitive word.
-	- ``samples``: None, int, or str (default: None). Allows downselection of
-	  available samples. If this is None, no downselection is used. If this is
-	  an integer, then only the first ``samples`` samples will be kept. This
-	  can also be specified as a range ``123-456`` to keep the 333 samples from
-	  123 through 455. You can also omit the second range to use all samples to
-	  the end of the file, as in ``123-``. Percentages are allowed as well by
-	  *appending* a single percent sign to the end of the string, as in:
-	  ``10%``, ``20-30%``, ``90-%``.
+  - ``unpack``: bool (default: True). If set, and if the source file is
+    compressed (e.g., ``.tar.gz``), then Kur will first unpack the file
+    before using the dataset.
+  - ``type``: str, either ``spec`` or ``mfcc`` (default: ``spec``).
+    Determines the type of audio features to present to the model, either
+    spectrograms (for ``spec``) or Mel-frequency cepstral coefficients
+    (``mfcc``).
+  - ``normalization``: None, string, or dictionary (default: None). Indicates
+    how data should be normalized. If None, speech data is automatically
+    normalized on a per-dataset basis, but the normalization is **not** saved
+    between training sessions. You should only do this if you are
+    experimenting, and not in a production setting. If this is a string, it
+    is interpretted as a filename where a previous normalization is stored.
+    If this file doesn't exist, it will be created and normalization
+    statistics from the dataset will be stored in it. If it is a dictionary,
+    then more advanced normalization settings can be specified. Valid
+    dictionary keys are ``path`` (the file to store/load the normalization
+    in/from, or null to use per-session data only), ``center`` (boolean
+    indicating whether or not to mean-subtract the data, ``scale`` (boolean
+    indicating whether or not to scale the data), ``rotate`` (boolean
+    indicating whether or not to perform a ZCA rotation on the data; or one
+    of the strings ``zca``, ``pca`` to indicate the rotation to perform), and
+    ``depth`` (an integer indicating how many data samples to use in
+    calculating the normalization statistics).
+  - ``min_duration``: float (default: None). Only keeps audio utterances that
+    are longer than ``min_duration`` seconds; if unspecified or ``null``, it
+    keeps all utterances.
+  - ``max_duration``: float (default: None). Only keeps audio utterances that
+    are shorter than ``max_duration`` seconds; if unspecified or ``null``, it
+    keeps all utterances.
+  - ``max_frequency``: float (default: None). Only keep frequency components
+    that are less than ``max_frequency`` Hertz; if unspecified or ``null``,
+    it keeps all frequencies.
+  - ``vocab``: str, list, or None (default: None). The vocabulary to use in
+    preparing transcripts. If None, it auto-detects the vocabulary from the
+    dataset (**note**: this is *only* recommended for testing). If a string,
+    it is a JSON file containing a single JSON list; each element in the list
+    is treated as a case-insensitive vocabulary word. If a list, each element
+    of the list is treated as a case-insensitive word.
+  - ``samples``: None, int, or str (default: None). Allows downselection of
+    available samples. If this is None, no downselection is used. If this is
+    an integer, then only the first ``samples`` samples will be kept. This
+    can also be specified as a range ``123-456`` to keep the 333 samples from
+    123 through 455. You can also omit the second range to use all samples to
+    the end of the file, as in ``123-``. Percentages are allowed as well by
+    *appending* a single percent sign to the end of the string, as in:
+    ``10%``, ``20-30%``, ``90-%``.
 
   The speech recognition supplier will produce the following data sources that
   you can use in your model:
@@ -1627,14 +1628,14 @@ as part of Kur:
 
   .. code-block:: yaml
 
-	slack:
-	  channel: CHANNEL
-	  url: URL
-	  icon: ICON
-	  user: USER
-	  title: TITLE
-	  token: TOKEN
-	  extra_files: EXTRA
+  slack:
+    channel: CHANNEL
+    url: URL
+    icon: ICON
+    user: USER
+    title: TITLE
+    token: TOKEN
+    extra_files: EXTRA
 
   ``CHANNEL`` is the name of the Slack channel to post to (e.g, "#kur") and is
   required. ``URL`` is the Slack webhook URL and is required. ``ICON`` is the
@@ -1659,9 +1660,9 @@ as part of Kur:
   .. code-block:: yaml
   
     plot:
-	  loss_per_batch: LOSS_PER_BATCH
-	  loss_per_time: LOSS_PER_TIME
-	  throughput_per_time: THROUGHPUT_PER_TIME
+    loss_per_batch: LOSS_PER_BATCH
+    loss_per_time: LOSS_PER_TIME
+    throughput_per_time: THROUGHPUT_PER_TIME
 
   All parameters are filenames for storing their respective plots at. In the
   second form, any line may be absent (or None) to disable generation of that
@@ -1673,13 +1674,13 @@ as part of Kur:
   .. note::
 
     Pro-tip: ``plot`` and ``slack`` hooks can be combined so that your latest
-	loss plots get automatically posted to Slack. Since hooks are processed
-	in order, make sure the plot comes first:
+  loss plots get automatically posted to Slack. Since hooks are processed
+  in order, make sure the plot comes first:
 
-	.. code-block:: yaml
+  .. code-block:: yaml
 
-	  hooks:
-	    - plot: &loss_file my_loss.png
-		- slack:
-		    extra_files: \*loss_file
-		    # Other Slack parameters...
+    hooks:
+      - plot: &loss_file my_loss.png
+    - slack:
+        extra_files: \*loss_file
+        # Other Slack parameters...
