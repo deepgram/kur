@@ -55,10 +55,6 @@ class Meta(Operator):
 	def _parse(self, engine):
 		""" Parses out the meta-container.
 		"""
-
-		# Always call the parent.
-		super()._parse(engine)
-
 		# Figure out which template we represent.
 		name, template = self._resolve(engine)
 		self.args = engine.evaluate(self.data[name])

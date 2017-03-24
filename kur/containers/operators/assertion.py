@@ -42,7 +42,6 @@ class Assertion(Operator):			# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the debug statement and print it.
 		"""
-		super()._parse(engine)
 		self.condition = engine.evaluate(self.args, recursive=True)
 		if not self.condition:
 			raise AssertionError('"assert" layer failed. Condition evaluated '

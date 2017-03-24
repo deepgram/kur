@@ -33,9 +33,6 @@ class Embedding(Layer):				# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the layer.
 		"""
-
-		super()._parse(engine)
-
 		if not isinstance(self.args, dict):
 			raise ParsingError('Embedding layer expected a dictionary of '
 				'parameters, but instead received: {}'.format(self.args))

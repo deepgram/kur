@@ -32,9 +32,6 @@ class Repeat(Layer):				# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the layer.
 		"""
-
-		super()._parse(engine)
-
 		if isinstance(self.args, dict):
 			self.count = engine.evaluate(self.args['count'], recursive=True)
 		else:

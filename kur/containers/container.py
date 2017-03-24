@@ -278,6 +278,7 @@ class Container:
 
 		self._parse_pre(engine)
 		# TODO: Apply any "vars" that got parsed out during `_parse_pre()`.
+		self._parse_core(engine)
 		self._parse(engine)
 		self._parse_post(engine)
 
@@ -323,6 +324,12 @@ class Container:
 		""" Parse the container.
 
 			This should be overriden in derived classes.
+		"""
+		pass
+
+	###########################################################################
+	def _parse_core(self, engine):
+		""" Parse the core components of the container.
 		"""
 		if 'tag' in self.data:
 			self.tags = engine.evaluate(self.data['tag'], recursive=True)

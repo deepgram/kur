@@ -56,10 +56,6 @@ class ForLoop(Operator):				# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse and construct the child containers.
 		"""
-
-		# Always call the parent.
-		super()._parse(engine)
-
 		# Parse self
 		if 'range' not in self.args:
 			raise ParsingError('Missing "range" key in for loop.')

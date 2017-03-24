@@ -44,8 +44,6 @@ class Reuse(Layer):						# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the debug statement and print it.
 		"""
-		super()._parse(engine)
-
 		if isinstance(self.args, dict):
 			if 'target' not in self.args:
 				raise ParsingError('Missing key "target" in Reuse layer.')

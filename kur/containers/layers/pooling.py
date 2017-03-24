@@ -64,9 +64,6 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parses out the pooling layer.
 		"""
-		# Always call the parent.
-		super()._parse(engine)
-
 		# Parse self
 		if isinstance(self.args, dict):
 			if 'size' not in self.args:

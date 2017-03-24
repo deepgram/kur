@@ -41,10 +41,6 @@ class ForEach(Operator):				# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse and construct the child containers.
 		"""
-
-		# Always call the parent.
-		super()._parse(engine)
-
 		# Parse self
 		if 'items' not in self.args:
 			raise ParsingError('Missing "items" key in for_each loop.')

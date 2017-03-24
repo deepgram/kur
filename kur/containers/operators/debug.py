@@ -47,7 +47,6 @@ class Debug(Operator):					# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the debug statement and print it.
 		"""
-		super()._parse(engine)
 		logger.debug('Container %s says: %s', self.name, self.args)
 
 	###########################################################################

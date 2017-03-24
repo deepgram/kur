@@ -39,9 +39,6 @@ class Dropout(Layer):	# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the layer.
 		"""
-
-		super()._parse(engine)
-
 		if isinstance(self.args, dict):
 			if 'fraction' in self.args:
 				self.dropout = engine.evaluate(

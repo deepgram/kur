@@ -45,6 +45,12 @@ class ContainerGroup(Operator):		# pylint: disable=too-few-public-methods
 			self.add_child(child)
 
 	###########################################################################
+	def _parse_core(self, engine):
+		""" This container has no pieces to it.
+		"""
+		pass
+
+	###########################################################################
 	def _parse(self, engine):
 		""" Parse all children.
 		"""

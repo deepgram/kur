@@ -35,9 +35,6 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the layer.
 		"""
-
-		super()._parse(engine)
-
 		if isinstance(self.args, dict):
 			self.size = engine.evaluate(self.args['size'], recursive=True)
 			self.auto_flatten = engine.evaluate(
