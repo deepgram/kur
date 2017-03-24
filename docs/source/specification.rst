@@ -13,12 +13,12 @@ the required sections that every Kur model needs.
 
 .. note::
 
-  Out of the box, Kur understands YAML files and JSON files, although other
-  formats may be added in the future. For details of the YAML syntax, take a
-  look at the `Ansible overview
-  <https://docs.ansible.com/ansible/YAMLSyntax.html>`_.  Here, we will give
-  our examples in YAML, since the concepts should port fairly directly to
-  other data languages (like JSON).
+	Out of the box, Kur understands YAML files and JSON files, although other
+	formats may be added in the future. For details of the YAML syntax, take a
+	look at the `Ansible overview
+	<https://docs.ansible.com/ansible/YAMLSyntax.html>`_.  Here, we will give
+	our examples in YAML, since the concepts should port fairly directly to
+	other data languages (like JSON).
 
 Top-level Sections
 ==================
@@ -27,27 +27,27 @@ All Kur specifications support these top-level sections:
 
 .. code-block:: yaml
 
-  ---
+	---
 
-  # Optional
-  include:
+	# Optional
+	include:
 
-  # Optional
-  settings:
+	# Optional
+	settings:
 
-  # Required
-  model:
+	# Required
+	model:
 
-  # Required for respective functionality.
-  train:
-  validate:
-  test:
-  evaluate:
+	# Required for respective functionality.
+	train:
+	validate:
+	test:
+	evaluate:
 
-  # Required for training, validation, and testing
-  loss:
+	# Required for training, validation, and testing
+	loss:
 
-  ...
+	...
 
 The ``model`` section is required. The ``train``, ``test``, and ``evaluate``
 blocks are required to train, test, or evaluate a model, respectively. The
@@ -71,18 +71,18 @@ container looks like this:
 
 .. code-block:: yaml
 
-  - CONTAINER_TYPE:
-  
-      # Parameters that are given to the container.
-      param1: value1
-      param2: value2
+	- CONTAINER_TYPE:
+	
+	    # Parameters that are given to the container.
+	    param1: value1
+	    param2: value2
 
-    # Optional information about this container.
-    name: NAME
-    tag: TAGS
-    oldest: OLDEST
-    inputs: INPUTS
-    sink: SINK
+	  # Optional information about this container.
+	  name: NAME
+	  tag: TAGS
+	  oldest: OLDEST
+	  inputs: INPUTS
+	  sink: SINK
 
 There are many different kinds of containers, which we describe on the
 :doc:`containers` page. The parameters that are given to the container (e.g.,
@@ -90,18 +90,18 @@ There are many different kinds of containers, which we describe on the
 
 .. note::
 
-  Kur actually thinks about two broad types of containers: *layers* and
-  *operators*. Layers are containers which "know" the kind of underlying
-  tensor operations they represent; think of layers as your deep learning
-  primitives that you use to construct your model. Convolutions,
-  fully-connected layers, recurrent layers, and so forth are all "layers" to
-  Kur. Operators are "meta-layers." They modify the way other layers are
-  interpretted, but do not produce underlying tensor operations themselves.
-  For example, a "for" loop is an operator because it can generate many other
-  layers, but by itself, a "for" loop is not a deep learning operation. If
-  you've looked through the :ref:`in_depth_examples` page, then you know that
-  ``convolution``, ``activation``, ``dense``, and ``input`` are all layers.
-  The ``for`` loop is an operator.
+	Kur actually thinks about two broad types of containers: *layers* and
+	*operators*. Layers are containers which "know" the kind of underlying
+	tensor operations they represent; think of layers as your deep learning
+	primitives that you use to construct your model. Convolutions,
+	fully-connected layers, recurrent layers, and so forth are all "layers" to
+	Kur. Operators are "meta-layers." They modify the way other layers are
+	interpretted, but do not produce underlying tensor operations themselves.
+	For example, a "for" loop is an operator because it can generate many other
+	layers, but by itself, a "for" loop is not a deep learning operation. If
+	you've looked through the :ref:`in_depth_examples` page, then you know that
+	``convolution``, ``activation``, ``dense``, and ``input`` are all layers.
+	The ``for`` loop is an operator.
 
 The other parameters to the container are described below.
 
@@ -129,8 +129,8 @@ Example:
 
 .. code-block:: yaml
 
-  # Names are just strings.
-  name: my_container_name
+	# Names are just strings.
+	name: my_container_name
 
 Tag
 ---
@@ -140,17 +140,17 @@ container temporarily "nickname" itself. It looks like this:
 
 .. code-block:: yaml
 
-  # Single tag
-  tag: foo
+	# Single tag
+	tag: foo
 
-  # Multiple tags (short version)
-  tag: [foo, bar, baz]
+	# Multiple tags (short version)
+	tag: [foo, bar, baz]
 
-  # Multiple tags (long version)
-  tag:
-    - foo
-    - bar
-    - baz
+	# Multiple tags (long version)
+	tag:
+	  - foo
+	  - bar
+	  - baz
 
 Now other layers can refer to that layer using the templating engine:
 ``{{ tags.foo }}`` and ``{{ tags["foo"] }}`` both resolve to the tagged
@@ -163,24 +163,24 @@ a tag can be used:
 
 .. code-block:: yaml
 
-  # Create a layer and tag it.
-  - convolution:
-      # ...
-    tag: foobar
+	# Create a layer and tag it.
+	- convolution:
+	    # ...
+	  tag: foobar
 
-  # ... more layers
+	# ... more layers
 
-  # Reference the tag.
-  - convolution:
-      # ...
-    inputs: "{{ tags.foobar }}"
+	# Reference the tag.
+	- convolution:
+	    # ...
+	  inputs: "{{ tags.foobar }}"
 
-  # ... more layers
+	# ... more layers
 
-  # Reassign the tag.
-  - dense:
-      size: 10
-    tag: foobar
+	# Reassign the tag.
+	- dense:
+	    size: 10
+	  tag: foobar
 
 The ``{{ tags.foobar }}`` in this example just resolves to the name of the
 first convolution container. It is similar to this code, which does not use
@@ -188,15 +188,15 @@ tags.
 
 .. code-block:: yaml
 
-  - convolution:
-      # ...
-    name: my_convolution
+	- convolution:
+	    # ...
+	  name: my_convolution
 
-  # ... more layers
+	# ... more layers
 
-  - convolution:
-      # ...
-    inputs: my_convolution
+	- convolution:
+	    # ...
+	  inputs: my_convolution
 
 Tags are most useful in large, complicated models with many loops where you
 might want to grab a container you created earlier, do something with it (e.g.
@@ -214,48 +214,48 @@ regular tags:
 
 .. code-block:: yaml
 
-  # Single "oldest" tag
-  oldest: foo
+	# Single "oldest" tag
+	oldest: foo
 
-  # Claim multiple "oldest" tags (short version)
-  oldest: [foo, bar, baz]
+	# Claim multiple "oldest" tags (short version)
+	oldest: [foo, bar, baz]
 
-  # Claim multiple "oldest" tags (long version)
-  oldest:
-    - foo
-    - bar
-    - baz
+	# Claim multiple "oldest" tags (long version)
+	oldest:
+	  - foo
+	  - bar
+	  - baz
 
 They are also used in a similar way to regular tags:
 
 .. code-block:: yaml
 
-  - convolution:
-      # ...
-    oldest: foobar
-    name: first_convolution
+	- convolution:
+	    # ...
+	  oldest: foobar
+	  name: first_convolution
 
-  - convolution:
-      # ...
-    oldest: foobar
-    name: second_convolution
+	- convolution:
+	    # ...
+	  oldest: foobar
+	  name: second_convolution
 
-  - convolution:
-      # ...
-    oldest: [foobar, baz]
-    name: third_convolution
+	- convolution:
+	    # ...
+	  oldest: [foobar, baz]
+	  name: third_convolution
 
-  # ... more layers
+	# ... more layers
 
-  # This convolution will get its input from `first_convolution`
-  - convolution:
-      # ...
-    inputs: "{{ oldest.foobar }}"
+	# This convolution will get its input from `first_convolution`
+	- convolution:
+	    # ...
+	  inputs: "{{ oldest.foobar }}"
 
-  # This convolution will get its input from `third_convolution`
-  - convolution:
-      # ...
-    inputs: "{{ oldest.baz }}"
+	# This convolution will get its input from `third_convolution`
+	- convolution:
+	    # ...
+	  inputs: "{{ oldest.baz }}"
 
 Again, these ``{{ oldest.foobar }}`` variables just resolve to the names of the
 referenced containers (e.g., ``first_convolution``).
@@ -275,16 +275,16 @@ For example
 
 .. code-block:: yaml
 
-  # Single input
-  inputs: my_layer
+	# Single input
+	inputs: my_layer
 
-  # Multiple inputs (short version)
-  inputs: [my_layer, your_layer]
+	# Multiple inputs (short version)
+	inputs: [my_layer, your_layer]
 
-  # Multiple inputs (long version)
-  inputs:
-    - my_layer
-    - your_layer
+	# Multiple inputs (long version)
+	inputs:
+	  - my_layer
+	  - your_layer
 
 Sink
 ----
@@ -299,14 +299,14 @@ For example, consider this:
 
 .. code-block:: yaml
 
-  - convolution:
-      # ...
-    sink: yes
-    name: layer_1
+	- convolution:
+	    # ...
+	  sink: yes
+	  name: layer_1
 
-  - convolution:
-      # ...
-    name: layer_2
+	- convolution:
+	    # ...
+	  name: layer_2
 
 The container ``layer_1`` is one of the model outputs. It is also an input to
 ``layer_2``. (Why? Because ``layer_2`` didn't declare an explicit ``inputs``,
@@ -331,16 +331,16 @@ The Kur backend can be chosen like this:
 
 .. code-block:: yaml
 
-  settings:
+	settings:
 
-    backend:
-      name: NAME
-      variant: VARIANT
-      device: DEVICE
-    parallel: PARALLEL
-      PARAM_KEY: PARAM_VALUE
-      PARAM_KEY: PARAM_VALUE
-      ...
+	  backend:
+	    name: NAME
+	    variant: VARIANT
+	    device: DEVICE
+		parallel: PARALLEL
+	    PARAM_KEY: PARAM_VALUE
+	    PARAM_KEY: PARAM_VALUE
+	    ...
 
 The ``NAME``, ``VARIANT``, ``DEVICE``, ``PARALLEL``, and ``PARAM_`` fields are
 all optional.
@@ -373,24 +373,24 @@ many GPUs as possible.
 
 .. note::
 
-  What's the difference between ``DEVICE`` and ``PARALLEL``? ``DEVICE`` tells
-  Kur **which** devices it is **allowed** to use, and ``PARALLEL`` tells Kur
-  **how many** devices it should use. Kur will look at all the allowed
-  devices (as specified by ``DEVICE``), and then automatically select
-  ``PARALLEL`` devices that do not seem to be in use. This is very useful
-  when you have many GPUs but you want to start several, separate Kur jobs.
-  In this case, you might leave ``DEVICE`` empty but set ``PARALLEL`` to 2.
-  Or if you want to reserve GPU 0 for some other process (maybe some
-  on-the-side PyTorch testing?), then you can set ``DEVICE`` to ``gpu!0`` and
-  leave ``PARALLEL`` blank (which tells Kur to use as many GPUs as possible,
-  except for GPU 0).
+	What's the difference between ``DEVICE`` and ``PARALLEL``? ``DEVICE`` tells
+	Kur **which** devices it is **allowed** to use, and ``PARALLEL`` tells Kur
+	**how many** devices it should use. Kur will look at all the allowed
+	devices (as specified by ``DEVICE``), and then automatically select
+	``PARALLEL`` devices that do not seem to be in use. This is very useful
+	when you have many GPUs but you want to start several, separate Kur jobs.
+	In this case, you might leave ``DEVICE`` empty but set ``PARALLEL`` to 2.
+	Or if you want to reserve GPU 0 for some other process (maybe some
+	on-the-side PyTorch testing?), then you can set ``DEVICE`` to ``gpu!0`` and
+	leave ``PARALLEL`` blank (which tells Kur to use as many GPUs as possible,
+	except for GPU 0).
 
 .. note::
 
-  When ``PARALLEL`` is specified, the batch size will be **reinterpretted**
-  as a *global* batch size. Thus, leaving ``PARALLEL`` blank might lead to
-  unexpected batch sizes being distributed. This may be changed in the
-  future.
+	When ``PARALLEL`` is specified, the batch size will be **reinterpretted**
+	as a *global* batch size. Thus, leaving ``PARALLEL`` blank might lead to
+	unexpected batch sizes being distributed. This may be changed in the
+	future.
 
 The remaining ``PARAM_KEY``, ``PARAM_VALUE`` fields are just key/value pairs
 that the backend uses to configure itself. Their meaning is backend specific.
@@ -400,10 +400,10 @@ is:
 
 .. code-block:: yaml
 
-  settings:
-    backend:
-      name: keras
-      backend: tensorflow
+	settings:
+	  backend:
+	    name: keras
+	    backend: tensorflow
 
 Global variables
 ----------------
@@ -420,35 +420,35 @@ can do things like:
 
 .. code-block:: yaml
 
-  settings:
-    batch_size: 32
+	settings:
+	  batch_size: 32
 
-  train:
-    provider:
-      batch_size: "{{ batch_size }}"
+	train:
+	  provider:
+	    batch_size: "{{ batch_size }}"
 
 .. note::
 
-  **Advanced usage**. The ``settings`` section is available to other sections
-  for templating and variable substitution. Is it available to the
-  ``settings`` section itself? Yes! However, you need to prepend the variable
-  field with ``settings``. For example, if you want to use multiple GPUs, and
-  want the local (per-GPU) batch size to be constant, you might do this:
+	**Advanced usage**. The ``settings`` section is available to other sections
+	for templating and variable substitution. Is it available to the
+	``settings`` section itself? Yes! However, you need to prepend the variable
+	field with ``settings``. For example, if you want to use multiple GPUs, and
+	want the local (per-GPU) batch size to be constant, you might do this:
 
-  .. code-block:: yaml
+	.. code-block:: yaml
 
-    settings:
-      backend:
-        parallel: 4
-      local_batch_size: 16
-      batch_size: "{{ settings.backend.parallel * settings.local_batch_size }}"
+		settings:
+		  backend:
+		    parallel: 4
+		  local_batch_size: 16
+		  batch_size: "{{ settings.backend.parallel * settings.local_batch_size }}"
 
-    train:
-      provider:
-        batch_size: "{{ batch_size }}"
+		train:
+		  provider:
+		    batch_size: "{{ batch_size }}"
 
-  Additionally, recursive use of ``settings`` variables from within the
-  ``settings`` block itself is not allowed.
+	Additionally, recursive use of ``settings`` variables from within the
+	``settings`` block itself is not allowed.
 
 Hyperparameters
 ---------------
@@ -470,29 +470,29 @@ There are a couple ways to specify includes
 
 .. code-block:: yaml
 
-  # Include a single other file.
-  include: other-file.yml
+	# Include a single other file.
+	include: other-file.yml
 
-  # Include a single other file (list-of-files)
-  include:
-    - other-file.yml
+	# Include a single other file (list-of-files)
+	include:
+	  - other-file.yml
 
-  # Include a single other file (list-of-dictionaries)
-  include:
-    - source: other-file.yml
+	# Include a single other file (list-of-dictionaries)
+	include:
+	  - source: other-file.yml
 
-  # Include two other files (list-of-files, short version)
-  include: [A-file.yml, B-file.yml]
+	# Include two other files (list-of-files, short version)
+	include: [A-file.yml, B-file.yml]
 
-  # Include two other files (list-of-files, long version)
-  include:
-    - A-file.yml
-    - B-file.yml
-  
-  # Include two other files (list-of-dictionaries)
-  include:
-    - source: A-file.yml
-    - source: B-file.yml
+	# Include two other files (list-of-files, long version)
+	include:
+	  - A-file.yml
+	  - B-file.yml
+	
+	# Include two other files (list-of-dictionaries)
+	include:
+	  - source: A-file.yml
+	  - source: B-file.yml
 
 The ``include`` field is the very first field parsed out of every file. Each
 include is parsed in order, recursively.
@@ -512,17 +512,17 @@ supports:
   then the key and value are kept in the merged result. If both dictionaries
   have the key, then:
 
-  - If the data types of the values are *different* or if the data types are
-    *primitive* (integer, float, boolean), the "not included" dictionary's
-    value is kept (i.e., "includes" get overridden by the file doing the
-    including).
-  - If the values are both dictionaries, they are recursively merged with the
-    same ``blend`` strategy.
-  - If the values are both lists, then the two lists are merged into a single
-    list. Each element of the list is the resulting of ``blend``-ing the
-    corresponding elements of the two original lists. If one list is longer
-    than the other, then the "unmatched" elements are appended to the end of
-    the merged list (and are unaffected by the presence of the other list).
+	- If the data types of the values are *different* or if the data types are
+	  *primitive* (integer, float, boolean), the "not included" dictionary's
+	  value is kept (i.e., "includes" get overridden by the file doing the
+	  including).
+	- If the values are both dictionaries, they are recursively merged with the
+	  same ``blend`` strategy.
+	- If the values are both lists, then the two lists are merged into a single
+	  list. Each element of the list is the resulting of ``blend``-ing the
+	  corresponding elements of the two original lists. If one list is longer
+	  than the other, then the "unmatched" elements are appended to the end of
+	  the merged list (and are unaffected by the presence of the other list).
 
 - ``merge``: This is similar to the ``blend`` strategy, except that lists are
   not merged, and are instead replaced as if they were primitives. Thus, the
@@ -536,16 +536,16 @@ can do so using the list-of-dictionaries format:
 
 .. code-block:: yaml
 
-  # Include a single other file with an alternative merging strategy.
-  include:
-    - source: other-file.yml
-      method: merge
+	# Include a single other file with an alternative merging strategy.
+	include:
+	  - source: other-file.yml
+	    method: merge
 
-  # Include two files, one with a non-default merge strategy
-  include:
-    - source: A-file.yml
-      method: merge
-    - source: B-file.yml
+	# Include two files, one with a non-default merge strategy
+	include:
+	  - source: A-file.yml
+	    method: merge
+	  - source: B-file.yml
 
 Train
 =====
@@ -558,29 +558,29 @@ existing model. It looks like this:
 
 .. code-block:: yaml
 
-  train:
+	train:
 
-    # How to load and process data (required)
-    data: DATA
-    provider: PROVIDER
+	  # How to load and process data (required)
+	  data: DATA
+	  provider: PROVIDER
 
-    # Where the log file lives
-    log: LOG (optional)
+	  # Where the log file lives
+	  log: LOG (optional)
 
-    # How many epochs to train for (optional)
-    epochs: EPOCHS
+	  # How many epochs to train for (optional)
+	  epochs: EPOCHS
 
-    # Where to store weights (optional)
-    weights: WEIGHTS
+	  # Where to store weights (optional)
+	  weights: WEIGHTS
 
-    # How to create checkpoints.
-    checkpoint: CHECKPOINT
+	  # How to create checkpoints.
+	  checkpoint: CHECKPOINT
 
-    # What optimizer to use (optional)
-    optimizer: OPTIMIZER
+	  # What optimizer to use (optional)
+	  optimizer: OPTIMIZER
 
-    # Callbacks to be executed after each epoch (optional)
-    hooks: HOOKS
+	  # Callbacks to be executed after each epoch (optional)
+	  hooks: HOOKS
 
 The ``data`` and ``provider`` fields are discussed in the :ref:`data_spec`
 section, and the ``hooks`` field is discussed in :ref:`hooks_spec`. The other
@@ -607,26 +607,26 @@ Here are some examples of using this field:
 
 .. code-block:: yaml
 
-  # Empty entry: same as not specifying a log (no log will be used)
-  log:
+	# Empty entry: same as not specifying a log (no log will be used)
+	log:
 
-  # Explicitly empty entry: same as not specifying a log (no log will be used)
-  log: null
+	# Explicitly empty entry: same as not specifying a log (no log will be used)
+	log: null
 
-  # Use the default log format
-  log: /my/log/path
+	# Use the default log format
+	log: /my/log/path
 
-  # Use the default log format (alternative format)
-  log:
-    path: /my/log/path
-  
-  # Non-default log format, optionally with implementation-specific parameters
-  log:
-    name: LOGGER_TYPE
+	# Use the default log format (alternative format)
+	log:
+	  path: /my/log/path
+	
+	# Non-default log format, optionally with implementation-specific parameters
+	log:
+	  name: LOGGER_TYPE
 
-    # Parameters to LOGGER_TYPE (e.g., `path`)
-    param: value
-    param2: value2
+	  # Parameters to LOGGER_TYPE (e.g., `path`)
+	  param: value
+	  param2: value2
 
 The default logger is a binary logger that saves log information in a binary
 format, which allows data to be appended efficiently rather than spend precious
@@ -665,9 +665,9 @@ train`` is called. More complicated configurations can be specified with:
 
 .. code-block:: yaml
 
-  epochs:
-    number: NUMBER
-    mode: MODE
+	epochs:
+	  number: NUMBER
+	  mode: MODE
 
 ``NUMBER`` is the number of epochs to train for. To train forever, set this to
 ``null`` or ``infinite``. For finite values of ``NUMBER``, ``MODE`` tells Kur
@@ -695,15 +695,15 @@ training like this:
 
 .. code-block:: yaml
 
-  # Set the optimizer and use its default parameter values.
-  optimizer: NAME
-  
-  # Set the optimizer, and optionally provide parameter values
-  optimizer:
-    name: NAME
+	# Set the optimizer and use its default parameter values.
+	optimizer: NAME
+	
+	# Set the optimizer, and optionally provide parameter values
+	optimizer:
+	  name: NAME
 
-    # Optional parameters
-    param: value
+	  # Optional parameters
+	  param: value
 
 Available optimizers:
 
@@ -714,43 +714,43 @@ Available optimizers:
 
 - ``sgd``. Stochastic gradient descent. It takes these parameters:
 
-  - ``learning_rate`` (default: 0.01). The learning rate for the optimizer.
-  - ``momentum`` (default: 0)
-  - ``decay`` (default: 0)
-  - ``nesterov`` (default: ``no``). If True, Nesterov momentum calculations
-    are used.
+	- ``learning_rate`` (default: 0.01). The learning rate for the optimizer.
+	- ``momentum`` (default: 0)
+	- ``decay`` (default: 0)
+	- ``nesterov`` (default: ``no``). If True, Nesterov momentum calculations
+	  are used.
 
 - ``rmsprop``. RMSProp. It takes these parameters:
 
-  - ``learning_rate`` (default: 0.001). The learning rate for the optimizer.
-  - ``rho`` (default: 0.9)
-  - ``epsilon`` (default: ``1e-8``)
-  - ``decay`` (default: 0)
+	- ``learning_rate`` (default: 0.001). The learning rate for the optimizer.
+	- ``rho`` (default: 0.9)
+	- ``epsilon`` (default: ``1e-8``)
+	- ``decay`` (default: 0)
 
 Additionally, all of these optimizers support these paramters:
 
 - ``clip`` (default: ``null``). Scale or clip gradients. To scale the gradients
   so that their L2 norm never exceeds some value ``X``, use:
 
-  .. code-block:: yaml
+	.. code-block:: yaml
 
-      clip:
-        norm: X
+	    clip:
+	      norm: X
 
   To clip gradients so that none of their absolute values exceeds ``X``, use:
 
-  .. code-block:: yaml
+	.. code-block:: yaml
 
-      clip:
-        abs: X
+	    clip:
+	      abs: X
 
 If no optimizer is specified, or if the name is mising, the ``adam`` optimizer
 is used.
 
 .. note::
 
-  The ``rmsprop`` optimizer and gradient clipping are not currently available
-  for the PyTorch backend.
+	The ``rmsprop`` optimizer and gradient clipping are not currently available
+	for the PyTorch backend.
 
 .. _weights_train:
 
@@ -766,9 +766,9 @@ you could specify null weights like this:
 
 .. code-block:: yaml
 
-  # These are both the same as not loading or saving weights.
-  weights:
-  weights: null
+	# These are both the same as not loading or saving weights.
+	weights:
+	weights: null
 
 You can also just specify a file name. This tells Kur to try and load initial
 weights from the given path if the path exists. If the path doesn't exist, Kur
@@ -779,30 +779,30 @@ This format looks like this:
 
 .. code-block:: yaml
 
-  # This loads its initial weights from `PATH`. If `PATH` doesn't exist, then
-  # training continues anyway with fresh weights. If no weights are specified
-  # in the ``validate`` section, then the very best training weights are saved
-  # to `PATH`.
-  weights: PATH
+	# This loads its initial weights from `PATH`. If `PATH` doesn't exist, then
+	# training continues anyway with fresh weights. If no weights are specified
+	# in the ``validate`` section, then the very best training weights are saved
+	# to `PATH`.
+	weights: PATH
 
 The most flexibility can be gleaned from a dictionary-like value:
 
 .. code-block:: yaml
 
-  # This format allows for more flexibility.
-  weights:
-    # Load the initial weights from this path
-    initial: INITIAL
+	# This format allows for more flexibility.
+	weights:
+	  # Load the initial weights from this path
+	  initial: INITIAL
 
-    # If true/yes, then Kur will refuse to train unless INITIAL exists.
-    # By default, this is no/false.
-    must_exist: [yes | true | no | false]
+	  # If true/yes, then Kur will refuse to train unless INITIAL exists.
+	  # By default, this is no/false.
+	  must_exist: [yes | true | no | false]
 
-    # Where to save the best weights (with respect to training set loss).
-    best: BEST
+	  # Where to save the best weights (with respect to training set loss).
+	  best: BEST
 
-    # Where to save the most recent model weights.
-    last: LAST
+	  # Where to save the most recent model weights.
+	  last: LAST
 
 Each of the fields is optional.
 
@@ -823,13 +823,13 @@ dictionary, it should look like this:
 
 .. code-block:: yaml
 
-  checkpoint:
-    path: PATH
-    epochs: EPOCHS
-    batches: BATCHES
-    samples: SAMPLES
-    minutes: MINUTES
-    validation: VALIDATION
+	checkpoint:
+	  path: PATH
+	  epochs: EPOCHS
+	  batches: BATCHES
+	  samples: SAMPLES
+	  minutes: MINUTES
+	  validation: VALIDATION
 
 ``PATH`` is the name of the path to save the checkpoint to. It defaults to
 ``checkpoint`` if not specified. ``VALIDATION`` indicates whether or not to run
@@ -842,9 +842,9 @@ can be used together; for example, consider this specification:
 
 .. code-block:: yaml
 
-  checkpoint:
-    batches: 10
-    samples: 1000
+	checkpoint:
+	  batches: 10
+	  samples: 1000
 
 Here, the model will be saved after every 10 batches or after every 1000
 samples, whichever comes first. Once a checkpoint is created, the internal
@@ -870,18 +870,18 @@ like this:
 
 .. code-block:: yaml
 
-  validate:
+	validate:
 
-    # How to load and process data (required)
-    data: DATA
-    provider: PROVIDER
+	  # How to load and process data (required)
+	  data: DATA
+	  provider: PROVIDER
 
-    # Where to store weights (optional)
-    weights: WEIGHTS
+	  # Where to store weights (optional)
+	  weights: WEIGHTS
 
-    # Hooks for running some quick analysis on validation data between
-    # epochs (optional).
-    hooks: HOOKS
+	  # Hooks for running some quick analysis on validation data between
+	  # epochs (optional).
+	  hooks: HOOKS
 
 The ``data`` and ``provider`` fields are discussed in the :ref:`data_spec`
 section, and the ``hooks`` field is discussed in :ref:`hooks_spec`. The other
@@ -902,18 +902,18 @@ These are all valid:
 
 .. code-block:: yaml
 
-  # Don't save weights based on the validation loss.
-  # These two examples are the same as if the ``weights`` section was not even
-  # present in the specification.
-  weights: 
-  weights: null
+	# Don't save weights based on the validation loss.
+	# These two examples are the same as if the ``weights`` section was not even
+	# present in the specification.
+	weights: 
+	weights: null
 
-  # Save the best validation weights to `PATH`:
-  weights: PATH
+	# Save the best validation weights to `PATH`:
+	weights: PATH
 
-  # Same thing:
-  weights:
-    best: PATH
+	# Same thing:
+	weights:
+	  best: PATH
 
 Test
 ====
@@ -930,14 +930,14 @@ test``. Unsurprisingly, the ``test`` section just needs data:
 
 .. code-block:: yaml
 
-  test:
+	test:
 
-    # How to load and process data (required)
-    data: DATA
-    provider: PROVIDER
+	  # How to load and process data (required)
+	  data: DATA
+	  provider: PROVIDER
 
-    # Hooks for running some quick analysis on the model outputs (optional).
-    hooks: HOOKS
+	  # Hooks for running some quick analysis on the model outputs (optional).
+	  hooks: HOOKS
 
 The ``data`` and ``provider`` fields are discussed in the :ref:`data_spec`
 section, and the ``hooks`` field is discussed in :ref:`hooks_spec`.
@@ -962,20 +962,20 @@ The evaluation section looks like this:
 
 .. code-block:: yaml
 
-  evaluate:
+	evaluate:
 
-    # How to load and process data (required)
-    data: DATA
-    provider: PROVIDER
+	  # How to load and process data (required)
+	  data: DATA
+	  provider: PROVIDER
 
-    # Where to load weights from
-    weights: WEIGHTS
+	  # Where to load weights from
+	  weights: WEIGHTS
 
-    # The post-evaluation functions to apply.
-    hooks: HOOKS
+	  # The post-evaluation functions to apply.
+	  hooks: HOOKS
 
-    # Where to store the final, evaluated results
-    destination: DESTINATION
+	  # Where to store the final, evaluated results
+	  destination: DESTINATION
 
 The ``data`` and ``provider`` fields are discussed in the :ref:`data_spec`
 section, and the ``hooks`` field is discussed in :ref:`hooks_spec`. The other
@@ -993,18 +993,18 @@ These are all valid:
 
 .. code-block:: yaml
 
-  # Don't load any weights.
-  # These two examples are the same as if the ``weights`` section was not even
-  # present in the specification.
-  weights: 
-  weights: null
+	# Don't load any weights.
+	# These two examples are the same as if the ``weights`` section was not even
+	# present in the specification.
+	weights: 
+	weights: null
 
-  # Load the weights from `PATH`.
-  weights: PATH
+	# Load the weights from `PATH`.
+	weights: PATH
 
-  # Same thing:
-  weights:
-    initial: PATH
+	# Same thing:
+	weights:
+	  initial: PATH
 
 .. _destination_spec:
 
@@ -1018,14 +1018,14 @@ more details.
 
 .. note::
 
-  Why is the ``destination`` hook special? Why not just use the existing
-  ``hooks`` take care of this? Remember that your specification might be
-  included by other specifications. Once merged, you might have lots of
-  hooks, but you probably only want one "final" output product written to
-  disk. If this is not what you want, that's fine: just don't use
-  ``destination`` and use ``output`` hooks whenever is appropriate. But lots
-  of users don't want that, so we offer ``destination`` as a convenience
-  function.
+	Why is the ``destination`` hook special? Why not just use the existing
+	``hooks`` take care of this? Remember that your specification might be
+	included by other specifications. Once merged, you might have lots of
+	hooks, but you probably only want one "final" output product written to
+	disk. If this is not what you want, that's fine: just don't use
+	``destination`` and use ``output`` hooks whenever is appropriate. But lots
+	of users don't want that, so we offer ``destination`` as a convenience
+	function.
 
 Loss
 ====
@@ -1036,16 +1036,16 @@ model output needs a corresponding loss function defined. It looks like this:
 
 .. code-block:: yaml
 
-  loss:
+	loss:
 
-    - target: MODEL_OUTPUT_1
-      name: LOSS_FUNCTION
-      weight: WEIGHT
-      param_1: value_1
-      param_2: value_2
+	  - target: MODEL_OUTPUT_1
+	    name: LOSS_FUNCTION
+	    weight: WEIGHT
+	    param_1: value_1
+	    param_2: value_2
 
-    - target: MODEL_OUTPUT_2
-      # ... etc
+	  - target: MODEL_OUTPUT_2
+	    # ... etc
 
 There is one loss function per model output (``target``). The loss function are
 in no particular order, although if you have multiple loss function associated
@@ -1069,7 +1069,7 @@ Valid loss functions (choices for ``name``) are:
 
 .. note::
 
-  The CTC loss function is not available for the PyTorch backend.
+	The CTC loss function is not available for the PyTorch backend.
 
 Using CTC Loss
 --------------
@@ -1079,12 +1079,12 @@ and ``output``. Your specification should look like this:
 
 .. code-block:: yaml
 
-  - name: ctc
-    target: PREDICTED_TRANSCRIPTION
-    output: TRUE_TRANSCRIPTION
-    input_length: LENGTH_OF_PREDICTED_TRANSCRIPTION
-    output_length: LENGTH_OF_TRUE_TRANSCRIPTION
-    relative_to: AUTOSCALE_TARGET
+	- name: ctc
+	  target: PREDICTED_TRANSCRIPTION
+	  output: TRUE_TRANSCRIPTION
+	  input_length: LENGTH_OF_PREDICTED_TRANSCRIPTION
+	  output_length: LENGTH_OF_TRUE_TRANSCRIPTION
+	  relative_to: AUTOSCALE_TARGET
 
 Here is description of all these pieces:
 
@@ -1193,11 +1193,11 @@ Your CTC loss function would be:
 
 .. code-block:: yaml
 
-  - name: ctc
-    target: output
-    input_length: input_length
-    output_length: transcription_length
-    output: transcription
+	- name: ctc
+	  target: output
+	  input_length: input_length
+	  output_length: transcription_length
+	  output: transcription
 
 Alternatively, you could use ``AUTOSCALE_TARGET`` (the value of ``relative_to``)
 in order to simplify your calculations. In this case, your ``input_length``
@@ -1207,12 +1207,12 @@ and your CTC loss function would look like:
 
 .. code-block:: yaml
 
-  - name: ctc
-    target: output
-    input_length: input_length
-    relative_to: input
-    output_length: transcription_length
-    output: transcription
+	- name: ctc
+	  target: output
+	  input_length: input_length
+	  relative_to: input
+	  output_length: transcription_length
+	  output: transcription
 
 .. _data_spec:
 
@@ -1235,18 +1235,18 @@ names of the Kur suppliers.
 
 .. code-block:: yaml
 
-  data:
+	data:
 
-    - SUPPLIER_1:
-        param_1: value_1
-        param_2: value_2
-        # ....
+	  - SUPPLIER_1:
+	      param_1: value_1
+	      param_2: value_2
+	      # ....
 
-    - SUPPLIER_2:
-        param_1: value_1
-        # ...
+	  - SUPPLIER_2:
+	      param_1: value_1
+	      # ...
 
-    # ...
+	  # ...
 
 Valid suppliers are:
 
@@ -1262,10 +1262,10 @@ Valid suppliers are:
   example. In addition to standard :ref:`package_specification`, you can also
   specify:
 
-  - ``parts``: Which parts of the data set to load. CIFAR-10 splits the data
-    sets into 6 pieces, named: 1, 2, 3, 4, 5, and "test". If ``parts`` is not
-    specified, all six pieces are loaded by the supplier; otherwise,
-    ``parts`` can be a single piece to load, or a list of pieces to load.
+	- ``parts``: Which parts of the data set to load. CIFAR-10 splits the data
+	  sets into 6 pieces, named: 1, 2, 3, 4, 5, and "test". If ``parts`` is not
+	  specified, all six pieces are loaded by the supplier; otherwise,
+	  ``parts`` can be a single piece to load, or a list of pieces to load.
 
 - ``pickle``: Loads a pickled Python data structure. The pickled file is
   expected to contain a dictionary whose keys are strings naming the respective
@@ -1303,8 +1303,8 @@ Valid suppliers are:
 
   .. code-block:: javascript
 
-    {"pig_latin":["e", "l", "l", "o", "h", "a", "y", " ", "i", "w", "a", "y", " ", "a", "m", "w", "a", "y", " ", "a", "w", "a", "y", " ", "o", "m", "p", "u", "t", "e", "r", "c", "a", "y"], "english":["h", "e", "l", "l", "o", " ", "i", " ", "a", "m", " ", "a", " ", "c", "o", "m", "p", "u", "t", "e", "r"]}
-    {"pig_latin":["a", "p", "p", "l", "e", "w", "a", "y"], "english":["a", "p", "p", "l", "e"]}
+	  {"pig_latin":["e", "l", "l", "o", "h", "a", "y", " ", "i", "w", "a", "y", " ", "a", "m", "w", "a", "y", " ", "a", "w", "a", "y", " ", "o", "m", "p", "u", "t", "e", "r", "c", "a", "y"], "english":["h", "e", "l", "l", "o", " ", "i", " ", "a", "m", " ", "a", " ", "c", "o", "m", "p", "u", "t", "e", "r"]}
+	  {"pig_latin":["a", "p", "p", "l", "e", "w", "a", "y"], "english":["a", "p", "p", "l", "e"]}
     ...
 
   Notice that the sequences are different lengths -- these will be right-padded with
@@ -1344,7 +1344,6 @@ Valid suppliers are:
   output is finished and the model should output '<done>' symbols to signal that its
   job is done.
 
-
 - ``csv``: This supplier loads CSV data. If you only give it a filename, then
   it will try to load a local file, and it assumes that the first row of the
   file is a header row. Alternatively, you can given it a dictionary of
@@ -1353,12 +1352,12 @@ Valid suppliers are:
 
   .. code-block:: yaml
 
-  csv:
-    format:
-      delimiter: DELIMITER
-    quote: QUOTE_CHARACTER
-    header: HEADER
-    # ... also uses standard packaging
+	csv:
+	  format:
+	    delimiter: DELIMITER
+		quote: QUOTE_CHARACTER
+	  header: HEADER
+	  # ... also uses standard packaging
 
   ``DELIMITER`` is the delimiter character. Normally, it is autodetected, but
   you can override it here. Similarly, the ``QUOTE_CHARACTER`` indicates the
@@ -1372,8 +1371,8 @@ Valid suppliers are:
 
   .. note::
 
-  At the moment, all CSV data will be cast to floating-point numbers. This
-  means that if strings are encountered, you will get errors.
+	At the moment, all CSV data will be cast to floating-point numbers. This
+	means that if strings are encountered, you will get errors.
 
 - ``jsonl``. This supplier loads data from a JSONL file. JSONL files have a
   single JSON blob *per line*, with each line corresponding to another data
@@ -1386,70 +1385,70 @@ Valid suppliers are:
   speech recognition (ASR, also known as transcription). It takes the standard
   :ref:`package_specification`, in addition to these other optional parameters:
 
-  - ``unpack``: bool (default: True). If set, and if the source file is
-    compressed (e.g., ``.tar.gz``), then Kur will first unpack the file
-    before using the dataset.
-  - ``type``: str, either ``spec`` or ``mfcc`` (default: ``spec``).
-    Determines the type of audio features to present to the model, either
-    spectrograms (for ``spec``) or Mel-frequency cepstral coefficients
-    (``mfcc``).
-  - ``normalization``: None, string, or dictionary (default: None). Indicates
-    how data should be normalized. If None, speech data is automatically
-    normalized on a per-dataset basis, but the normalization is **not** saved
-    between training sessions. You should only do this if you are
-    experimenting, and not in a production setting. If this is a string, it
-    is interpretted as a filename where a previous normalization is stored.
-    If this file doesn't exist, it will be created and normalization
-    statistics from the dataset will be stored in it. If it is a dictionary,
-    then more advanced normalization settings can be specified. Valid
-    dictionary keys are ``path`` (the file to store/load the normalization
-    in/from, or null to use per-session data only), ``center`` (boolean
-    indicating whether or not to mean-subtract the data, ``scale`` (boolean
-    indicating whether or not to scale the data), ``rotate`` (boolean
-    indicating whether or not to perform a ZCA rotation on the data; or one
-    of the strings ``zca``, ``pca`` to indicate the rotation to perform), and
-    ``depth`` (an integer indicating how many data samples to use in
-    calculating the normalization statistics).
-  - ``min_duration``: float (default: None). Only keeps audio utterances that
-    are longer than ``min_duration`` seconds; if unspecified or ``null``, it
-    keeps all utterances.
-  - ``max_duration``: float (default: None). Only keeps audio utterances that
-    are shorter than ``max_duration`` seconds; if unspecified or ``null``, it
-    keeps all utterances.
-  - ``max_frequency``: float (default: None). Only keep frequency components
-    that are less than ``max_frequency`` Hertz; if unspecified or ``null``,
-    it keeps all frequencies.
-  - ``vocab``: str, list, or None (default: None). The vocabulary to use in
-    preparing transcripts. If None, it auto-detects the vocabulary from the
-    dataset (**note**: this is *only* recommended for testing). If a string,
-    it is a JSON file containing a single JSON list; each element in the list
-    is treated as a case-insensitive vocabulary word. If a list, each element
-    of the list is treated as a case-insensitive word.
-  - ``samples``: None, int, or str (default: None). Allows downselection of
-    available samples. If this is None, no downselection is used. If this is
-    an integer, then only the first ``samples`` samples will be kept. This
-    can also be specified as a range ``123-456`` to keep the 333 samples from
-    123 through 455. You can also omit the second range to use all samples to
-    the end of the file, as in ``123-``. Percentages are allowed as well by
-    *appending* a single percent sign to the end of the string, as in:
-    ``10%``, ``20-30%``, ``90-%``.
+	- ``unpack``: bool (default: True). If set, and if the source file is
+	  compressed (e.g., ``.tar.gz``), then Kur will first unpack the file
+	  before using the dataset.
+	- ``type``: str, either ``spec`` or ``mfcc`` (default: ``spec``).
+	  Determines the type of audio features to present to the model, either
+	  spectrograms (for ``spec``) or Mel-frequency cepstral coefficients
+	  (``mfcc``).
+	- ``normalization``: None, string, or dictionary (default: None). Indicates
+	  how data should be normalized. If None, speech data is automatically
+	  normalized on a per-dataset basis, but the normalization is **not** saved
+	  between training sessions. You should only do this if you are
+	  experimenting, and not in a production setting. If this is a string, it
+	  is interpretted as a filename where a previous normalization is stored.
+	  If this file doesn't exist, it will be created and normalization
+	  statistics from the dataset will be stored in it. If it is a dictionary,
+	  then more advanced normalization settings can be specified. Valid
+	  dictionary keys are ``path`` (the file to store/load the normalization
+	  in/from, or null to use per-session data only), ``center`` (boolean
+	  indicating whether or not to mean-subtract the data, ``scale`` (boolean
+	  indicating whether or not to scale the data), ``rotate`` (boolean
+	  indicating whether or not to perform a ZCA rotation on the data; or one
+	  of the strings ``zca``, ``pca`` to indicate the rotation to perform), and
+	  ``depth`` (an integer indicating how many data samples to use in
+	  calculating the normalization statistics).
+	- ``min_duration``: float (default: None). Only keeps audio utterances that
+	  are longer than ``min_duration`` seconds; if unspecified or ``null``, it
+	  keeps all utterances.
+	- ``max_duration``: float (default: None). Only keeps audio utterances that
+	  are shorter than ``max_duration`` seconds; if unspecified or ``null``, it
+	  keeps all utterances.
+	- ``max_frequency``: float (default: None). Only keep frequency components
+	  that are less than ``max_frequency`` Hertz; if unspecified or ``null``,
+	  it keeps all frequencies.
+	- ``vocab``: str, list, or None (default: None). The vocabulary to use in
+	  preparing transcripts. If None, it auto-detects the vocabulary from the
+	  dataset (**note**: this is *only* recommended for testing). If a string,
+	  it is a JSON file containing a single JSON list; each element in the list
+	  is treated as a case-insensitive vocabulary word. If a list, each element
+	  of the list is treated as a case-insensitive word.
+	- ``samples``: None, int, or str (default: None). Allows downselection of
+	  available samples. If this is None, no downselection is used. If this is
+	  an integer, then only the first ``samples`` samples will be kept. This
+	  can also be specified as a range ``123-456`` to keep the 333 samples from
+	  123 through 455. You can also omit the second range to use all samples to
+	  the end of the file, as in ``123-``. Percentages are allowed as well by
+	  *appending* a single percent sign to the end of the string, as in:
+	  ``10%``, ``20-30%``, ``90-%``.
 
   The speech recognition supplier will produce the following data sources that
   you can use in your model:
 
-  - ``utterance``. The audio signal itself.
-  - ``utterance_length``. The number of frames in the audio signal.
-  - ``transcript``. An integer-encoded transcript.
-  - ``transcript_length``. The length of the corresponding transcript.
-  - ``duration``. The length of the audio utterance, in seconds.
+	- ``utterance``. The audio signal itself.
+	- ``utterance_length``. The number of frames in the audio signal.
+	- ``transcript``. An integer-encoded transcript.
+	- ``transcript_length``. The length of the corresponding transcript.
+	- ``duration``. The length of the audio utterance, in seconds.
 
   The input file can be a file (which is extracted) or a directory. Kur will
   search for a JSON-Lines (JSONL) file, each line of which should be a JSON
   directionary with the following keys:
 
-  - ``text``: the transcription.
-  - ``duration_s``: the duration of the audio, in seconds.
-  - ``uuid``: a unique value used to identify the audio.
+	- ``text``: the transcription.
+	- ``duration_s``: the duration of the audio, in seconds.
+	- ``uuid``: a unique value used to identify the audio.
 
   Next to the JSONL file should be a directory named ``audio`` where all of the
   audio sources are stored. Each filename should be of the form ``UUID.EXT``,
@@ -1500,11 +1499,11 @@ Providers are specified like this:
 
 .. code-block:: yaml
 
-  provider:
-    name: NAME
-    param_1: value_1
-    param_2: value_2
-    # ...
+	provider:
+	  name: NAME
+	  param_1: value_1
+	  param_2: value_2
+	  # ...
 
 The name of the provider is given by the ``name`` field, and everything else is
 given to the provider as parameters. Valid provider names are:
@@ -1515,38 +1514,38 @@ given to the provider as parameters. Valid provider names are:
   the batch size, then the last batch is allowed to be a little smaller.) It
   accepts the following parameters:
 
-  - ``randomize``: A boolean value ``yes, true, no, false`` indicating whether
-    or not the data should be shuffled between epochs. By default, it is true.
-  - ``batch_size``: The number of samples to provide in each batch. By
-    default, it is 32.
-  - ``num_batches``: An integer indicating how many batches to provide each
-    epoch. This is mostly useful for test purposes on slower machines. If it
-    is larger than the number of batches available, then all the batches are
-    kept. By default, all batches are provided. Note that even this is set
-    less than the number of available batches, the batches will still be
-    shuffled from across the entire dataset if ``randomize`` is True (i.e.,
-    you will get ``num_batches`` of randomly chosen samples, not simply the
-    first *N* batches repeatedly).
-  - ``sortagrad``: A string specifying a data source. As Baidu noted in their
-    `DeepSpeech paper <https://arxiv.org/abs/1512.02595>`_, models can train
-    better and more stably if, during the first epoch, training samples are
-    presented in order of increasing duration. If a data source is specified
-    here, then for the first epoch, data will be sorted by this data source.
-    Setting ``sortagrad: X`` is equivalent to ``sort_by: X`` with
-    ``shuffle_after: 1``.
-  - ``sort_by``: A string specifying a data source. If specified, all data is
-    sorted by this data source before the first epoch. By default, no sorting
-    is done.
-  - ``shuffle_after``: An integer indicating how many epochs to wait before
-    randomizing the dataset. By default, this is zero.
-  - ``force_batch_size``: A boolean indicating whether or not the
-    ``batch_size`` should be strictly adhered to. If this is True, then any
-    data samples that do not fit cleanly into fixed-sized batches are simply
-    dropped for that epoch (if shuffling is enabled, then you will still see
-    all your data samples at some point). If this is False, then Kur will try
-    its best to use fixed-sized batches, but may occassionally return smaller
-    batches (particularly at the end of the epoch if the length of the
-    training set is not evenly divisible by the batch size).
+	- ``randomize``: A boolean value ``yes, true, no, false`` indicating whether
+	  or not the data should be shuffled between epochs. By default, it is true.
+	- ``batch_size``: The number of samples to provide in each batch. By
+	  default, it is 32.
+	- ``num_batches``: An integer indicating how many batches to provide each
+	  epoch. This is mostly useful for test purposes on slower machines. If it
+	  is larger than the number of batches available, then all the batches are
+	  kept. By default, all batches are provided. Note that even this is set
+	  less than the number of available batches, the batches will still be
+	  shuffled from across the entire dataset if ``randomize`` is True (i.e.,
+	  you will get ``num_batches`` of randomly chosen samples, not simply the
+	  first *N* batches repeatedly).
+	- ``sortagrad``: A string specifying a data source. As Baidu noted in their
+	  `DeepSpeech paper <https://arxiv.org/abs/1512.02595>`_, models can train
+	  better and more stably if, during the first epoch, training samples are
+	  presented in order of increasing duration. If a data source is specified
+	  here, then for the first epoch, data will be sorted by this data source.
+	  Setting ``sortagrad: X`` is equivalent to ``sort_by: X`` with
+	  ``shuffle_after: 1``.
+	- ``sort_by``: A string specifying a data source. If specified, all data is
+	  sorted by this data source before the first epoch. By default, no sorting
+	  is done.
+	- ``shuffle_after``: An integer indicating how many epochs to wait before
+	  randomizing the dataset. By default, this is zero.
+	- ``force_batch_size``: A boolean indicating whether or not the
+	  ``batch_size`` should be strictly adhered to. If this is True, then any
+	  data samples that do not fit cleanly into fixed-sized batches are simply
+	  dropped for that epoch (if shuffling is enabled, then you will still see
+	  all your data samples at some point). If this is False, then Kur will try
+	  its best to use fixed-sized batches, but may occassionally return smaller
+	  batches (particularly at the end of the epoch if the length of the
+	  training set is not evenly divisible by the batch size).
 
 If the ``provider`` section is not given, or if ``name`` is not specified, then
 a ``batch_provider`` is created as a default provider.
@@ -1594,12 +1593,12 @@ Hooks can take parameters as well. An example of using hooks is:
 
 .. code-block:: yaml
 
-  hooks:
-    - output:
-        path: /path/to/output.pkl
-        format: pickle
-    - custom_function:
-        param: value
+	hooks:
+	  - output:
+	      path: /path/to/output.pkl
+	      format: pickle
+	  - custom_function:
+	      param: value
 
 Many of these hooks will be application specific, but these hooks are available
 as part of Kur:
@@ -1613,10 +1612,10 @@ as part of Kur:
   ``destination`` save the final product as well. It takes two parameters:
 
     - ``path``: the path to save the data to.
-  - ``format``: the data format to save the data as. Supported formats are:
+	- ``format``: the data format to save the data as. Supported formats are:
 
-    - ``pkl`` or ``pickle``: Python 3 pickle. This is the default if
-      ``format`` is not specified.
+	  - ``pkl`` or ``pickle``: Python 3 pickle. This is the default if
+	    ``format`` is not specified.
 
   This hook is primarily an ``evaluate`` hook.
 - ``transcript``: This is useful for performing argmax-decoding of the ASR
@@ -1628,14 +1627,14 @@ as part of Kur:
 
   .. code-block:: yaml
 
-  slack:
-    channel: CHANNEL
-    url: URL
-    icon: ICON
-    user: USER
-    title: TITLE
-    token: TOKEN
-    extra_files: EXTRA
+	slack:
+	  channel: CHANNEL
+	  url: URL
+	  icon: ICON
+	  user: USER
+	  title: TITLE
+	  token: TOKEN
+	  extra_files: EXTRA
 
   ``CHANNEL`` is the name of the Slack channel to post to (e.g, "#kur") and is
   required. ``URL`` is the Slack webhook URL and is required. ``ICON`` is the
@@ -1660,9 +1659,9 @@ as part of Kur:
   .. code-block:: yaml
   
     plot:
-    loss_per_batch: LOSS_PER_BATCH
-    loss_per_time: LOSS_PER_TIME
-    throughput_per_time: THROUGHPUT_PER_TIME
+	  loss_per_batch: LOSS_PER_BATCH
+	  loss_per_time: LOSS_PER_TIME
+	  throughput_per_time: THROUGHPUT_PER_TIME
 
   All parameters are filenames for storing their respective plots at. In the
   second form, any line may be absent (or None) to disable generation of that
@@ -1674,13 +1673,13 @@ as part of Kur:
   .. note::
 
     Pro-tip: ``plot`` and ``slack`` hooks can be combined so that your latest
-  loss plots get automatically posted to Slack. Since hooks are processed
-  in order, make sure the plot comes first:
+	loss plots get automatically posted to Slack. Since hooks are processed
+	in order, make sure the plot comes first:
 
-  .. code-block:: yaml
+	.. code-block:: yaml
 
-    hooks:
-      - plot: &loss_file my_loss.png
-    - slack:
-        extra_files: \*loss_file
-        # Other Slack parameters...
+	  hooks:
+	    - plot: &loss_file my_loss.png
+		- slack:
+		    extra_files: \*loss_file
+		    # Other Slack parameters...
