@@ -19,10 +19,8 @@ import logging
 
 import urllib.request
 
-from . import TrainingHook, EvaluationHook, PlotHook
-from .transcript import Transcript
-from ...utils import prepare_multipart, prepare_json, UploadFile
-from ...supplier import SpeechRecognitionSupplier
+from . import TrainingHook, PlotHook
+from ...utils import prepare_json
 
 from tempfile import NamedTemporaryFile
 
@@ -119,23 +117,17 @@ class KurhubHook(TrainingHook):
         # check if plot
         plot_name = '{}.png'.format(self.plot_name)
         if os.path.isfile(plot_name):
-            logger.debug('isfile')
-            logger.debug(os.stat(plot_name).st_size)
             if os.stat(plot_name).st_size > 0:
-                logger.debug('size > 0')
                 # upload
                 with open(plot_name, 'rb') as plotfile:
                     import base64
                     encoded_string = base64.b64encode(plotfile.read()).decode('utf-8')
 
                 ## send as post request base64
-                logger.debug('before send_plot_message {}'.format(encoded_string))
                 self.send_plot_message('plot created', encoded_string)
-                logger.debug('after send_plot_message {}'.format(encoded_string))
                 # delete after upload
                 os.remove(plot_name)
-
-        logger.debug('kurhub hook received training message.')
+                self.plot_name = 
 
         info = info or {}
 
@@ -152,37 +144,5 @@ class KurhubHook(TrainingHook):
 
         if text:
             self.send_message(text, info)
-
-
-    ###########################################################################
-    def apply(self, current, original, model=None):
-        """ Sends a kurhub message in response to an evaluation hook.
-        """
-
-        logger.debug('kurhub hook received non-training message.')
-
-        data, truth = current
-        if self.uuid is not None:
-            if isinstance(data, Transcript) \
-                    and original[1] is not None \
-                    and 'audio_source' in original[1]:
-                path = SpeechRecognitionSupplier.find_audio_path(
-                    original[1]['audio_source'][0]
-                )
-                if path is not None:
-                    upload = True
-
-        text = 'Truth = "{}", Prediction = "{}"'.format(truth, data),
-        if self.endpoint is not None:
-            self.send_message(text)
-        else:
-            logger.warning('Failed to post to kurhub. The "kurhub" hook was '
-                'given enough information for uploading only, and not enough '
-                'for message posting. However, the data you are working with '
-                'does not provide enough information for file uploading.')
-
-        self.upload_extra_files()
-
-        return current
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
