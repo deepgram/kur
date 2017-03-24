@@ -28,6 +28,7 @@ from .utils import logcolor
 from . import Kurfile
 from .engine import JinjaEngine
 
+# get logger a name for display
 logger = logging.getLogger(__name__)
 
 ###############################################################################
@@ -50,6 +51,7 @@ def parse_kurfile(filename, engine):
 def dump(args):
 	""" Dumps the Kurfile to stdout as a JSON blob.
 	"""
+	logger.info("Hack! execute dump()")
 	spec = parse_kurfile(args.kurfile, args.engine)
 	print(json.dumps(spec.data, sort_keys=True, indent=4))
 
@@ -65,6 +67,7 @@ def train(args):
 def test(args):
 	""" Tests a model.
 	"""
+
 	spec = parse_kurfile(args.kurfile, args.engine)
 	func = spec.get_testing_function()
 	func(step=args.step)
@@ -81,18 +84,57 @@ def evaluate(args):
 def build(args):
 	""" Builds a model.
 	"""
+	logger.info("Hack! Build, start to parse kurfile: -------")
 	spec = parse_kurfile(args.kurfile, args.engine)
+	logger.info("Hack! from spec we can access details of kurfile: -------")
+	logger.info("Hack! by now, args of console input can be accessed too: -------")
+	# to explore spec
+	# logger.info("what is stored inside `spec = parse_kurfile(args.kurfile, args.engine)`: -----------")
+	# logger.info("spec: %s", dir(spec))
+	# logger.info("spec.DEFAULT_OPTIMIZER: %s", spec.DEFAULT_OPTIMIZER)
+	# logger.info("spec.filename: %s", spec.filename)
+	# logger.info("spec.backend: %s", spec.backend)
+	# logger.info("spec.get_backend: %s", spec.get_backend)
+	# logger.info("spec.get_evaluation_function: %s", spec.get_evaluation_function)
+	# logger.info("spec.get_trainer: %s", spec.get_trainer)
+	# logger.info("spec.containers: %s", spec.containers)
+	# logger.info("spec.data: %s", spec.data)
+	# logger.info("spec.engine: %s", spec.engine)
+	# logger.info("spec.get_evaluator: %s", spec.get_evaluator)
+	# logger.info("spec.get_loss: %s", spec.get_loss)
+	# logger.info("spec.get_model: %s", spec.get_model)
+	# logger.info("spec.model: %s", spec.model)
+	# logger.info("spec.parse: %s", spec.parse)
+	# logger.info("spec.parse_source: %s", spec.parse_source)
 
+	#### explore args produced by args = parse_args() in main():
+	logger.info("what args contain: ----------------------")
+	logger.info("args:   %s", args)
+
+	# if build compile option is set to auto
 	if args.compile == 'auto':
+		# create an empty list
 		result = []
+		# if train, test, evalute sections are available in kurfile,
 		for section in ('train', 'test', 'evaluate'):
 			if section in spec.data:
+				# then store the sections inside result list
 				result.append((section, 'data' in spec.data[section]))
+
+		# if no section above is available in the kurfile
 		if not result:
+			# display message
 			logger.info('Trying to build a bare model.')
+			# set build complile option to be none
 			args.compile = 'none'
+
+		# if those sections are available in kurfile, then
 		else:
+			logger.info("Hack! what is inside result: ----------")
+			logger.info("result without sorted: %s", result)
 			args.compile, has_data = sorted(result, key=lambda x: not x[1])[0]
+			logger.info("result after sorted: %s", sorted(result))
+
 			logger.info('Trying to build a "%s" model.', args.compile)
 			if not has_data:
 				logger.info('There is not data defined for this model, '
@@ -185,7 +227,9 @@ def prepare_data(args):
 def version(args):							# pylint: disable=unused-argument
 	""" Prints the Kur version and exits.
 	"""
+	logger.info("simply print a string")
 	print('Kur, by Deepgram -- deep learning made easy')
+	logger.info("print('Version: {}'.format(__version__))")
 	print('Version: {}'.format(__version__))
 	print('Homepage: {}'.format(__homepage__))
 
@@ -348,37 +392,91 @@ def parse_args():
 def main():
 	""" Entry point for the Kur command-line script.
 	"""
+
+
+	# logging is introduced after this line of code, so
 	args = parse_args()
 
+
+
+	# set log level for display level (warning, info and debug levels)
 	loglevel = {
 		0 : logging.WARNING,
 		1 : logging.INFO,
 		2 : logging.DEBUG
 	}
+
+
+	# A number of optional keyword arguments may be specified, which can alter
+	# the default behaviour.
+	# to log we must first finish configure
 	config = logging.basicConfig if args.no_color else logcolor.basicConfig
 	config(
+
+		# choose log level based on value of args.verbose
+		# default = 0, `-v` = 1, `-vv` = 2
 		level=loglevel.get(args.verbose, logging.DEBUG),
+
+		# set color
 		format='{color}[%(levelname)s %(asctime)s %(name)s:%(lineno)s]{reset} '
 			'%(message)s'.format(
 				color='' if args.no_color else '$COLOR',
 				reset='' if args.no_color else '$RESET'
 			)
 	)
+	logger.info("Hack! Is everything starting at `def main():` first?")
+	logger.info("Hack! Now we have args from console: ------")
+	logger.info("args = parse_args(): %s", args)
+
+
+	# If capture is true, redirect all warnings to the logging package.
 	logging.captureWarnings(True)
 
+
+
+	logger.info("Hack!: run at do_monitor(args)")
+	# do monitor here, but why?
 	do_monitor(args)
 
+
+	logger.info("Hack!: run at `if args.version:`")
+	# if console receive `--version`, then args.version == True
 	if args.version:
+		# set args.func = version, version is a function defined above
 		args.func = version
+
+
+	### what to output when not action is given after `kur   `
+	# if  args.func == none or null
 	elif not hasattr(args, 'func'):
+		logger.info("Hack!: run at `kur and nothing`")
+		## sys.stderr
+		# A file like object that publishes the stream to a 0MQ PUB socket.
+		# Output is handed off to an IO Thread
 		print('Nothing to do!', file=sys.stderr)
 		print('For usage information, try: kur --help', file=sys.stderr)
 		print('Or visit our homepage: {}'.format(__homepage__))
+		## sys.exit()
+		# Exit the interpreter by raising SystemExit(status).
+		# If the status is omitted or None, it defaults to zero (i.e., success).
+		# If the status is an integer, it will be used as the system exit status.
+		# If it is another kind of object, it will be printed and the system
+		# exit status will be one (i.e., failure).
 		sys.exit(1)
 
+	# JinjiaEngine()
+	# An evaluation engine which uses Jinja2 for templating.
+	# Creates a new Jinja2 templating engine.
 	engine = JinjaEngine()
+
+	# setattr(x, 'y', v) is equivalent to ``x.y = v''
+	# set args.engine to be engine defined above
 	setattr(args, 'engine', engine)
 
+
+	### This line of code is crucial: it runs all functions as user want expressed as inputs from console
+	# comment it out, nothing will actually get done
+	# with this line of code, system run the functions and exit with success.
 	sys.exit(args.func(args) or 0)
 
 ###############################################################################

@@ -44,6 +44,9 @@ if sys.version_info < (3, 4):
 	error_message('Kur requires Python 3.4 or later.')
 
 ###############################################################################
+#### use setup() from setuptools lib to help set things up for kur lib
+
+
 # pylint: disable=wrong-import-position
 import os
 from setuptools import setup, find_packages
