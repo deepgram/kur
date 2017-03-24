@@ -127,7 +127,6 @@ class KurhubHook(TrainingHook):
                 self.send_plot_message('plot created', encoded_string)
                 # delete after upload
                 os.remove(plot_name)
-                self.plot_name = 
 
         info = info or {}
 
