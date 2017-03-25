@@ -20,5 +20,7 @@ from .mnist_hook import MnistHook
 from .transcript import TranscriptHook
 from .slack_hook import SlackHook
 from .plot_hook import PlotHook
+from .text_hook import TextHook
+from .kurhub_hook import KurhubHook
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

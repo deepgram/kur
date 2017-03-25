@@ -36,8 +36,6 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the layer.
 		"""
-
-		super()._parse(engine)
 		self.type = self.args
 
 	###########################################################################

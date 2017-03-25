@@ -19,6 +19,8 @@ import copy
 import socket
 import warnings
 import logging
+from collections import deque
+
 from .engine import ScopeStack, PassthroughEngine
 from .reader import Reader
 from .containers import Container, ParsingError
@@ -90,6 +92,7 @@ class Kurfile:
 			'validate' : ('validate', 'validation'),
 			'test' : ('test', 'testing'),
 			'evaluate' : ('evaluate', 'evaluation'),
+			'templates' : ('templates', ),
 			'model' : ('model', ),
 			'loss' : ('loss', )
 		}
@@ -118,6 +121,10 @@ class Kurfile:
 			self.engine, builtin['test'], stack, include_key=True)
 		self._parse_section(
 			self.engine, builtin['evaluate'], stack, include_key=True)
+
+		# Parse the templates
+		self.templates = self._parse_templates(
+			self.engine, builtin['templates'], stack)
 
 		# Parse the model.
 		self.containers = self._parse_model(
@@ -647,12 +654,15 @@ class Kurfile:
 			raise ValueError(
 				'Section "{}" should contain a list of layers.'.format(key))
 
-		containers = [
-			Container.create_container_from_data(entry)
-			for entry in self.data[key]
-		]
-
 		with ScopeStack(engine, stack):
+			queue = deque(self.data[key])
+			containers = []
+			while queue:
+				entry = queue.popleft()
+				entry = engine.evaluate(entry)
+				containers.append(
+					Container.create_container_from_data(entry)
+				)
 			for container in containers:
 				container.parse(engine)
 
@@ -746,6 +756,37 @@ class Kurfile:
 			)
 
 		return data
+
+	###########################################################################
+	def _parse_templates(self, engine, section, stack):
+		""" Parses the template section.
+		"""
+		if isinstance(section, str):
+			section = (section, )
+
+		key = None		# Not required, but shuts pylint up.
+		for key in section:
+			if key in self.data:
+				break
+		else:
+			return None
+
+		if not self.data[key]:
+			return None
+
+		if not isinstance(self.data[key], dict):
+			raise ValueError('Section "{}" should contain a dictionary of '
+				'templates.'.format(key))
+
+		for template in self.data[key]:
+			other = Container.get_container_for_name(template)
+			if other:
+				raise ValueError('Templates cannot override built-in layers. '
+					'We found a conflict with template "{}".'.format(template))
+
+		engine.register_templates(self.data[key])
+
+		return self.data[key]
 
 	###########################################################################
 	def _parse_section(self, engine, section, stack, *,

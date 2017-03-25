@@ -39,8 +39,8 @@ class Transcript:
 
 ###############################################################################
 class TranscriptHook(EvaluationHook):
-	""" Post-evaluation hook for MNIST data, which prints summary statistics
-		specific to the MNIST data set.
+	""" Post-evaluation hook for speech data, which prints sample transcripts
+	using argmax decoding
 	"""
 
 	###########################################################################

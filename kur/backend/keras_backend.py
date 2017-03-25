@@ -168,24 +168,16 @@ class KerasBackend(Backend):
 					logger.debug('Setting Theano flag %s = %s', k, v)
 					replace_theano_flag(k, v)
 
-			if self.device is not None:
-				replace_theano_flag('force_device', 'true')
-				if self.device == 'cpu':
-					logger.info('Forcing CPU.')
-					replace_theano_flag('device', 'cpu')
-					env['CUDA_VISIBLE_DEVICES'] = '100'
-					logger.info('Requesting CPU')
-				else:
-					if self.device_number is None:
-						replace_theano_flag('device', 'gpu')
-						logger.info('Requesting any GPU')
-					else:
-						replace_theano_flag('device', 'gpu0')
-						env['CUDA_VISIBLE_DEVICES'] = str(self.device_number)
-						logger.info('Requesting GPU %d', self.device_number)
-
-			if self.parallel > 1 and env['KERAS_BACKEND'] == 'tensorflow':
-				logger.info('Using %d GPUs', self.parallel)
+			replace_theano_flag('force_device', 'true')
+			if not self.devices:
+				replace_theano_flag('device', 'cpu')
+				env['CUDA_VISIBLE_DEVICES'] = '100'
+				logger.info('Requesting CPU')
+			else:
+				replace_theano_flag('device', 'gpu')
+				env['CUDA_VISIBLE_DEVICES'] = ','.join(
+					str(x) for x in self.devices)
+				logger.info('Requesting GPUs: %s', self.devices)
 
 			# Supress the deluge of TensorFlow messages that we aren't
 			# interested in.
@@ -216,6 +208,13 @@ class KerasBackend(Backend):
 				)
 			})
 		)
+
+		if self.parallel > 1 and self.get_toolchain() == 'theano':
+			logger.warning('Multiple GPUs were requested, but are not '
+				'supported with Keras\' Theano backend. Try the PyTorch '
+				'backend or Keras\' TensorFlow backend instead. Falling back '
+				'to a single device.')
+			self.devices = self.devices[:1]
 
 	###########################################################################
 	def get_toolchain(self):
@@ -435,10 +434,6 @@ class KerasBackend(Backend):
 
 				# Get the symbolic weights.
 				symbolic_weights = layer.weights
-				if len(weights) != len(symbolic_weights):
-					raise ValueError('Layer "%s" expected %d weights, but we '
-						'found %d on disk.', layer_name, len(symbolic_weights),
-						len(weights))
 
 				# Get the associated names (so we know what order to assign the
 				# weights in.
@@ -446,6 +441,20 @@ class KerasBackend(Backend):
 					self._get_weight_names_and_values_from_symbolic(
 						symbolic_weights
 					)
+
+				available = set(weights.keys())
+				needed = set(name.replace('/', '_') for name in weight_names)
+				if available ^ needed:
+					logger.error('Weight discrepancy in the weights we are '
+						'supposed to load.')
+					logger.error('These weights are on-disk, but not '
+						'requested: %s', ', '.join(available - needed))
+					logger.error('These weights were requested, but not '
+						'available: %s', ', '.join(needed - available))
+					raise ValueError('Layer "{}" expected {} weights, but we '
+						'found {} on disk.'.format(layer_name,
+						len(needed), len(available)))
+
 				for i, name in enumerate(weight_names):
 					name = name.replace('/', '_')
 					weight_value_tuples.append((symbolic_weights[i], weights[name]))
@@ -586,16 +595,16 @@ class KerasBackend(Backend):
 				outputs=[node.value for node in model.outputs.values()]
 			)
 
-			if self.toolchain == 'tensorflow' and self.parallel > 1:
-				from ..utils.parallelism import make_parallel
-				compiled = make_parallel(compiled, self.parallel)
-
 			if logger.isEnabledFor(logging.DEBUG):
 				x = io.StringIO()
 				with contextlib.redirect_stdout(x):
 					compiled.summary()
 				for line in x.getvalue().split('\n'):
 					logger.debug(line)
+
+			if self.parallel > 1:
+				from ..utils.parallelism import make_parallel
+				compiled = make_parallel(compiled, self.parallel)
 
 			model.compiled['raw'] = compiled
 
@@ -712,7 +721,7 @@ class KerasBackend(Backend):
 		with DisableLogging():
 			provider = BatchProvider(
 				sources=dict(zip(model.provider.keys, model.provider.sources)),
-				batch_size=2*self.parallel,
+				batch_size=2*max(1, self.parallel),
 				num_batches=1,
 				randomize=False
 			)

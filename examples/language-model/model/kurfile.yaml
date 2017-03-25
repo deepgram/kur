@@ -45,22 +45,17 @@ train:
   weights:
     initial: best.w.kur
     last: last.w.kur
-
   log: log
 
 validate:
   data:
     - jsonl: ../data/validate.jsonl
   weights: best.w.kur
-   
-
 
 test:
   data:
     - jsonl: ../data/test.jsonl
   weights: best.w.kur
-    
-
 
 evaluate:
   data:

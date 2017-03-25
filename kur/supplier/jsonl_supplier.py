@@ -15,9 +15,8 @@ limitations under the License.
 """
 
 import json
-import numpy
 from . import Supplier
-from ..sources import VanillaSource
+from ..sources import JSONLSource
 
 ###############################################################################
 class JSONLSupplier(Supplier):
@@ -47,40 +46,26 @@ class JSONLSupplier(Supplier):
 
         self.source = source
         self.data = None
-
-    ###########################################################################
-    def _load(self):
-        """ Loads the data (only if it hasn't already been loaded).
-        """
-        if self.data is not None:
-            return
-
-        data = {}
         with open(self.source, 'r') as infile:
-            data = {
-                key: [value]
-                for key, value in json.loads(next(infile)).items()
-            }
-            for line in infile:
-                line = line.strip()
-                if not line:
-                    continue
-                for key, value in json.loads(line).items():
-                    data[key].append(value)
+            keys = json.loads(next(infile)).keys()
 
-        for key in data:
-            data[key] = numpy.array(data[key])
+        with open(self.source, 'r') as infile:
+            self.num_entries = sum(1 for _ in infile if _.strip())
 
-        self.data = {k : VanillaSource(v) for k, v in data.items()}
+        self.data = {
+            k: JSONLSource(self.source, k, self.num_entries)
+            for k in keys
+        }
 
     ###########################################################################
     def get_sources(self, sources=None):
         """ Returns all sources from this provider.
         """
-        self._load()
 
         if sources is None:
-            sources = list(self.data.keys())
+            with open(self.source, 'r') as infile:
+                sources = list(json.loads(next(infile)).keys())
+
         elif not isinstance(sources, (list, tuple)):
             sources = [sources]
 

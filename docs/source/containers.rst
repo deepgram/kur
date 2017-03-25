@@ -103,7 +103,7 @@ Recurrent (RNN)
   which learns both the forward and backward sequences of data).
 - ``MERGE``: if ``BIDIRECTIONAL`` is true, then this determines how the outputs
   of the forward and backward RNNs is merged. If bidirectional is not set, then
-  "merge" cannot be used. The default value is ``average``.
+  "merge" cannot be used. The default value is ``concat``.
 - ``ACTIVATION``: an activation to apply within the RNN (it is not equivalent
   to simply following the RNN layer with an Activation layer). Defaults to
   "relu".
@@ -353,10 +353,13 @@ or::
 	- ``average``: Computes the mean of the input tensors.
 	- ``multiply``: Computes the product of the input tensors.
 	- ``add``: Computes the sum of the input tensors.
-	- ``concat``: Concatenates the data tensors along ``AXIS`` axis.
+	- ``concat``: Concatenates the data tensors along ``AXIS`` axis. This is
+	  the default.
 
 - ``AXIS``: the axis to concatenate input tensors along. Only used if ``MODE``
   is ``concat``. Defaults to -1 (the last axis).
+
+.. _ref_placeholder:
 
 Placeholder
 -----------
@@ -436,6 +439,23 @@ higher-dimensional vocabulary.
 - ``SIZE``: The dimensionality of the embedding layer to learn. Each input
   label is mapped to a ``SIZE``-dimensional vector.
 
+Dropout
+-------
+
+**Description**. A dropout layer which drops a random set of activations on the
+previous layer during every forward/backward pass.
+
+**Purpose**. Dropout layers help to control overtraining by forcing the network
+to use different "neural pathways" to solve the problem. It is similar to
+generating a large number of superimposed models.
+
+**Usage**::
+
+	dropout: FRACTION
+
+- ``FRACTION``: float between 0 and 1. The fraction of activations to drop at
+  each pass.
+
 Operators
 =========
 
@@ -470,6 +490,45 @@ over and over again).
 The ``for`` loop adds each container under ``iterate`` during each iteration
 (there are ``RANGE`` iterations total). Unless the containers are ``reuse``
 containers, each resulting container is independent and has its own weights.
+
+.. _meta_containers:
+
+Meta-Containers
+---------------
+
+**Description**. A user-defined template.
+
+**Purpose**. Meta-containers are instantiations of :ref:`user-defined templates
+<template_spec>`. They do not have a well-defined name, unlike other
+containers.  Instead, they are created by simply referencing the template
+definition, and then defining any variables that need to be passed to the
+template.
+
+**Usage**:
+
+Given a previous template definition::
+
+	templates:
+	  cnn_stack:
+	    - for:
+	        range: "{{ depth }}"
+	        iterate:
+	          - convolution: "{{ cnn }}"
+
+one could use the template like this::
+
+	cnn_stack:
+	  depth: 3
+	  cnn:
+	    size: [2, 2]
+	    kernels: 64
+
+As you can see, the template parameters ``depth`` and ``cnn`` where defined and
+passed into the container.
+
+**Note**: Some template parameters may be defined outside the meta-container
+layer (as with indices inside a loop); therefore, not all template parameters
+need to be defined as arguments to the meta-container.
 
 Debug
 -----

@@ -69,7 +69,22 @@ class Container:
 		""" Factory method for creating containers.
 		"""
 		cls = Container.find_container_for_data(data)
-		return cls(data, **kwargs)
+		if cls:
+			return cls(data, **kwargs)
+
+		from .operators.meta import Meta
+		return Meta(data, **kwargs)
+
+	###########################################################################
+	@staticmethod
+	def get_container_for_name(name):
+		""" Finds a class object with the given name.
+		"""
+		name = name.lower()
+		for cls in get_subclasses(Container):
+			if cls.get_container_name() == name:
+				return cls
+		return None
 
 	###########################################################################
 	@staticmethod
@@ -79,7 +94,7 @@ class Container:
 		for cls in get_subclasses(Container):
 			if cls.get_container_name() in data:
 				return cls
-		raise ValueError('No such container for data: {}'.format(data))
+		return None
 
 	###########################################################################
 	def __init__(self, data):
@@ -263,6 +278,7 @@ class Container:
 
 		self._parse_pre(engine)
 		# TODO: Apply any "vars" that got parsed out during `_parse_pre()`.
+		self._parse_core(engine)
 		self._parse(engine)
 		self._parse_post(engine)
 
@@ -308,6 +324,12 @@ class Container:
 		""" Parse the container.
 
 			This should be overriden in derived classes.
+		"""
+		pass
+
+	###########################################################################
+	def _parse_core(self, engine):
+		""" Parse the core components of the container.
 		"""
 		if 'tag' in self.data:
 			self.tags = engine.evaluate(self.data['tag'], recursive=True)

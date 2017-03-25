@@ -7,9 +7,9 @@ models in a specification file, and actually running Kur.
 
 .. note::
 
-	If you haven't already, make sure you work through the :ref:`in_depth_examples`
-	first. Otherwise, this might feel a little overwhelming, and Kur shouldn't
-	make you feel like that.
+	If you haven't already, make sure you work through the
+	:ref:`in_depth_examples` first. Otherwise, this might feel a little
+	overwhelming, and Kur shouldn't make you feel like that.
 
 Running Kur
 ===========
@@ -19,7 +19,7 @@ Kur is pretty easy to run. It looks like this:
 .. code-block:: bash
 
 	# usage:
-	kur [-v] {train | test | evaluate | build} KURFILE.yml
+	kur [-v] {train | test | evaluate | build | dump | data} KURFILE.yml
 
 .. code-block:: bash
 	
@@ -29,29 +29,58 @@ Kur is pretty easy to run. It looks like this:
 	# test the Kur speech example while showing debug output
 	kur -vv test speech.yml
 
-You feed Kur a Kurfile, and tell it what to do with the file (e.g. ``kur train mnist.yml``, which is the first example in :ref:`in_depth_examples` ).
-Train, test, and evaluate will be explained in detail in the next section on Kurfile specification. The other command,
-``build`` is kind of like ``train``, but does not load the data set, and doesn't
-actually start training. Instead, ``build`` just assembles the model. This is useful
-for debugging the construction of models, looking for obvious problems, while not bothering with loading and training on data just yet.
+You feed Kur a Kurfile, and tell it what to do with the file (e.g. ``kur train
+mnist.yml``, which is the first example in :ref:`in_depth_examples` ).  Train,
+test, and evaluate will be explained in detail in the next section on Kurfile
+specification. The other commands are:
 
-**Note:** Keep in mind the optional flags ``-v`` and ``-vv``. If you are curious about the lower-level details of what
-Kur is doing (like the nuts and bolts of how the network is being buit), then feel free to add ``-v`` to enable INFO-level output, or
-even ``-vv`` to enable DEBUG-level ouput (there's a lot). 
+- ``build`` is kind of like ``train``, but does not load the data set, and
+  doesn't actually start training. Instead, ``build`` just assembles the model.
+  This is useful for debugging the construction of models, looking for obvious
+  problems, while not bothering with loading and training on data just yet.
 
-By default, Kur tries not to be overly verbose in terminal output, so it only prints progress indicators, warnings and errors to the console while running. You should
-definitely pay attention to any warnings or errors: they are indicative of something
-unexpected or wrong. If Kur seems 'stuck', try enabling verbose output to see what it is up to.
+- ``dump`` displays a JSON representation of the parsed Kurfile. It doesn't do
+  anything else, and is primarily useful as a debugging tool to see what
+  information Kur is using. If you are using complicated Jinja2 syntax,
+  including multiple Kurfiles, or want to verify YAML anchors, then this is an
+  invaluable debugging command.
+
+- ``data`` will _not_ train/test/evaluate a model, but it will do _almost_
+  everything else. Instead of actually using the model, it will instead print
+  out the data that it _would_ have fed into the very first batch. This is
+  useful for checking that data is flowing in the way you expect through Kur.
+
+**Note:** Keep in mind the optional flags ``-v`` and ``-vv``. If you are
+curious about the lower-level details of what Kur is doing (like the nuts and
+bolts of how the network is being buit), then feel free to add ``-v`` to enable
+INFO-level output, or even ``-vv`` to enable DEBUG-level ouput (there's a lot). 
+
+By default, Kur tries not to be overly verbose in terminal output, so it only
+prints progress indicators, warnings and errors to the console while running.
+You should definitely pay attention to any warnings or errors: they are
+indicative of something unexpected or wrong. If Kur seems "stuck," try enabling
+verbose output to see what it is up to.
+
+.. note::
+
+	One other tip: the train/test/evaluate commands can all take a ``--step``
+	flag. This sets a "breakpoint" just before data is given to the model at
+	each batch, requiring you to press ENTER to continue. Moreover, if
+	DEBUG-level output is enabled (``-vv``), then the entire batch of data will
+	be printed to the screen, and the model predictions will be printed
+	immediately after the batch is processed. This is primarily useful to Kur
+	developers who want to inspect the data that is being passed into the
+	model.
 
 Kurfile Template & Info
 =======================
 
-Kur uses Kurfiles. These are "specification" files which describe the model, hyperparameters, data
-sets, training/evaluation options, and functional settings. This doc gives a quick, whirlwind
-tour of how Kur interprets the specification files. Kurfiles can be written in YAML or JSON. 
+Kur uses Kurfiles. These are "specification" files which describe the model,
+hyperparameters, data sets, training/evaluation options, and functional
+settings. This doc gives a quick, whirlwind tour of how Kur interprets the
+specification files. Kurfiles can be written in YAML or JSON. 
 
-For more details, see
-:doc:`specification`. 
+For more details, see :doc:`specification`. 
 
 YAML Notes
 ----------

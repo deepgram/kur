@@ -161,7 +161,7 @@ only have Python 2, it's time to move into the future--let's install it!
 
 	   	.. code-block:: bash
 
-			echo 'PATH=/usr/local/bin:$PATH' >> ~/.profile
+			echo 'PATH=/usr/local/bin:$PATH' >> ~/.bash_profile
 
 	   Now, close the terminal---you need a fresh terminal for that change to
 	   take effect.
@@ -211,27 +211,27 @@ This step is optional, but **highly** recommended, since virtual environments
 allow you to isolate different packages and package versions, making
 installations cleaner, more reliable, and more stable.
 
-Let's install the core package and its highly convenient helper utility:
-
-.. code-block:: bash
-
-	pip install virtualenv virtualenvwrapper
-
-We also need to update your profile. Following these instructions, depending on
-your platform.
+Let's install the core package and its highly convenient helper utility. We
+also need to update your profile. Follow these instructions, depending on your
+platform.
 
 	- OS X:
 
 	  .. code-block:: bash
 
-		echo 'export WORKON_HOME=$HOME/.virtualenvs' >> ~/.profile
-		echo 'source $(which virtualenvwrapper.sh)' >> ~/.profile
-		source ~/.profile
+		pip3 install virtualenv virtualenvwrapper
+
+		echo 'export WORKON_HOME=$HOME/.virtualenvs' >> ~/.bash_profile
+		echo 'export VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python3' >> ~/.bash_profile
+		echo 'source $(which virtualenvwrapper.sh)' >> ~/.bash_profile
+		source ~/.bash_profile
 
 	- Linux: this depends on your shell. For ``bash`` (which is very common for
 	  Linux distributions to use), do this:
 
 	  .. code-block:: bash
+
+		pip install virtualenv virtualenvwrapper
 
 		echo 'export WORKON_HOME=$HOME/.virtualenvs' >> ~/.bashrc
 		echo 'source $(which virtualenvwrapper.sh)' >> ~/.bashrc

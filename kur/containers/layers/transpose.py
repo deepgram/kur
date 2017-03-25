@@ -47,10 +47,6 @@ class Transpose(Layer):				# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parses out the transpose layer.
 		"""
-
-		# Always call the parent.
-		super()._parse(engine)
-
 		if isinstance(self.args, (list, tuple)):
 			self.axes = self.args
 			self.include_batch = False

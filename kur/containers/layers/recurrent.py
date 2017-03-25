@@ -64,9 +64,6 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parses out the recurrent layer.
 		"""
-		# Always call the parent.
-		super()._parse(engine)
-
 		self.sequence = engine.evaluate(self.args.get('sequence', True),
 			recursive=True)
 		if not isinstance(self.sequence, bool):

@@ -14,11 +14,11 @@ Model Features
 - More intuitive error messages when trying to assemble models.
 - Add "flatten" layers automatically before Dense layers.
 - Add "activation" layers automatically between layers.
+- Multi-model architectures, as used for GANs.
 
 Container Features
 -------------------
 
-- Repeat
 - Additional activation functions
 
 Templating Features
@@ -39,7 +39,6 @@ Data Features
   pre-processing data, and doing just-in-time manipulation of data.
 - Column mapping: assign a column of data from a file to a model container with
   a different name.
-- Fix multi-name merging (same column specified multiple times)
 
 Log Features
 ============

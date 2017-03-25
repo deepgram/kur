@@ -2,6 +2,78 @@
 Frequently Asked Questions
 **************************
 
+Backends
+========
+
+How do I use other backends?
+----------------------------
+
+Kur supports Theano, TensorFlow, and PyTorch backends. The default PyPI
+installation only installs the Theano backend, though. This is because Theano
+supports both CPU and GPU out-of-the-box, and supports all of Kur's current
+feature set (except for multi-GPU). However, if you want try other backends,
+feel free!
+
+- **TensorFlow**. To install a CPU-only version of TensorFlow, you can simply
+  do: ``pip install tensorflow``. For GPU support as well, do: ``pip install
+  tensorflow-gpu`` instead. To use the backend, merge these lines into your
+  Kurfile:
+
+  .. code-block:: yaml
+
+    settings:
+      backend:
+        name: keras
+        backend: tensorflow
+
+- **PyTorch**. See the `PyTorch homepage <https://pytorch.org/>`_ for the
+  latest instructions, as their pre-built Python "wheels" depend on your
+  version of Python and, for GPU support, your version of CUDA. Then merge
+  these lines into your Kurfile:
+
+  .. code-block:: yaml
+
+    settings:
+      backend:
+        name: pytorch
+
+Why would I use other backends?
+-------------------------------
+
+Good question! Turns out, implementation differences can lead to drastic
+performance differences between backends. This often depends on your model
+architecture, though, so there isn't a simply "always use such-and-such a
+backend" statement that can be made. So it is usually worth the time to try
+different backends and see how well they work. Here are some overall
+characteristics:
+
+- **Theano**. This a great, overall performer. It is easy to install and
+  therefore comes bundled in Kur as the default backend. It has two downsides:
+  it does not support multiple GPUs, and its CPU implementation currently will
+  only saturate a single core. If you only have one GPU, though, perfect! Note
+  that we've seen more reports of NaN errors with Theano's RNNs than in other
+  backends.
+
+- **TensorFlow**. TensorFlow has a large backing from Google. It is slightly
+  less obvious to install (because you need to pick a CPU-only vs. GPU
+  package). However, it does do a great job at using all the CPUs at its
+  disposal and supports multi-GPU.
+
+- **PyTorch**. PyTorch is the new kid on the block. It is a well-designed,
+  easy-to-use deep learning library. Someday, Kur may switch to PyTorch as the
+  default backend. Right now, it will happily saturate many CPUs and can use
+  multiple GPUs. There is no CTC loss function available at the moment, though,
+  so you cannot train the speech recognition example using it.
+
+Beyond these slight feature differences and the potential performance
+differences, you might try different backends because it makes sense for the
+rest of your development workflow. After all, the weight files saved and loaded
+by Kur can also be saved and loaded into your favorite backend. That means that
+you can port your current, written-by-hand TensorFlow model into Kur and keep
+all your pre-trained weights! Or you can use Kur to explore the best models for
+your problem, train for a while, and then export the weights so that you can
+integrate them into your PyTorch model.
+
 Releases
 ========
 

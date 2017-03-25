@@ -45,10 +45,6 @@ class Parallel(Layer):					# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the child containers
 		"""
-
-		# Always call the parent.
-		super()._parse(engine)
-
 		# Parse self
 		if 'apply' not in self.args:
 			raise ParsingError('Missing "apply" key in parallel container.')

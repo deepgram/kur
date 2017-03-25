@@ -90,9 +90,6 @@ class Placeholder(Layer):				# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the placeholder.
 		"""
-
-		super()._parse(engine)
-
 		if 'shape' not in self.args:
 			logger.debug('Placeholder "%s" has a deferred shape.', self.name)
 		else:

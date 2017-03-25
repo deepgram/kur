@@ -96,7 +96,7 @@ class TorchModel:
 	"""
 
 	###########################################################################
-	def __init__(self, gpu=False):
+	def __init__(self, gpu=None):
 		""" Creates a new model.
 		"""
 		self.model = BYOM()

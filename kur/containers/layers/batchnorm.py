@@ -39,9 +39,6 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the layer.
 		"""
-
-		super()._parse(engine)
-
 		if isinstance(self.args, dict):
 			if 'axis' in self.args:
 				self.axis = engine.evaluate(self.args['axis'], recursive=True)

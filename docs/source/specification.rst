@@ -13,11 +13,12 @@ the required sections that every Kur model needs.
 
 .. note::
 
-	Out of the box, Kur understands YAML files, although other formats may be
-	added in the future. For details of the YAML syntax, take a look at the
-	`Ansible overview <https://docs.ansible.com/ansible/YAMLSyntax.html>`_.
-	Here, we will give our examples in YAML, since the concepts should port
-	fairly directly to other data languages (like JSON).
+	Out of the box, Kur understands YAML files and JSON files, although other
+	formats may be added in the future. For details of the YAML syntax, take a
+	look at the `Ansible overview
+	<https://docs.ansible.com/ansible/YAMLSyntax.html>`_.  Here, we will give
+	our examples in YAML, since the concepts should port fairly directly to
+	other data languages (like JSON).
 
 Top-level Sections
 ==================
@@ -30,6 +31,9 @@ All Kur specifications support these top-level sections:
 
 	# Optional
 	include:
+
+	# Optional
+	templates:
 
 	# Optional
 	settings:
@@ -313,6 +317,37 @@ so it still gets its input from the most recently declared container.) And if
 ``layer_2`` is the last layer in the model, then model will have a second
 output named ``layer_2``.
 
+.. _template_spec:
+
+Templates
+=========
+
+The ``templates`` section is where *templates* can be defined. Templates are
+essentially user-defined meta-containers, like macros, that can be used to
+streamline the development of complex models. The ``templates`` section should
+contain a dictionary of template definitions like this:
+
+.. code-block:: yaml
+
+	templates:
+
+	  my_first_template:
+	    # ... template definition
+
+	  my_second_template:
+	    # ... template definition
+
+	  # Other templates
+
+Each template definition is a list of containers that it should be replaced
+with, which may themselves contain other templates. These templates may
+reference arguments that are explicitly passed to them during the template
+instantiation, as well as any other values which happen to be "in scope".
+Additionally, all meta-containers also have access to an ``args`` value which
+is itself a dictionary of all parameters passed to the template instantiation.
+
+For more information, see the :ref:`meta_containers` section.
+
 Settings
 ========
 
@@ -336,11 +371,13 @@ The Kur backend can be chosen like this:
 	    name: NAME
 	    variant: VARIANT
 	    device: DEVICE
+		parallel: PARALLEL
 	    PARAM_KEY: PARAM_VALUE
 	    PARAM_KEY: PARAM_VALUE
 	    ...
 
-The ``NAME``, ``VARIANT``, ``DEVICE``, and ``PARAM_`` fields are all optional.
+The ``NAME``, ``VARIANT``, ``DEVICE``, ``PARALLEL``, and ``PARAM_`` fields are
+all optional.
 
 The ``NAME`` field specifies which backend Kur should use (e.g., ``keras``). If
 no ``NAME`` is specified (or indeed, if the entire ``backend`` or ``settings``
@@ -352,9 +389,42 @@ to the backend. They do not have any defined meaning. They are useful for
 developers who want to be able to make small, functional changes to an existing
 backend without having to re-write an entire backend.
 
-The ``DEVICE`` field tells Kur that it should use a particular device for its
-calculations. This can be ``cpu``, ``gpu``, or ``gpuX`` where ``X`` is an
-integer.
+The ``DEVICE`` field tells Kur which devices it is allowed to use. If it is
+``cpu``, only the CPU will be used. If it is ``gpu``, Kur will try to use GPU
+devices. For more refined control of GPU devices, Kur can take more advanced
+selection criteria. This is best illustrated by examples: 
+
+- ``gpu2``: use GPU 2 only (all indices are zero-based).
+- ``gpu2,gpu4``: use GPUs 2 and 4 only.
+- ``gpu2-6,gpu!3``: use GPUs 2 through 6, but not GPU 3.
+
+If ``DEVICE`` is not present, then Kur will try to use GPUs if they are
+available.
+
+The ``PARALLEL`` field tells Kur how many GPUs to use. It is not used if
+``DEVICE`` is ``cpu``.  If this field is absent, then Kur will try to use as
+many GPUs as possible.
+
+.. note::
+
+	What's the difference between ``DEVICE`` and ``PARALLEL``? ``DEVICE`` tells
+	Kur **which** devices it is **allowed** to use, and ``PARALLEL`` tells Kur
+	**how many** devices it should use. Kur will look at all the allowed
+	devices (as specified by ``DEVICE``), and then automatically select
+	``PARALLEL`` devices that do not seem to be in use. This is very useful
+	when you have many GPUs but you want to start several, separate Kur jobs.
+	In this case, you might leave ``DEVICE`` empty but set ``PARALLEL`` to 2.
+	Or if you want to reserve GPU 0 for some other process (maybe some
+	on-the-side PyTorch testing?), then you can set ``DEVICE`` to ``gpu!0`` and
+	leave ``PARALLEL`` blank (which tells Kur to use as many GPUs as possible,
+	except for GPU 0).
+
+.. note::
+
+	When ``PARALLEL`` is specified, the batch size will be **reinterpretted**
+	as a *global* batch size. Thus, leaving ``PARALLEL`` blank might lead to
+	unexpected batch sizes being distributed. This may be changed in the
+	future.
 
 The remaining ``PARAM_KEY``, ``PARAM_VALUE`` fields are just key/value pairs
 that the backend uses to configure itself. Their meaning is backend specific.
@@ -390,6 +460,29 @@ can do things like:
 	train:
 	  provider:
 	    batch_size: "{{ batch_size }}"
+
+.. note::
+
+	**Advanced usage**. The ``settings`` section is available to other sections
+	for templating and variable substitution. Is it available to the
+	``settings`` section itself? Yes! However, you need to prepend the variable
+	field with ``settings``. For example, if you want to use multiple GPUs, and
+	want the local (per-GPU) batch size to be constant, you might do this:
+
+	.. code-block:: yaml
+
+		settings:
+		  backend:
+		    parallel: 4
+		  local_batch_size: 16
+		  batch_size: "{{ settings.backend.parallel * settings.local_batch_size }}"
+
+		train:
+		  provider:
+		    batch_size: "{{ batch_size }}"
+
+	Additionally, recursive use of ``settings`` variables from within the
+	``settings`` block itself is not allowed.
 
 Hyperparameters
 ---------------
@@ -578,6 +671,17 @@ Available loggers:
 
 - ``binary``: the default binary logger. It creates an entire directory
   structure at ``path`` to store its statistics.
+  
+All loggers accept the following arguments:
+
+- ``keep_batch``: bool (default: True). Whether or not per-batch statistics
+  should be logged.
+- ``rate``: int or None (default: None). How often to write out per-batch
+  statistics. This is only meaningful when ``keep_batch`` is true. If ``rate``
+  is None, batch information is only written out when an epoch finishes or a
+  validation run occurs. If ``rate`` is zero, batch information is written to
+  disk every batch. If ``rate`` is a positive integer, then batch statistics
+  are written out no quicker than once every ``rate`` seconds.
 
 Epochs
 ------
@@ -676,6 +780,11 @@ Additionally, all of these optimizers support these paramters:
 
 If no optimizer is specified, or if the name is mising, the ``adam`` optimizer
 is used.
+
+.. note::
+
+	The ``rmsprop`` optimizer and gradient clipping are not currently available
+	for the PyTorch backend.
 
 .. _weights_train:
 
@@ -992,6 +1101,10 @@ Valid loss functions (choices for ``name``) are:
 - ``ctc``: Connectionist temporal classification. The is a soft-alignment loss
   function appropriate for functions like automatic speech recognition (ASR).
 
+.. note::
+
+	The CTC loss function is not available for the PyTorch backend.
+
 Using CTC Loss
 --------------
 
@@ -1175,8 +1288,8 @@ Valid suppliers are:
   :ref:`in_depth_mnist_example` example. It takes two parameters: ``images``
   and ``labels``, each of which, in turn, is a :ref:`package_specification`.
 
-  The MNIST supplier also takes care of creating a one-hot representation of the
-  labels as well as normalizing the images. The images are presented to the
+  The MNIST supplier also takes care of creating a one-hot representation of
+  the labels as well as normalizing the images. The images are presented to the
   network as single channel images (i.e., they are 3D).
 
 - ``cifar``: This supplier provides CIFAR data for the :ref:`in_depth_cifar_10`
@@ -1185,8 +1298,8 @@ Valid suppliers are:
 
 	- ``parts``: Which parts of the data set to load. CIFAR-10 splits the data
 	  sets into 6 pieces, named: 1, 2, 3, 4, 5, and "test". If ``parts`` is not
-	  specified, all six pieces are loaded by the supplier; otherwise, ``parts``
-	  can be a single piece to load, or a list of pieces to load.
+	  specified, all six pieces are loaded by the supplier; otherwise,
+	  ``parts`` can be a single piece to load, or a list of pieces to load.
 
 - ``pickle``: Loads a pickled Python data structure. The pickled file is
   expected to contain a dictionary whose keys are strings naming the respective
@@ -1197,6 +1310,73 @@ Valid suppliers are:
   taking a Python dictionary whose keys a strings naming the data, and whose
   values are numpy arrays, and saving the dictionary with ``numpy.save``. The
   name of the file is expected as the only argument: ``numpy_dict: PATH``.
+
+- ``jsonl``: Loads data from a JSON-lines / line-delimited JSON / JSONL file.
+  This file is just one JSON object per line. `See here for more details on JSONL. <http://jsonlines.org/>`_
+  The keys of the first object are taken to represent sources, which will pull from
+  the value for that key at each step, which should be a tensor (i.e., rectangular
+  JSON Array or a JSON Number) The name of the file is expected as the only
+  argument to ``jsonl``: ``jsonl: PATH.jsonl``. One reason to use JSONL is that it
+  permits arbitrary tensor shapes and number of data columns. One downside is that these
+  JSONL files can become quite large for high-dimensional tensors, unless stored
+  in compressed format.
+
+- ``text``: Loads text or other symbolic data, automatically converting each
+  symbol to a one-hot representation. The data file should be JSONL where each
+  key maps to an array of symbols (strings). A symbol may be more than
+  one unicode character, for example you could have a symbol for each word in the
+  dictionary. The permitted symbols must be listed in the required ``vocabs`` parameter,
+  which must give a dictionary mapping the column names (JSONL keys) to their
+  symbol vocabularies (arrays of strings). For large or autogenerated vocabs,
+  you may want to use the ``include:`` syntax so that you can store your vocabs
+  file outside your Kurfile.
+
+  For example, suppose we would like to train a model to translate text from
+  pig latin to english. E.g., 'ellohay iway amway away omputercay' --> 'hello i am a computer'.
+  Your data file ``data.jsonl`` could look like this:
+
+  .. code-block:: javascript
+
+	  {"pig_latin":["e", "l", "l", "o", "h", "a", "y", " ", "i", "w", "a", "y", " ", "a", "m", "w", "a", "y", " ", "a", "w", "a", "y", " ", "o", "m", "p", "u", "t", "e", "r", "c", "a", "y"], "english":["h", "e", "l", "l", "o", " ", "i", " ", "a", "m", " ", "a", " ", "c", "o", "m", "p", "u", "t", "e", "r"]}
+	  {"pig_latin":["a", "p", "p", "l", "e", "w", "a", "y"], "english":["a", "p", "p", "l", "e"]}
+    ...
+
+  Notice that the sequences are different lengths -- these will be right-padded with
+  0 vectors by default, but this can be customized with the ``padding`` and ``pad_with``
+  parameters to the supplier. In our Kurfile, we specify the data like this:
+
+  .. code-block:: yaml
+
+    text:
+      path: data.jsonl
+      seq_len: 36
+
+      vocabs:
+        pig_latin: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+        english: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '<done>']
+
+      padding:
+        pig_latin: left
+        english: right
+
+      pad_with:
+        pig_latin: null
+        english: '<done>'
+
+      # ... also uses standard packaging
+
+  Notice the extra '<done>' symbol in the english vocabulary -- we use this as
+  right-padding on the output sequence so that the network is trained to
+  produce a constant norm at its output layer each step. The ``seq_len``
+  is the sequence length and should be set so that it fits the longest symbol
+  sequences in your data set. In this case, an RNN encoder-decoder model would be a
+  good architecture to try. The model receives no activations at its input layer
+  (left-padding with ``null`` i.e. 0) until the pig latin symbol sequence begins,
+  then at each step thereafter the text supplier supplies a one-hot representation of
+  the symbol at that step, indexing by the appropriate vocabulary. The output should be
+  one-hot representations of the appropriate output sybols for each step until the
+  output is finished and the model should output '<done>' symbols to signal that its
+  job is done.
 
 - ``csv``: This supplier loads CSV data. If you only give it a filename, then
   it will try to load a local file, and it assumes that the first row of the
@@ -1228,6 +1408,13 @@ Valid suppliers are:
 	At the moment, all CSV data will be cast to floating-point numbers. This
 	means that if strings are encountered, you will get errors.
 
+- ``jsonl``. This supplier loads data from a JSONL file. JSONL files have a
+  single JSON blob *per line*, with each line corresponding to another data
+  sample. Each JSON blob (i.e., each line) should be a JSON dictionary whose
+  keys are the names of the data columns, and whose values are JSON lists
+  (which may be nested for multi-dimensional data). The supplier is used like
+  this: ``jsonl: my_data.jsonl``.
+
 - ``speech_recognition``. This supplier loads data appropriate for automatic
   speech recognition (ASR, also known as transcription). It takes the standard
   :ref:`package_specification`, in addition to these other optional parameters:
@@ -1239,6 +1426,26 @@ Valid suppliers are:
 	  Determines the type of audio features to present to the model, either
 	  spectrograms (for ``spec``) or Mel-frequency cepstral coefficients
 	  (``mfcc``).
+	- ``normalization``: None, string, or dictionary (default: None). Indicates
+	  how data should be normalized. If None, speech data is automatically
+	  normalized on a per-dataset basis, but the normalization is **not** saved
+	  between training sessions. You should only do this if you are
+	  experimenting, and not in a production setting. If this is a string, it
+	  is interpretted as a filename where a previous normalization is stored.
+	  If this file doesn't exist, it will be created and normalization
+	  statistics from the dataset will be stored in it. If it is a dictionary,
+	  then more advanced normalization settings can be specified. Valid
+	  dictionary keys are ``path`` (the file to store/load the normalization
+	  in/from, or null to use per-session data only), ``center`` (boolean
+	  indicating whether or not to mean-subtract the data, ``scale`` (boolean
+	  indicating whether or not to scale the data), ``rotate`` (boolean
+	  indicating whether or not to perform a ZCA rotation on the data; or one
+	  of the strings ``zca``, ``pca`` to indicate the rotation to perform), and
+	  ``depth`` (an integer indicating how many data samples to use in
+	  calculating the normalization statistics).
+	- ``min_duration``: float (default: None). Only keeps audio utterances that
+	  are longer than ``min_duration`` seconds; if unspecified or ``null``, it
+	  keeps all utterances.
 	- ``max_duration``: float (default: None). Only keeps audio utterances that
 	  are shorter than ``max_duration`` seconds; if unspecified or ``null``, it
 	  keeps all utterances.
@@ -1251,6 +1458,14 @@ Valid suppliers are:
 	  it is a JSON file containing a single JSON list; each element in the list
 	  is treated as a case-insensitive vocabulary word. If a list, each element
 	  of the list is treated as a case-insensitive word.
+	- ``samples``: None, int, or str (default: None). Allows downselection of
+	  available samples. If this is None, no downselection is used. If this is
+	  an integer, then only the first ``samples`` samples will be kept. This
+	  can also be specified as a range ``123-456`` to keep the 333 samples from
+	  123 through 455. You can also omit the second range to use all samples to
+	  the end of the file, as in ``123-``. Percentages are allowed as well by
+	  *appending* a single percent sign to the end of the string, as in:
+	  ``10%``, ``20-30%``, ``90-%``.
 
   The speech recognition supplier will produce the following data sources that
   you can use in your model:
@@ -1425,6 +1640,7 @@ as part of Kur:
 - ``mnist``: This is a analysis hook used in the MNIST example, and is not
   appropriate for use outside of that example. It is intended as an
   ``evaluate`` hook.
+
 - ``output``: This is used for saving intermediate data products. This is done
   by the :ref:`destination_spec`, but can also be done as a hook, which is nice
   when you want to save the model output, apply some other hooks, and then let
@@ -1437,9 +1653,17 @@ as part of Kur:
 	    ``format`` is not specified.
 
   This hook is primarily an ``evaluate`` hook.
+
 - ``transcript``: This is useful for performing argmax-decoding of the ASR
   pipeline, effectively turning your model outputs into true transcriptions.
   This is intended as a ``test``/``validate`` hook.
+
+- ``text``: This hook will perform argmax-decoding of a model whose output targets
+  a ``text`` data source. Unlike the ``transcript`` hook, the
+  ``text`` hook will not collapse repeated symbols, and can be used with an arbitrary
+  symbol vocabulary by customizing the ``vocabs`` parameter of the corresponding
+  ``text`` source. It is intended as a ``test``/``validate`` hook.
+
 - ``slack``: This is useful for posting to a Slack channel using Slack's
   `incoming webhooks <https://api.slack.com/custom-integrations>`_. It is
   intended as both a training and evaluation hook. It takes this form:
@@ -1452,6 +1676,8 @@ as part of Kur:
 	  icon: ICON
 	  user: USER
 	  title: TITLE
+	  token: TOKEN
+	  extra_files: EXTRA
 
   ``CHANNEL`` is the name of the Slack channel to post to (e.g, "#kur") and is
   required. ``URL`` is the Slack webhook URL and is required. ``ICON`` is the
@@ -1459,4 +1685,44 @@ as part of Kur:
   ``USER`` is the name of the user to post as (e.g., "kur-bot") and is
   optional. ``TITLE`` is a message that is prepended to the message body. It is
   optional and is useful for distinguishing between different models that you
-  may be training (e.g., "model #1").
+  may be training (e.g., "model #1"). ``EXTRA`` is a filename or a list of
+  filenames that Kur should upload to Slack; if specified, then ``TOKEN`` must
+  be given (it is a Slack webhooks token). Additionally, if ``TOKEN`` is
+  specified and the ``speech_recognition`` supplier is used, then audio
+  utterances will be automatically uploaded to Slack as well as the
+  transcription.
+- ``plot``: Generates plots. It takes two forms:
+
+  .. code-block:: yaml
+
+    plot: LOSS_PER_BATCH
+
+  and:
+
+  .. code-block:: yaml
+  
+    plot:
+	  loss_per_batch: LOSS_PER_BATCH
+	  loss_per_time: LOSS_PER_TIME
+	  throughput_per_time: THROUGHPUT_PER_TIME
+
+  All parameters are filenames for storing their respective plots at. In the
+  second form, any line may be absent (or None) to disable generation of that
+  particular plot. ``LOSS_PER_BATCH`` is a plot of loss as a function of batch.
+  ``LOSS_PER_TIME`` is a plot of loss as a function of wall-clock time.
+  ``THROUGHPUT_PER_TIME`` is a plot of instantaneous "batches-per-second" as a
+  function of wall-clock time.
+
+  .. note::
+
+    Pro-tip: ``plot`` and ``slack`` hooks can be combined so that your latest
+	loss plots get automatically posted to Slack. Since hooks are processed
+	in order, make sure the plot comes first:
+
+	.. code-block:: yaml
+
+	  hooks:
+	    - plot: &loss_file my_loss.png
+		- slack:
+		    extra_files: \*loss_file
+		    # Other Slack parameters...
