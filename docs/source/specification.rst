@@ -746,6 +746,12 @@ Available optimizers:
 
     - ``learning_rate`` (default: 0.001). The learning rate for the optimizer.
 
+- ``adadelta``: The Adadelta optimizer, which takes the following parameters:
+
+	- ``learning_rate`` (default: 1.0). The learning rate for the optimizer.
+	- ``rho`` (default: 0.95)
+	- ``decay`` (default: 0)
+
 - ``sgd``. Stochastic gradient descent. It takes these parameters:
 
 	- ``learning_rate`` (default: 0.01). The learning rate for the optimizer.
