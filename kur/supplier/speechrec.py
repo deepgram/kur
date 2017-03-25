@@ -352,13 +352,22 @@ class RawTranscript(ChunkSource):
 		self.vocab = self.make_vocab(vocab)
 
 	###########################################################################
+	@staticmethod
+	def make_lower(entry):
+		""" Maps strings or lists of strings to lowercase.
+		"""
+		if isinstance(entry, str):
+			return entry.lower()
+		return [x.lower() for x in entry]
+
+	###########################################################################
 	def make_vocab(self, vocab):
 		""" Loads or infers a vocabulary.
 		"""
 		if vocab is None:
 			logger.info('Inferring vocabulary from data set.')
 			data = set(x for transcript in self.transcripts \
-				for x in transcript.lower())
+				for x in self.make_lower(transcript))
 			data = sorted(data)
 
 		elif isinstance(vocab, str):
@@ -366,7 +375,7 @@ class RawTranscript(ChunkSource):
 			with open(vocab) as fh:
 				json_data = json.loads(fh.read())
 			try:
-				data = [x.lower() for x in json_data]
+				data = [self.make_lower(x) for x in json_data]
 			except:
 				logger.exception('Expected the JSON to contain a single list '
 					'of strings. Instead, we got: %s', json_data)
@@ -375,7 +384,7 @@ class RawTranscript(ChunkSource):
 		elif isinstance(vocab, (tuple, list)):
 			logger.info('Using a hard-coded vocabulary.')
 			try:
-				data = [x.lower() for x in vocab]
+				data = [self.make_lower(x) for x in vocab]
 			except:
 				logger.exception('Expected the vocabulary to be a list of '
 					'strings. Instead, we got: %s', vocab)
