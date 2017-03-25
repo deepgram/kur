@@ -1414,6 +1414,26 @@ Valid suppliers are:
 	At the moment, all CSV data will be cast to floating-point numbers. This
 	means that if strings are encountered, you will get errors.
 
+- ``mind``: This supplier loads data from the Stanford EEG dataset available 
+  generally at https://exhibits.stanford.edu/data/catalog/tc919dd5388. Human 
+  subjects had 129 electrodes mounted to their scalp to read the electric 
+  field produced by their brains while images were displayed to their human 
+  eyeballs. Each subject was shown the same image (chosen from 72 images in 
+  6 categories) twelve times randomly throughout a session. The time series 
+  EEG data has been reduced into 2d FFT PNG images that capture the brain 
+  state of the human subject as s function of time while the image stimulus is 
+  shown to the subject. The reduced dataset used by this supplier is hosted by 
+  Deepgram at http://kur.deepgram.com/data/. Each sample is a 2d FFT image 
+  864x192 pixels in dimension `brain_probe_image` which is a concatenation of 
+  128 smaller 2d FFTs representing the time series state of each electrode 
+  during the time the stimulus is shown. This mega image is coupled with two 
+  labels—a one-hot `category_label` (1 out of 6) of the image being displayed 
+  to the human subjects eyeballs and a one-hot `precise_label` for the 
+  label of the precise image being shown (1 out of 72) to the humans. Either 
+  of these labels can be used as a target for the loss function.The collection 
+  of stimulus images and a statistical analysis of the dataset can be found at 
+  http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0135697.
+
 - ``jsonl``. This supplier loads data from a JSONL file. JSONL files have a
   single JSON blob *per line*, with each line corresponding to another data
   sample. Each JSON blob (i.e., each line) should be a JSON dictionary whose
