@@ -4,6 +4,13 @@ CHANGES
 master (unreleased)
 -------------------
 
+0.5.0 (2017.03.24)
+
+- Very small update prior to the Deep Learning Hackathon
+- Simplifies the requirements for subclassing Container
+- Added some documentation about the text hook.
+- Added an initial KurHub hook to support the hackathon.
+
 0.4.0 (2017.03.23)
 
 - Improved GPU selection
