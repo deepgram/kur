@@ -22,5 +22,6 @@ from .pickle_supplier import PickleSupplier
 from .speechrec import SpeechRecognitionSupplier
 from .csv_supplier import CsvSupplier
 from .jsonl_supplier import JSONLSupplier
+from .mind import MindSupplier
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
