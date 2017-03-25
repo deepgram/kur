@@ -4,6 +4,12 @@ CHANGES
 master (unreleased)
 -------------------
 
+0.5.1 (2017.03.25)
+
+- Fixed a bug in the Keras parallelizing which crashed TensorFlow whil waiting
+  for compilation to finish).
+- Improved debug output for Keras 2.0.2.
+
 0.5.0 (2017.03.24)
 
 - Very small update prior to the Deep Learning Hackathon
