@@ -20,6 +20,7 @@ import scipy
 import scipy.ndimage
 from . import Supplier
 from ..sources import DerivedSource, VanillaSource, ChunkSource
+from ..utils import package
 
 
 class SampleSource(ChunkSource):
@@ -144,10 +145,10 @@ class MindSupplier(Supplier):
 
 
 	###########################################################################
-	def __init__(self, path, *args, **kwargs):
+	def __init__(self, path=None, url=None, checksum=None, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		self.path = path
-		self.load_data()
+
+		self.load_data(path, url, checksum)
 
 		sample_source = SampleSource(self.data)
 		length = len(self.data)
@@ -162,7 +163,14 @@ class MindSupplier(Supplier):
 		}
 	
 	###########################################################################
-	def load_data(self):
+	def load_data(self, path, url, checksum):
+		
+		self.path, _ = package.install(
+			url=url,
+			path=path,
+			checksum=checksum
+		)
+
 		jsonl_candidates = [f for f in os.listdir(self.path) if f[-5:] == 'jsonl']
 		if len(jsonl_candidates) != 1:
 			raise Exception("Supplied path is not a valid data path for MindSupplier")
