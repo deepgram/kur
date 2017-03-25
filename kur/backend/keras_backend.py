@@ -721,7 +721,7 @@ class KerasBackend(Backend):
 		with DisableLogging():
 			provider = BatchProvider(
 				sources=dict(zip(model.provider.keys, model.provider.sources)),
-				batch_size=2*min(1, self.parallel),
+				batch_size=2*max(1, self.parallel),
 				num_batches=1,
 				randomize=False
 			)
