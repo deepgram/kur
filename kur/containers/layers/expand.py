@@ -41,10 +41,6 @@ class Expand(Layer):					# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parses out the expand layer.
 		"""
-
-		# Always call the parent.
-		super()._parse(engine)
-
 		if isinstance(self.args, dict) and 'dimension' in self.args:
 			self.dimension = engine.evaluate(self.args['dimension'])
 		elif isinstance(self.args, (str, int)):

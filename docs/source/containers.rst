@@ -491,6 +491,45 @@ The ``for`` loop adds each container under ``iterate`` during each iteration
 (there are ``RANGE`` iterations total). Unless the containers are ``reuse``
 containers, each resulting container is independent and has its own weights.
 
+.. _meta_containers:
+
+Meta-Containers
+---------------
+
+**Description**. A user-defined template.
+
+**Purpose**. Meta-containers are instantiations of :ref:`user-defined templates
+<template_spec>`. They do not have a well-defined name, unlike other
+containers.  Instead, they are created by simply referencing the template
+definition, and then defining any variables that need to be passed to the
+template.
+
+**Usage**:
+
+Given a previous template definition::
+
+	templates:
+	  cnn_stack:
+	    - for:
+	        range: "{{ depth }}"
+	        iterate:
+	          - convolution: "{{ cnn }}"
+
+one could use the template like this::
+
+	cnn_stack:
+	  depth: 3
+	  cnn:
+	    size: [2, 2]
+	    kernels: 64
+
+As you can see, the template parameters ``depth`` and ``cnn`` where defined and
+passed into the container.
+
+**Note**: Some template parameters may be defined outside the meta-container
+layer (as with indices inside a loop); therefore, not all template parameters
+need to be defined as arguments to the meta-container.
+
 Debug
 -----
 

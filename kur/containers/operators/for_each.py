@@ -1,5 +1,5 @@
 """
-Copyright 2016 Deepgram
+Copyright 2017 Deepgram
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,51 +15,56 @@ limitations under the License.
 """
 
 from . import Operator
+from . import ParsingError
 
 ###############################################################################
-class ContainerGroup(Operator):		# pylint: disable=too-few-public-methods
-	""" A pseudo-container for holding other containers.
-
-		The primary purpose for this container is to provide a unified
-		namespace for all containers. This way, even if the model is specified
-		over over multiple Containers, this ContainerGroup will still allow
-		containers to "find" other containers.
+class ForEach(Operator):				# pylint: disable=too-few-public-methods
+	""" Range-based for loops.
 	"""
 
 	###########################################################################
-	def __init__(self, containers):
-		""" Creates a new container group.
-
-			# Arguments
-
-			containers: list of Containers. The containers to add as children.
-
-			# Notes
-
-			None of the child containers should already have a parent; if any
-			of them do, a ParsingError is raised.
+	@classmethod
+	def get_container_name(cls):
+		""" Returns the name of the container class.
 		"""
-		super().__init__(data=None)
-
-		for child in containers:
-			self.add_child(child)
+		return 'for_each'
 
 	###########################################################################
-	def _parse_core(self, engine):
-		""" This container has no pieces to it.
+	def __init__(self, *args, **kwargs):
+		""" Create a new for loop.
 		"""
-		pass
+		super().__init__(*args, **kwargs)
+		self.items = None
+		self.loop_var = None
 
 	###########################################################################
 	def _parse(self, engine):
-		""" Parse all children.
+		""" Parse and construct the child containers.
 		"""
-		for child in self.children:
-			child.parse(engine)
+		# Parse self
+		if 'items' not in self.args:
+			raise ParsingError('Missing "items" key in for_each loop.')
+		self.items = engine.evaluate(self.args['items'])
+
+		if 'loop_var' not in self.args:
+			self.loop_var = 'item'
+		else:
+			self.loop_var = engine.evaluate(self.args['loop_var'])
+
+		if 'iterate' not in self.args:
+			raise ParsingError('Missing "iterate" key in for_each loop.')
+		target = engine.evaluate(self.args['iterate'])
+
+		# Parse children
+		for item in range(self.items):
+			item = engine.evaluate(item, recursive=True)
+			with engine.scope(**{self.loop_var : item}):
+				for entry in target:
+					self.new_child_from_data(entry).parse(engine)
 
 	###########################################################################
 	def _build(self, model):
-		""" Build all children.
+		""" Construct each child.
 		"""
 		for child in self.children:
 			yield from child.build(model)

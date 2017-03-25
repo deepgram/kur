@@ -38,10 +38,6 @@ class Merge(Layer):					# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the child containers
 		"""
-
-		# Always call the parent.
-		super()._parse(engine)
-
 		if isinstance(self.args, dict):
 			self.mode = engine.evaluate(self.args.get('mode'), recursive=True)
 			self.axis = engine.evaluate(self.args.get('axis'), recursive=True)
