@@ -1640,6 +1640,7 @@ as part of Kur:
 - ``mnist``: This is a analysis hook used in the MNIST example, and is not
   appropriate for use outside of that example. It is intended as an
   ``evaluate`` hook.
+
 - ``output``: This is used for saving intermediate data products. This is done
   by the :ref:`destination_spec`, but can also be done as a hook, which is nice
   when you want to save the model output, apply some other hooks, and then let
@@ -1652,9 +1653,17 @@ as part of Kur:
 	    ``format`` is not specified.
 
   This hook is primarily an ``evaluate`` hook.
+
 - ``transcript``: This is useful for performing argmax-decoding of the ASR
   pipeline, effectively turning your model outputs into true transcriptions.
   This is intended as a ``test``/``validate`` hook.
+
+- ``text``: This hook will perform argmax-decoding of a model whose output targets
+  a ``text`` data source. Unlike the ``transcript`` hook, the
+  ``text`` hook will not collapse repeated symbols, and can be used with an arbitrary
+  symbol vocabulary by customizing the ``vocabs`` parameter of the corresponding
+  ``text`` source. It is intended as a ``test``/``validate`` hook.
+
 - ``slack``: This is useful for posting to a Slack channel using Slack's
   `incoming webhooks <https://api.slack.com/custom-integrations>`_. It is
   intended as both a training and evaluation hook. It takes this form:
