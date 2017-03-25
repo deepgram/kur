@@ -595,16 +595,16 @@ class KerasBackend(Backend):
 				outputs=[node.value for node in model.outputs.values()]
 			)
 
-			if self.parallel > 1:
-				from ..utils.parallelism import make_parallel
-				compiled = make_parallel(compiled, self.parallel)
-
 			if logger.isEnabledFor(logging.DEBUG):
 				x = io.StringIO()
 				with contextlib.redirect_stdout(x):
 					compiled.summary()
 				for line in x.getvalue().split('\n'):
 					logger.debug(line)
+
+			if self.parallel > 1:
+				from ..utils.parallelism import make_parallel
+				compiled = make_parallel(compiled, self.parallel)
 
 			model.compiled['raw'] = compiled
 
@@ -721,7 +721,7 @@ class KerasBackend(Backend):
 		with DisableLogging():
 			provider = BatchProvider(
 				sources=dict(zip(model.provider.keys, model.provider.sources)),
-				batch_size=2*min(1, self.parallel),
+				batch_size=2*max(1, self.parallel),
 				num_batches=1,
 				randomize=False
 			)

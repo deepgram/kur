@@ -196,6 +196,18 @@ need to install the appropriate package for your operating system:
 
   	$ sudo pacman -S ffmpeg
 
+fatal error: Python.h: No such file or directory
+------------------------------------------------
+
+This is caused by not having the Python development headers installed. Try the
+following:
+
+- Ubuntu
+
+  .. code-block:: bash
+
+	sudo apt-get install python3-dev
+
 Plotting
 ========
 
