@@ -52,7 +52,7 @@ class TranscriptHook(EvaluationHook):
 
 	###########################################################################
 	@staticmethod
-	def argmax_decode(output, rev_vocab, blank):
+	def argmax_decode(output, rev_vocab, blank, separator):
 		""" output = matrix: timesteps * characters
 		"""
 		x = numpy.argmax(output, axis=1)
@@ -65,15 +65,16 @@ class TranscriptHook(EvaluationHook):
 				tokens.append(c)
 			prev = c
 		offset = 1 if blank == 0 else 0
-		return ''.join([rev_vocab[i-offset] for i in tokens])
+		return separator.join([rev_vocab[i-offset] for i in tokens])
 
 	###########################################################################
-	def __init__(self, warp=False, **kwargs):
+	def __init__(self, word=False, warp=False, **kwargs):
 		""" Creates a new transcript hook.
 		"""
 
 		super().__init__(**kwargs)
 		self.warp = warp
+		self.word = word
 
 	###########################################################################
 	def apply(self, current, original, model=None):
@@ -88,14 +89,17 @@ class TranscriptHook(EvaluationHook):
 
 		blank = len(vocab) if not self.warp else 0
 
+		separator = ' ' if self.word else ''
+
 		prediction = data['asr'][0]
 		result = {
 			'prediction' : Transcript(self.argmax_decode(
 				prediction,
 				rev,
-				blank
+				blank,
+				separator
 			)),
-			'truth' : Transcript(''.join(
+			'truth' : Transcript(separator.join(
 				rev.get(i, '') for i in truth['transcript_raw'][0]
 			)) if truth is not None else None
 		}
