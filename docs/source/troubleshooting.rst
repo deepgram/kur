@@ -208,6 +208,13 @@ following:
 
 	sudo apt-get install python3-dev
 
+TypeError: Expected int32, got list containing Tensors of type '_Message' instead.
+----------------------------------------------------------------------------------
+
+If you are using TensorFlow <= 0.12 (see ``pip freeze``), upgrade to TensorFlow >= 1.0::
+
+	pip install --upgrade tensorflow      # And/or tensorflow-gpu
+
 Plotting
 ========
 
