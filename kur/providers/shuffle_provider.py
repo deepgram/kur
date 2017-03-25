@@ -94,7 +94,6 @@ class ShuffleProvider(Provider): \
 
 			if randomize is True:
 				if self.entries <= 0:
-					import pdb; pdb.set_trace()
 					raise ValueError('Must know how long our shuffleable '
 						'sources are in order to shuffle them, but all '
 						'sources seem to be infinite. If this is the case, '
