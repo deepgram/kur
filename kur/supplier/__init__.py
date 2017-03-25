@@ -23,5 +23,6 @@ from .speechrec import SpeechRecognitionSupplier
 from .csv_supplier import CsvSupplier
 from .jsonl_supplier import JSONLSupplier
 from .text_supplier import TextSupplier
+from .mind import MindSupplier
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
