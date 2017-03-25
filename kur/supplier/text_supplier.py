@@ -47,10 +47,17 @@ class TextSupplier(Supplier):
         super().__init__(*args, **kwargs)
 
         self.path = path
-        self.seq_len = seq_len
 
         with open(self.path, 'r') as infile:
             keys = json.loads(next(infile)).keys()
+
+        if type(seq_len) == dict:
+            self.seq_len = seq_len
+        else:
+            self.seq_len = {
+                k: seq_len
+                for k in keys
+            }
 
         self.vocabs = vocabs
 
@@ -69,8 +76,6 @@ class TextSupplier(Supplier):
             }
         else:
             self.pad_with = pad_with
-
-
 
         self.vocabs = {
             k: list(map(str, self.vocabs[k]))
@@ -93,7 +98,7 @@ class TextSupplier(Supplier):
                 'raw_' + k,
                 self.vocabs[k],
                 self.num_entries,
-                self.seq_len,
+                self.seq_len[k],
                 padding=self.padding[k],
                 pad_with=self.pad_with[k]
             )
