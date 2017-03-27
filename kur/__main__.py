@@ -28,6 +28,7 @@ from .utils import logcolor
 from . import Kurfile
 from .engine import JinjaEngine
 
+# get logger a name for display
 logger = logging.getLogger(__name__)
 
 ###############################################################################
@@ -50,8 +51,11 @@ def parse_kurfile(filename, engine):
 def dump(args):
 	""" Dumps the Kurfile to stdout as a JSON blob.
 	"""
+	logger.info("execute dump(args) ....")
 	spec = parse_kurfile(args.kurfile, args.engine)
-	print(json.dumps(spec.data, sort_keys=True, indent=4))
+	# import json; json.dumps?
+	# todo: remove one of `evaluate` and 'evaluation', and etc
+	print(json.dumps(spec.data, sort_keys=False, indent=4))
 
 ###############################################################################
 def train(args):
@@ -65,6 +69,7 @@ def train(args):
 def test(args):
 	""" Tests a model.
 	"""
+
 	spec = parse_kurfile(args.kurfile, args.engine)
 	func = spec.get_testing_function()
 	func(step=args.step)
@@ -81,18 +86,36 @@ def evaluate(args):
 def build(args):
 	""" Builds a model.
 	"""
+	
+	logger.info("Executing build(args) ...  ")
+
 	spec = parse_kurfile(args.kurfile, args.engine)
 
+
+	# if build compile option is set to auto
 	if args.compile == 'auto':
+		# create an empty list
 		result = []
+		# if train, test, evalute sections are available in kurfile,
 		for section in ('train', 'test', 'evaluate'):
 			if section in spec.data:
+				# then store the sections inside result list
 				result.append((section, 'data' in spec.data[section]))
+
+		# if no section above is available in the kurfile
 		if not result:
+			# display message
 			logger.info('Trying to build a bare model.')
+			# set build complile option to be none
 			args.compile = 'none'
+
+		# if those sections are available in kurfile, then
 		else:
+			logger.info("Hack! what is inside result: ----------")
+			logger.info("result without sorted: %s", result)
 			args.compile, has_data = sorted(result, key=lambda x: not x[1])[0]
+			logger.info("result after sorted: %s", sorted(result))
+
 			logger.info('Trying to build a "%s" model.', args.compile)
 			if not has_data:
 				logger.info('There is not data defined for this model, '
@@ -185,6 +208,7 @@ def prepare_data(args):
 def version(args):							# pylint: disable=unused-argument
 	""" Prints the Kur version and exits.
 	"""
+	logger.info("version(args) is running ...")
 	print('Kur, by Deepgram -- deep learning made easy')
 	print('Version: {}'.format(__version__))
 	print('Homepage: {}'.format(__homepage__))
@@ -348,37 +372,89 @@ def parse_args():
 def main():
 	""" Entry point for the Kur command-line script.
 	"""
+
+
+	# logging is introduced after this line of code, so
 	args = parse_args()
 
+
+
+	# set log level for display level (warning, info and debug levels)
 	loglevel = {
 		0 : logging.WARNING,
 		1 : logging.INFO,
 		2 : logging.DEBUG
 	}
+
+
+	# A number of optional keyword arguments may be specified, which can alter
+	# the default behaviour.
+	# to log we must first finish configure
 	config = logging.basicConfig if args.no_color else logcolor.basicConfig
 	config(
+
+		# choose log level based on value of args.verbose
+		# default = 0, `-v` = 1, `-vv` = 2
 		level=loglevel.get(args.verbose, logging.DEBUG),
+
+		# set color
 		format='{color}[%(levelname)s %(asctime)s %(name)s:%(lineno)s]{reset} '
 			'%(message)s'.format(
 				color='' if args.no_color else '$COLOR',
 				reset='' if args.no_color else '$RESET'
 			)
 	)
+
+
+	logger.info("Step1: get console inputs or args into py-script")
+	logger.info("args = parse_args(): %s", args)
+
+
+	# in ipython, try:
+	# import logging; logging.captureWarnings?
 	logging.captureWarnings(True)
 
+
+
+	logger.info("Step2: if args will, do_monitor(args) will run next")
+	# do monitor here, but why?
 	do_monitor(args)
 
+
+	logger.info("Step3: if args.version True, kur version will show up")
+	# if console receive `--version`, then args.version == True
 	if args.version:
+		# set args.func = version, version is a function defined above
 		args.func = version
+
+
+
+
 	elif not hasattr(args, 'func'):
+		logger.info("Step4: if no args.func is given, print out the following")
+		## import sys; sys.stderr?
 		print('Nothing to do!', file=sys.stderr)
 		print('For usage information, try: kur --help', file=sys.stderr)
 		print('Or visit our homepage: {}'.format(__homepage__))
+		## import sys; sys.exit?
+		# exit as failure?
 		sys.exit(1)
 
+	# import kur; from kur.engine import JinjaEngine; JinjaEngine.__dict__
+	# Creates a new Jinja2 templating engine.
+	logger.info("Step5: create a JinjiaEngine object")
 	engine = JinjaEngine()
+
+	# setattr(x, 'y', v) is equivalent to ``x.y = v''
+	# set args.engine to be engine defined above
+	logger.info("Step6: set args.engine to be a real engine object")
 	setattr(args, 'engine', engine)
 
+
+	### This line of code is crucial: it runs all functions as user want expressed as inputs from console
+	# comment it out, nothing will actually get done
+	# with this line of code, system run the functions and exit with success.
+	logger.info("Step7: run relevant funcions with args: it can be version(), train(), evaluate(), test(), dump(), build(), prepare_data(), then exit the program as success")
 	sys.exit(args.func(args) or 0)
 
 ###############################################################################

@@ -27,7 +27,7 @@ train:
     num_batches: 15
 
   # How many epochs to train for.
-  epochs: 10
+  epochs: 2
 
 # Here, we use the MNIST test set as a validation set (more generally, you'll
 # want train, validation, and test sets; but we ignore this for the MNIST
@@ -60,10 +60,10 @@ test: *validate
 
 # This is the evaluation section, used during `kur evaluate mnist.yml`.
 # The funky "<<: *validate" is just YAML, and basically means "copy all of the
-# keys from 'validate', and then add/replace the 
+# keys from 'validate', and then add/replace the
 evaluate:
   <<: *validate
-  
+
   # Use the entire testing set for evaluation.
   provider:
     num_batches: null
