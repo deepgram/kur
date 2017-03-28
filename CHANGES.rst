@@ -4,9 +4,14 @@ CHANGES
 master (unreleased)
 -------------------
 
+0.5.2 (2017.03.28)
+
+- Fixed a bug when processing meta-container inputs.
+- Added globbing patterns for includes.
+
 0.5.1 (2017.03.25)
 
-- Fixed a bug in the Keras parallelizing which crashed TensorFlow whil waiting
+- Fixed a bug in the Keras parallelizing which crashed TensorFlow while waiting
   for compilation to finish).
 - Improved debug output for Keras 2.0.2.
 
