@@ -581,6 +581,15 @@ can do so using the list-of-dictionaries format:
 	    method: merge
 	  - source: B-file.yml
 
+Note that any place a filename can be specified, a shell glob can be used as
+well. So these are also allowed:
+
+.. code-block:: yaml
+
+	include:
+	  - conf.d/*.yml
+	  - conf.d/**/kur_*.yml
+
 Train
 =====
 
