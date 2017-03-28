@@ -19,6 +19,7 @@ import copy
 import socket
 import warnings
 import logging
+import glob
 from collections import deque
 
 from .engine import ScopeStack, PassthroughEngine
@@ -743,17 +744,18 @@ class Kurfile:
 				'files. Instead we received: {}'.format(
 					expanded, new_sources))
 
-		for x in new_sources:
-			data = mergetools.deep_merge(
-				self.parse_source(
-					engine,
-					source=x,
-					context=expanded,
-					loaded=loaded
-				),
-				data,
-				strategy=strategy
-			)
+		for new_source in new_sources:
+			for x in glob.iglob(new_source, recursive=True):
+				data = mergetools.deep_merge(
+					self.parse_source(
+						engine,
+						source=x,
+						context=expanded,
+						loaded=loaded
+					),
+					data,
+					strategy=strategy
+				)
 
 		return data
 

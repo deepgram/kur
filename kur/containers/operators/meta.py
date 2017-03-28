@@ -62,7 +62,10 @@ class Meta(Operator):
 		if self.inputs:
 			inputs = self.inputs
 		else:
-			inputs = engine.state['layers'][-1]
+			if engine.state['layers']:
+				inputs = [engine.state['layers'][-1]]
+			else:
+				inputs = []
 
 		# Put the arguments in scope for the children.
 		with engine.scope(args=self.args, inputs=inputs):
