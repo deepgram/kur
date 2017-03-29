@@ -154,7 +154,8 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 				'activation' : self.activation or 'relu',
 				'return_sequences' : self.sequence,
 				'go_backwards' : False,
-				size_key : self.size
+				size_key : self.size,
+				'trainable' : not self.frozen
 			}
 
 			if self.bidirectional:
@@ -269,7 +270,8 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 					'layer' : model.data.add_layer(
 						self.name,
 						func(**kwargs),
-						func=layer_func
+						func=layer_func,
+						frozen=self.frozen
 					)(inputs[0]['layer'])
 				}
 

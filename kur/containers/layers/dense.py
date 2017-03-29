@@ -80,11 +80,12 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 				func = lambda x, **kwargs: L.Dense(units=x, **kwargs)
 
 			for v in self.size[:-1]:
-				yield func(v)
+				yield func(v, trainable=not self.frozen)
 
 			yield func(
 				self.size[-1],
-				name=self.name
+				name=self.name,
+				trainable=not self.frozen
 			)
 
 		elif backend.get_name() == 'pytorch':
@@ -99,7 +100,8 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 					'shape' : self.shape([inputs[0]['shape']]),
 					'layer' : model.data.add_layer(
 						self.name,
-						nn.Linear(inputs[0]['shape'][-1], self.size[-1])
+						nn.Linear(inputs[0]['shape'][-1], self.size[-1]),
+						frozen=self.frozen
 					)(inputs[0]['layer'])
 				}
 

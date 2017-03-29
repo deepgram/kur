@@ -49,7 +49,8 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 			yield L.Activation(
 				'linear' if self.type == 'none' or self.type is None \
 					else self.type,
-				name=self.name
+				name=self.name,
+				trainable=not self.frozen
 			)
 
 		elif backend.get_name() == 'pytorch':

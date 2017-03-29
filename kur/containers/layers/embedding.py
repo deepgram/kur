@@ -73,7 +73,8 @@ class Embedding(Layer):				# pylint: disable=too-few-public-methods
 			yield L.Embedding(
 				self.vocab_size,
 				self.size,
-				name=self.name
+				name=self.name,
+				trainable=not self.frozen
 			)
 
 		elif backend.get_name() == 'pytorch':
@@ -84,14 +85,18 @@ class Embedding(Layer):				# pylint: disable=too-few-public-methods
 				""" Connects the layer.
 				"""
 				assert len(inputs) == 1
+				def layer_func(layer, *inputs):
+					return layer(*[x.long() for x in inputs])
 				return {
 					'shape' : self.shape([inputs[0]['shape']]),
 					'layer' : model.data.add_layer(
 						self.name,
-						lambda *x: nn.Embedding(
+						nn.Embedding(
 							self.vocab_size,
 							self.size
-						)(*[X.long() for X in x])
+						),
+						func=layer_func,
+						frozen=self.frozen
 					)(inputs[0]['layer'])
 				}
 

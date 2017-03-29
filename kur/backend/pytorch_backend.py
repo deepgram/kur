@@ -324,8 +324,13 @@ class PyTorchBackend(Backend):
 			key = 'test'
 			result = {'loss' : torch_losses}
 		else:
-			torch_optimizer = optimizer.get_optimizer(self)(
-				model.data.model.parameters())
+			trainables = tuple(model.data.get_trainable_parameters())
+			if not trainables:
+				torch_optimizer = None
+			else:
+				torch_optimizer = optimizer.get_optimizer(self)(
+					trainables)
+
 			torch_losses = self.process_loss(model, loss)
 
 			key = 'train'
@@ -424,16 +429,17 @@ class PyTorchBackend(Backend):
 		"""
 
 		torch_model = model.compiled['train']['model']
-		optimizer = model.compiled['train']['optimizer']
 		losses = model.compiled['train']['loss']
+		optimizer = model.compiled['train']['optimizer']
 
-		optimizer.zero_grad()
+		if optimizer:
+			optimizer.zero_grad()
 
 		predictions, losses = torch_model.test(data, losses)
 
-		torch_model.backprop(losses)
-
-		optimizer.step()
+		if optimizer:
+			torch_model.backprop(losses)
+			optimizer.step()
 
 		metrics = {
 			k : loss.data.cpu().numpy().squeeze(-1)

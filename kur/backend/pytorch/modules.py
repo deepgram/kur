@@ -348,7 +348,7 @@ class TorchModel:
 		return Layer(new_name, func)
 
 	###########################################################################
-	def add_layer(self, name, layer, func=None):
+	def add_layer(self, name, layer, *, func=None, frozen=False):
 		""" Creates a new layer.
 
 			# Notes
@@ -358,8 +358,18 @@ class TorchModel:
 			  parameters.
 			- All learnable layers must be added using this function.
 		"""
+		for param in layer.parameters():
+			param.requires_grad = not frozen
 		layer = self.add_variable(name, layer, func)
 		return self.add_operation(layer, name=name)
+
+	###########################################################################
+	def get_trainable_parameters(self):
+		""" Returns a generator over all trainable model parameters.
+		"""
+		for param in self.model.parameters():
+			if param.requires_grad:
+				yield param
 
 ###############################################################################
 def flatten(x):

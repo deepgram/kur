@@ -107,6 +107,7 @@ class Container:
 		self.inputs = []
 		self.args = None
 		self.sink = False
+		self.freeze = None
 
 		self.parent = None
 		self.children = []
@@ -367,6 +368,14 @@ class Container:
 		else:
 			self.inputs = []
 
+		if 'freeze' in self.data:
+			self.freeze = engine.evaluate(self.data['freeze'], recursive=True)
+			if not isinstance(self.freeze, (bool, type(None))):
+				raise ParsingError('"freeze" must be boolean or None. '
+					'Received: {}'.format(self.freeze))
+		else:
+			self.freeze = None
+
 		if 'sink' in self.data:
 			sink = engine.evaluate(self.data['sink'])
 			if isinstance(sink, str):
@@ -502,6 +511,22 @@ class Container:
 		""" Whether or not this container is intended to be used by end-users,
 			or is merely an internal container used by Kur.
 		"""
+		return False
+
+	###########################################################################
+	@property
+	def frozen(self):
+		""" Returns True if the container should be frozen (untrainable).
+		"""
+		# Do we have an explicit override?
+		if isinstance(self.freeze, bool):
+			return self.freeze
+
+		# Inherit from our parent.
+		if self.parent:
+			return self.parent.frozen
+
+		# By default, layers are trainable.
 		return False
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

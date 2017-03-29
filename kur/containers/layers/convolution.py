@@ -134,7 +134,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 					'nb_filter' : self.kernels,
 					'activation' : self.activation or 'linear',
 					'border_mode' : self.border,
-					'name' : self.name
+					'name' : self.name,
+					'trainable' : not self.frozen
 				}
 
 				if len(self.size) == 1:
@@ -174,7 +175,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 					'padding' : self.border,
 					'name' : self.name,
 					'kernel_size' : self.size,
-					'strides' : self.strides
+					'strides' : self.strides,
+					'trainable' : not self.frozen
 				}
 
 				if len(self.size) == 1:
@@ -239,7 +241,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 				)(inputs[0]['layer'])
 				output = model.data.add_layer(
 					self.name,
-					layer(inputs[0]['shape'][-1])
+					layer(inputs[0]['shape'][-1]),
+					frozen=self.frozen
 				)(output)
 				output = model.data.add_operation(
 					swap_channels

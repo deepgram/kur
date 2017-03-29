@@ -57,7 +57,8 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 				yield L.BatchNormalization(
 					mode=2,
 					axis=-1 if self.axis is None else self.axis,
-					name=self.name
+					name=self.name,
+					trainable=not self.frozen
 				)
 			else:
 				import keras.layers.normalization as L # pylint: disable=import-error
@@ -65,7 +66,8 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 					axis=-1 if self.axis is None else self.axis,
 					center=True,
 					scale=True,
-					name=self.name
+					name=self.name,
+					trainable=not self.frozen
 				)
 
 		elif backend.get_name() == 'pytorch':
@@ -98,7 +100,8 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 
 				output = model.data.add_layer(
 					self.name,
-					func(inputs[0]['shape'][-1], affine=True)
+					func(inputs[0]['shape'][-1], affine=True),
+					frozen=self.frozen
 				)(output)
 
 				if ndim != 1:

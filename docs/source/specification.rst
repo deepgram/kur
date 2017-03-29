@@ -86,6 +86,7 @@ container looks like this:
 	  oldest: OLDEST
 	  inputs: INPUTS
 	  sink: SINK
+	  freeze: FREEZE
 
 There are many different kinds of containers, which we describe on the
 :doc:`containers` page. The parameters that are given to the container (e.g.,
@@ -318,6 +319,43 @@ so it still gets its input from the most recently declared container.) And if
 output named ``layer_2``.
 
 .. _template_spec:
+
+Freeze
+------
+
+The ``freeze`` value indicates whether or not this container's weights (if any)
+should be modified during the training process. Setting this to False will
+allow the layer to be trained during the backpropagation phase of training.
+Similarly, setting this to True will lock the container's weights during
+training. If it is unset, the value is inherited from the container's parent.
+If no parent containers have a set value of ``freeze``, it will default to
+False.
+
+This makes it very easy to configure trainable aspects of your model. Even
+though not all containers have weights associated with them, you can mark
+parent containers as trainable (or not), and you will get trickle-down effects
+that you can override. For example:
+
+.. code-block:: yaml
+
+	- for:
+	    range: 10
+	    iterate:
+	      - dense: 10
+	      - dense: 20
+	        freeze: false
+	      - dense: 30
+	  freeze: yes
+
+In this example, the ``dense: 10`` layer in the ``for`` loop has frozen
+(untrainable) weights. This is because ``freeze`` was not explicitly specified
+for that layer, and so it inherits the "frozen-ness" of its parent (the ``for``
+loop), which is frozen. This is the same for the ``dense: 30`` layer. In
+contrast, the ``dense: 20`` layer overrides its parent's ``freeze`` value,
+allowing its parameters to vary during training. If the ``for`` loop did *not*
+have a ``freeze`` value specified, then all three ``dense`` layers would be
+trainable (not frozen), because they would inherit the global default of
+``freeze: no``.
 
 Templates
 =========
