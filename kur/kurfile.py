@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import sys
 import os
 import copy
 import socket
@@ -763,16 +764,37 @@ class Kurfile:
 				if not isinstance(sub_sources, (list, tuple)):
 					sub_sources = [sub_sources]
 				for sub_source in sub_sources:
-					for x in glob.iglob(sub_source, recursive=True):
+					for x in self.glob(sub_source, source=expanded,
+						recursive=True
+					):
 						new_source['source'] = x
 						data = load_source(dict(new_source))
 			elif isinstance(new_source, str):
-				for x in glob.iglob(new_source, recursive=True):
+				for x in self.glob(new_source, source=expanded,
+					recursive=True
+				):
 					data = load_source(x)
 			else:
 				data = load_source(new_source)
 
 		return data
+
+	###########################################################################
+	@staticmethod
+	def glob(path, *, source=None, recursive=False):
+		""" Wrapper for Python's `glob`.
+		"""
+		if sys.version_info < (3, 5):
+			kwargs = {}
+			if recursive and '**' in path:
+				warnings.warn('Recursive globbing is not supported on Python '
+					'3.4. Ignoring this...', UserWarning)
+		else:
+			kwargs = {'recursive' : recursive}
+
+		if source:
+			path = os.path.join(os.path.dirname(source), path)
+		yield from glob.iglob(path, **kwargs)
 
 	###########################################################################
 	def _parse_templates(self, engine, section, stack):
