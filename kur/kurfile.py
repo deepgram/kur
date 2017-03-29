@@ -76,6 +76,7 @@ class Kurfile:
 		self.model = None
 		self.backend = None
 		self.engine = engine
+		self.templates = None
 
 	###########################################################################
 	def parse(self):
