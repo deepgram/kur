@@ -31,7 +31,7 @@ from .engine import JinjaEngine
 logger = logging.getLogger(__name__)
 
 ###############################################################################
-def parse_kurfile(filename, engine):
+def parse_kurfile(filename, engine, parse=True):
 	""" Parses a Kurfile.
 
 		# Arguments
@@ -43,14 +43,15 @@ def parse_kurfile(filename, engine):
 		Kurfile instance
 	"""
 	spec = Kurfile(filename, engine)
-	spec.parse()
+	if parse:
+		spec.parse()
 	return spec
 
 ###############################################################################
 def dump(args):
 	""" Dumps the Kurfile to stdout as a JSON blob.
 	"""
-	spec = parse_kurfile(args.kurfile, args.engine)
+	spec = parse_kurfile(args.kurfile, args.engine, parse=not args.pre_parse)
 	print(json.dumps(spec.data, sort_keys=True, indent=4))
 
 ###############################################################################
@@ -327,6 +328,8 @@ def parse_args():
 	subparser = subparsers.add_parser('dump',
 		help='Dumps the Kurfile out as a JSON blob. Useful for debugging.')
 	subparser.add_argument('kurfile', help='The Kurfile to use.')
+	subparser.add_argument('-p', '--pre-parse', action='store_true',
+		help='Dump the Kurfile before parsing it.')
 	subparser.set_defaults(func=dump)
 
 	subparser = subparsers.add_parser('data',
