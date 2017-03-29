@@ -111,7 +111,8 @@ class Kurfile:
 
 		# Parse the settings (backends, globals, hyperparameters, ...)
 		self._parse_section(
-			self.engine, builtin['settings'], stack, include_key=False)
+			self.engine, builtin['settings'], stack, include_key=False,
+			auto_scope=True)
 
 		# Parse all of the "action" sections.
 		self._parse_section(
@@ -792,7 +793,7 @@ class Kurfile:
 
 	###########################################################################
 	def _parse_section(self, engine, section, stack, *,
-		required=False, include_key=True):
+		required=False, include_key=True, auto_scope=False):
 		""" Parses a single top-level entry in the Kurfile.
 
 			# Arguments
@@ -837,7 +838,11 @@ class Kurfile:
 			else:
 				return None
 
-		with ScopeStack(engine, stack + [{key : self.data[key]}]):
+		extra_stack = [{key : self.data[key]}]
+		if auto_scope:
+			extra_stack += [self.data[key]] \
+				if isinstance(self.data[key], dict) else []
+		with ScopeStack(engine, stack + extra_stack):
 			evaluated = engine.evaluate(self.data[key], recursive=True)
 
 		if not include_key:
