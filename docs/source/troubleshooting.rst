@@ -246,6 +246,20 @@ new PATH using:
 
 	source ~/.bashrc
 
+ValueError: Invalid value ("true") for configuration variable "dnn.enabled"
+---------------------------------------------------------------------------
+
+Theano has changed the format for its configuration file, which by default is
+at ``~/.theanorc``. Change lines like this::
+
+	[dnn]
+	enabled = true
+
+to this::
+
+	[dnn]
+	enabled = True
+
 Plotting
 ========
 
