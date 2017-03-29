@@ -202,7 +202,24 @@ class Engine:
 			The evaluated expression (some Python object/class).
 		"""
 		if isinstance(expression, (str, bytes)):
-			return self._evaluate(expression)
+			# A string may need several runs through evaluation to get out of
+			# the templating engine.
+			while True:
+				new_expression = self._evaluate(expression)
+				if new_expression == expression:
+					# We've reached quiescense. Done!
+					break
+
+				expression = new_expression
+				if not isinstance(expression, (str, bytes)):
+					# We've mutated data types.
+					if recursive:
+						return self.evaluate(expression, recursive=recursive)
+					break
+
+				# Otherwise, we are still just a string that needs additional
+				# evaluating. Continue looping.
+
 		elif isinstance(expression, (int, float, complex, type(None))):
 			pass
 		elif recursive:
@@ -220,6 +237,7 @@ class Engine:
 					type(expression),
 					expression
 				), UserWarning)
+
 		return expression
 
 	###########################################################################
