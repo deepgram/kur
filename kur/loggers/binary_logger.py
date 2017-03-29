@@ -146,11 +146,13 @@ class BinaryLogger(PersistentLogger):
 		summary_path = os.path.join(path, self.SUMMARY)
 		with open(summary_path, 'w') as fh:
 			fh.write(yaml.dump({
-				'version' : 2,
+				'version' : 3,
 				'epochs' : self.epochs,
 				'batches' : self.batches,
 				'samples' : self.samples,
-				'sessions' : self.sessions
+				'sessions' : self.sessions,
+				'clocks' : {k : float(v) for k, v in self.clocks.items()} \
+					if self.clocks else None
 			}))
 
 	###########################################################################
@@ -164,6 +166,7 @@ class BinaryLogger(PersistentLogger):
 		self.batches = summary.get('batches', 0)
 		self.samples = summary.get('samples', 0)
 		self.sessions = summary.get('sessions', 0) + 1
+		self.clocks = summary.get('clocks')
 
 	###########################################################################
 	@staticmethod

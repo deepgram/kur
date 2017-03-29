@@ -610,8 +610,11 @@ existing model. It looks like this:
 	  # Where the log file lives
 	  log: LOG (optional)
 
-	  # How many epochs to train for (optional)
+	  # DEPRECATED: How many epochs to train for (optional)
 	  epochs: EPOCHS
+
+	  # When to stop training (optional)
+	  stop_when: STOP_WHEN
 
 	  # Where to store weights (optional)
 	  weights: WEIGHTS
@@ -692,13 +695,80 @@ All loggers accept the following arguments:
   disk every batch. If ``rate`` is a positive integer, then batch statistics
   are written out no quicker than once every ``rate`` seconds.
 
+Stop When
+---------
+
+The ``stop_when`` field tells Kur how long it should train for during a ``kur
+train`` run. If it isn't specified (or if it is set to an empty or null value),
+then Kur trains interminably (or rather, until you Ctrl+C the process). It is
+a dictionary which takes the following form:
+
+.. code-block:: yaml
+
+	stop_when:
+	  epochs: EPOCHS
+	  elapsed: ELAPSED
+	  mode: MODE
+
+``EPOCHS`` is the number of epochs to train for. If missing, or if it is set to
+``infinite``, then there is no limit to the number of epochs Kur will train
+for (other stopping criteria still apply, however).
+
+``ELAPSED`` is the amount of time to train for. If missing, or if it is set to
+``infinite``, then there is no limit to the time Kur will spend training the
+model for (other stopping criteria still apply, however). If ``ELAPSED`` is an
+integer, then is specified the number of minutes to train for (as an integer or floating-point number). Alternatively, it can be a dictionary for more fine-grained
+control:
+
+.. code-block:: yaml
+
+	elapsed:
+	  days: DAYS
+	  hours: HOURS
+	  minutes: MINUTES
+	  clock: CLOCK
+
+In this form, the values of ``DAYS``, ``HOURS``, and ``MINUTES`` are added
+together to specify the maximum training time. ``CLOCK`` is optional, and is
+used to select how the time-keeping is done. It can be one of these values:
+
+- ``all``: the total wall-clock time, starting when training starts, and
+  including all time spent saving weights and validating.
+- ``train``: the total time spent training, excluding time spent saving model
+  weights and validating.
+- ``validate``: the total time spent validating.
+- ``batch``: a very strict, fine-grained timer which measures only time spent
+  submitting data to the underlying model during training. This includes only
+  the forward-pass, loss calculation, and backward pass through the model, and
+  does not include, for example, data preparation.
+
+If ``CLOCK`` is not specified, it defaults to ``all``.
+
+If both ``ELAPSED`` and ``EPOCHS`` are specified, then whichever criterion is
+met first will terminate training (logical "OR").
+
+Additionally, ``MODE`` tells Kur how to interpret the stopping criteria, and
+can be one of the following:
+
+- ``additional``. Kur will train for an additional ``EPOCHS`` epochs or
+  ``ELAPSED`` time every time ``kur train`` is called.
+- ``total``. Using the :ref:`log_spec`, Kur will train for exactly ``EPOCHS``
+  epochs total or ``ELAPSED`` time total (whichever comes first), regardless of
+  how many times ``kur train`` is called. For example, let's say that
+  ``EPOCHS`` is 10 in ``total`` mode and ``ELAPSED`` is omitted. You call ``kur
+  train`` but interrupt it after epoch 6 completes. If you can ``kur train``
+  again, it will only train for 4 more epochs (to reach its total of 10). If
+  you call ``kur train`` a third time, it will simply report that has already
+  finished 10 epochs. If a log is not specified, Kur will warn you but proceed
+  training as if ``MODE`` were ``additional``.
+
 Epochs
 ------
 
-The ``epochs`` field is an integer that simply tells Kur how many epochs to
-train for during a ``kur train`` run. If it isn't specified (or if it is set to
-an empty or null value), then Kur trains interminably (or rather, until you
-Ctrl+C the process).
+.. note::
+
+	The ``epochs`` field has been deprecated in favor of the ``stop_when``
+	field, which allows for more flexible stopping criteria.
 
 The ``epochs`` field tells Kur how many epochs to train for during a ``kur
 train`` run. If it isn't specified (or if it is set to an empty or null value),

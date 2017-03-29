@@ -89,7 +89,7 @@ class TestExecutor:
 			loss=loss,
 			optimizer=optimizer
 		)
-		trainer.train(provider=simple_data, epochs=1)
+		trainer.train(provider=simple_data, stop_when={'epochs' : 1})
 
 	###########################################################################
 	def test_testing(self, simple_model, loss, simple_data):
@@ -138,7 +138,7 @@ class TestExecutor:
 			loss=ctc_loss,
 			optimizer=optimizer
 		)
-		trainer.train(provider=ctc_data, epochs=1)
+		trainer.train(provider=ctc_data, stop_when={'epochs' : 1})
 
 	###########################################################################
 	def test_ctc_test(self, ctc_model, ctc_data, ctc_loss):
@@ -180,7 +180,7 @@ class TestExecutor:
 			optimizer=optimizer
 		)
 		trainer.compile()
-		trainer.train(provider=uber_data, epochs=1)
+		trainer.train(provider=uber_data, stop_when={'epochs' : 1})
 
 	###########################################################################
 	def test_uber_test(self, uber_model, uber_data, jinja_engine, loss):
@@ -221,7 +221,7 @@ class TestExecutor:
 			loss=loss,
 			optimizer=optimizer
 		)
-		trainer.train(provider=embedding_data, epochs=1)
+		trainer.train(provider=embedding_data, stop_when={'epochs' : 1})
 
 	###########################################################################
 	def test_embedding_test(self, embedding_model, embedding_data, loss):

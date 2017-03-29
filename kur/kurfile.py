@@ -266,6 +266,19 @@ class Kurfile:
 			log = None
 
 		epochs = self.data['train'].get('epochs')
+		stop_when = self.data['train'].get('stop_when', {})
+		if epochs:
+			if stop_when:
+				warnings.warn('"stop_when" has replaced "epochs" in the '
+					'"train" section. We will try to merge things together, '
+					'giving "stop_when" priority.', DeprecationWarning)
+			if isinstance(epochs, dict):
+				if 'number' in epochs and 'epochs' not in stop_when:
+					stop_when['epochs'] = epochs['number']
+				if 'mode' in epochs and 'mode' not in stop_when:
+					stop_when['mode'] = epochs['mode']
+			elif 'epochs' not in stop_when:
+				stop_when['epochs'] = epochs
 
 		provider = self.get_provider('train')
 
@@ -369,7 +382,7 @@ class Kurfile:
 			defaults = {
 				'provider' : provider,
 				'validation' : validation,
-				'epochs' : epochs,
+				'stop_when' : stop_when,
 				'log' : log,
 				'best_train' : best_train,
 				'best_valid' : best_valid,
@@ -649,8 +662,8 @@ class Kurfile:
 				break
 		else:
 			if required:
-				raise ValueError(
-					'Missing required section: {}'.format(', '.join(section)))
+				raise ValueError('Missing required section: {}'
+					.format(', '.join(section)))
 			else:
 				return None
 

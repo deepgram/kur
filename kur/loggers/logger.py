@@ -132,6 +132,8 @@ class Logger:
 		self.timer = Timer(started=False)
 		self.timestamper = Timer(started=False)
 
+		self.clocks = None
+
 		self._clear()
 
 	###########################################################################
@@ -237,9 +239,17 @@ class Logger:
 		self.data[data_type][tag].append(data)
 
 	###########################################################################
-	def log_batch(self, batch_size, data, tag=None):
+	def record_clocks(self, clocks):
+		""" Take a snapshot of any timer values that should be logged.
+		"""
+		self.clocks = clocks
+
+	###########################################################################
+	def log_batch(self, batch_size, data, tag=None, *, clocks=None):
 		""" Log training information after a batch.
 		"""
+		if clocks is not None:
+			self.record_clocks(clocks)
 		self.samples += batch_size
 		self.batches += 1
 		if not self.keep_batch:
@@ -252,17 +262,21 @@ class Logger:
 			self.flush()
 
 	###########################################################################
-	def log_training(self, data, tag=None):
+	def log_training(self, data, tag=None, *, clocks=None):
 		""" Log training statistics after an epoch.
 		"""
+		if clocks is not None:
+			self.record_clocks(clocks)
 		self.epochs += 1
 		self._push('training', tag, data)
 		self.flush()
 
 	###########################################################################
-	def log_validation(self, data, tag=None):
+	def log_validation(self, data, tag=None, *, clocks=None):
 		""" Log training statistics after a validation run.
 		"""
+		if clocks is not None:
+			self.record_clocks(clocks)
 		self._push('validation', tag, data)
 		self.flush()
 

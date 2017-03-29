@@ -31,7 +31,11 @@ def modify_kurfile(data):
 	if 'train' in data:
 		if 'checkpoint' in data['train']:
 			del data['train']['checkpoint']
-		data['train']['epochs'] = 2
+		if 'stop_when' not in data['train']:
+			data['train']['stop_when'] = {}
+		data['train']['stop_when']['epochs'] = 2
+		if 'epochs' in data['train']:
+			del data['train']['epochs']
 		if 'log' in data['train']:
 			del data['train']['log']
 

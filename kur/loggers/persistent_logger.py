@@ -23,6 +23,18 @@ class PersistentLogger(Logger):
 	"""
 
 	###########################################################################
+	def get_clocks(self):
+		""" Returns historical clock information.
+
+			Return value
+			------------
+
+			If historical clock information exists, it is returned as a
+			dictionary. Otherwise, None is returned.
+		"""
+		return self.clocks
+
+	###########################################################################
 	def get_best_training_loss(self):
 		""" Returns the best historical training loss.
 

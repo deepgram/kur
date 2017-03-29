@@ -22,7 +22,7 @@ import time
 import traceback
 import numpy
 import tqdm
-from ..utils import get_any_value, CriticalSection, parallelize
+from ..utils import get_any_value, CriticalSection, parallelize, Timer
 from ..loggers import PersistentLogger
 from .hooks import TrainingHook
 
@@ -256,7 +256,7 @@ class Executor:
 					)
 
 	###########################################################################
-	def wrapped_train(self, provider, *, validation=None, epochs=None,
+	def wrapped_train(self, provider, *, validation=None, stop_when=None,
 		log=None, best_train=None, best_valid=None, training_hooks=None,
 		validation_hooks=None, checkpoint=None, step=False):
 		""" Trains the model on some data.
@@ -267,8 +267,7 @@ class Executor:
 				data to be trained on.
 			validation: Provider instance or None (default: None). The data
 				provider which serves validation data.
-			epochs: int or None (default: None). The number of epochs to train
-				for, or None to train forever.
+			stop_when: dict or None (default: None). Stopping criteria.
 			log: Log instance or None (default: None). The logger to save
 				training statistics with.
 
@@ -278,116 +277,6 @@ class Executor:
 		"""
 
 		#######################################################################
-		# Process checkpoint requirements
-		if isinstance(checkpoint, dict):
-			if 'path' not in checkpoint:
-				checkpoint['path'] = 'checkpoint'
-
-			found = False
-			for k in ('epochs', 'batches', 'samples'):
-				if k in checkpoint:
-					if not isinstance(checkpoint[k], int):
-						raise ValueError('Expected "{}" key in "checkpoint" '
-							'to be an integer. Received: {}'.format(k,
-							checkpoint[k]))
-					found = True
-
-			if not found:
-				checkpoint['epochs'] = 1
-
-		elif isinstance(checkpoint, str):
-			checkpoint = {
-				'path' : checkpoint,
-				'epochs' : 1
-			}
-		elif checkpoint is not None:
-			raise ValueError('Unknown format for "checkpoint". Expected a '
-				'single file or a dictionary. Instead we received: {}'
-				.format(checkpoint))
-
-		#######################################################################
-		# Parse logs
-		if log is None:
-			logger.info('No log specified, so no historical loss information '
-				'is available.')
-			best_train_loss = best_valid_loss = None
-		elif not isinstance(log, PersistentLogger):
-			logger.info('Log type is non-persistent, so no historical loss '
-				'information is available.')
-			best_train_loss = best_valid_loss = None
-		else:
-			best_train_loss = log.get_best_training_loss()
-			if best_train_loss is not None:
-				logger.info('Best historical training loss: %.3f',
-					best_train_loss)
-			else:
-				logger.info('No historical training loss available from logs.')
-
-			best_valid_loss = log.get_best_validation_loss()
-			if best_valid_loss is not None:
-				logger.info('Best historical validation loss: %.3f',
-					best_valid_loss)
-			else:
-				logger.info(
-					'No historical validation loss available from logs.')
-
-		#######################################################################
-		# Parse desired number of epochs
-		completed_epochs = log.get_number_of_epochs() if log else 0
-		if not completed_epochs:
-			logger.info('No previous epochs.')
-		else:
-			logger.info('Restarting from epoch %d.', completed_epochs+1)
-
-		valid_modes = ('total', 'additional')
-		default_mode = 'additional'
-		mode = default_mode
-		if isinstance(epochs, dict):
-			mode = epochs.get('mode', default_mode)
-			if mode not in valid_modes:
-				raise ValueError('If "mode" in "epochs" must be one of: {}. '
-					'Instead, we received: {}.'.format(', '.join(valid_modes),
-					mode))
-			if mode == 'total' and log is None:
-				logger.warning('The epoch specification has "mode" set to '
-					'"%s". This mode requires a log to be used correctly. Kur '
-					'will proceed as if "mode" were "%s".', mode, default_mode)
-				mode = default_mode
-			epochs = epochs.get('number')
-			if epochs in ('inf', 'all', 'infinite', 'infinity'):
-				epochs = None
-		elif not isinstance(epochs, (int, type(None))):
-			raise ValueError('Expected "epochs" to be a dictionary or '
-				'integer. Instead, we received: {}.'.format(epochs))
-		logger.debug('Epoch handling mode: %s', mode)
-
-		if epochs is not None:
-			if mode == 'additional':
-				epochs += completed_epochs
-
-		#######################################################################
-		# Local variables
-
-		# The name of the most recently saved weight file. If the weights
-		# change, this should be reset to None. Otherwise, saving weights can
-		# be as simple as copying the previously saved file.
-		saved_recent = None
-
-		session = {
-			'epochs' : 0,
-			'batches' : 0,
-			'samples' : 0,
-			'minutes' : time.perf_counter() / 60
-		}
-		last_checkpoint = session.copy()
-
-		epoch = completed_epochs - 1
-		train_func = self.retry(
-			self.model.backend.train,
-			self.auto_retry
-		)
-
-		#######################################################################
 		def run_validation(num_batches=None):
 			""" Executes a validation run.
 			"""
@@ -395,6 +284,8 @@ class Executor:
 				return None
 
 			nonlocal best_valid_loss
+
+			timers['validate'].resume()
 
 			# Continue with a validation run.
 			try:
@@ -414,6 +305,7 @@ class Executor:
 					validation.num_batches = previous_num_batches
 
 			if validation_loss is None:
+				timers['validate'].pause()
 				return None
 
 			cur_validation_loss = sum(validation_loss.values())
@@ -428,8 +320,9 @@ class Executor:
 					save_or_copy_weights(best_valid)
 
 			if log is not None:
-				log.log_validation(validation_loss, 'loss')
+				log.log_validation(validation_loss, 'loss', clocks=timers)
 
+			timers['validate'].pause()
 			return validation_loss
 
 		#######################################################################
@@ -485,7 +378,7 @@ class Executor:
 					save_or_copy_weights(best_train)
 
 			if log is not None:
-				log.log_training(train_loss, 'loss')
+				log.log_training(train_loss, 'loss', clocks=timers)
 
 			return cur_train_loss
 
@@ -513,14 +406,37 @@ class Executor:
 				)
 
 		#######################################################################
+		def write_time(title, seconds):
+			""" Pretty-prints a number of seconds.
+			"""
+			seconds = int(seconds)
+			minutes, seconds = divmod(seconds, 60)
+			hours, minutes = divmod(minutes, 60)
+			tqdm.tqdm.write('{}: {:02d}h {:02d}m {:02d}s'.format(
+				title, hours, minutes, seconds
+			))
+
+		#######################################################################
+		def print_times():
+			""" Prints the current timer values.
+			"""
+			write_time('     Total wall-clock time', timers['all'].get())
+			write_time('  Training wall-clock time', timers['train'].get())
+			if validation is not None:
+				write_time('Validation wall-clock time',
+					timers['validate'].get())
+			write_time('     Batch wall-clock time', timers['batch'].get())
+
+		#######################################################################
 		def run_checkpoint(*triggers, allow_validation=True):
 			""" Runs the checkpoint triggers, if necessary.
 			"""
 			nonlocal last_checkpoint
 
 			if checkpoint is None:
-				return
+				return False
 
+			timers['train'].pause()
 			for k in triggers:
 				if k not in checkpoint:
 					continue
@@ -529,6 +445,7 @@ class Executor:
 
 					# Save the file if necessary.
 					if checkpoint['path']:
+						tqdm.tqdm.write('Checkpoint...')
 						logger.info('Making checkpoint backup: %s',
 							checkpoint['path'])
 						save_or_copy_weights(checkpoint['path'])
@@ -545,8 +462,198 @@ class Executor:
 							TrainingHook.VALIDATION_END)
 
 					last_checkpoint = session.copy()
-					break
 
+					timers['train'].resume()
+					return True
+
+			timers['train'].resume()
+			return False
+
+		#######################################################################
+		# Create the timers
+
+		timers = {
+			'batch' : Timer(started=False),
+			'train' : Timer(started=False),
+			'validate' : Timer(started=False),
+			'all' : Timer(started=False)
+		}
+
+		#######################################################################
+		# Process checkpoint requirements
+		if isinstance(checkpoint, dict):
+			if 'path' not in checkpoint:
+				checkpoint['path'] = 'checkpoint'
+
+			found = False
+			for k in ('epochs', 'batches', 'samples', 'minutes'):
+				if k in checkpoint:
+					if not isinstance(checkpoint[k], int):
+						raise ValueError('Expected "{}" key in "checkpoint" '
+							'to be an integer. Received: {}'.format(k,
+							checkpoint[k]))
+					found = True
+
+			if not found:
+				checkpoint['epochs'] = 1
+
+		elif isinstance(checkpoint, str):
+			checkpoint = {
+				'path' : checkpoint,
+				'epochs' : 1
+			}
+		elif checkpoint is not None:
+			raise ValueError('Unknown format for "checkpoint". Expected a '
+				'single file or a dictionary. Instead we received: {}'
+				.format(checkpoint))
+
+		#######################################################################
+		# Parse logs
+		if log is None:
+			logger.info('No log specified, so no historical loss information '
+				'is available.')
+			best_train_loss = best_valid_loss = None
+		elif not isinstance(log, PersistentLogger):
+			logger.info('Log type is non-persistent, so no historical loss '
+				'information is available.')
+			best_train_loss = best_valid_loss = None
+		else:
+			best_train_loss = log.get_best_training_loss()
+			if best_train_loss is not None:
+				logger.info('Best historical training loss: %.3f',
+					best_train_loss)
+			else:
+				logger.info('No historical training loss available from logs.')
+
+			best_valid_loss = log.get_best_validation_loss()
+			if best_valid_loss is not None:
+				logger.info('Best historical validation loss: %.3f',
+					best_valid_loss)
+			else:
+				logger.info(
+					'No historical validation loss available from logs.')
+
+			clocks = log.get_clocks()
+			if clocks:
+				for k, v in clocks.items():
+					if k in timers:
+						timers[k].reset(v)
+				print_times()
+
+		#######################################################################
+		# Parse desired number of epochs
+		completed_epochs = log.get_number_of_epochs() if log else 0
+		if not completed_epochs:
+			logger.info('No previous epochs.')
+		else:
+			logger.info('Restarting from epoch %d.', completed_epochs+1)
+
+		#######################################################################
+		# Parse the stopping criterion mode.
+
+		valid_modes = ('additional', 'total')
+		mode = stop_when.get('mode', valid_modes[0])
+
+		if mode not in valid_modes:
+			raise ValueError('"mode" in "stop_when" must be one of: {}. '
+				'Instead, we received: {}.'.format(', '.join(valid_modes),
+				mode))
+
+		if mode == 'total' and log is None:
+			logger.warning('The epoch specification has "mode" set to "%s". '
+			'This mode requires a log to be used correctly. Kur will proceed '
+			'as if "mode" were "%s".', mode, valid_modes[0])
+			mode = valid_modes[0]
+
+		#######################################################################
+		# Parse "epoch" stopping criterion.
+
+		epochs = stop_when.get('epochs')
+		if epochs in ('inf', 'all', 'infinite', 'infinity'):
+			epochs = None
+
+		if not isinstance(epochs, (int, type(None))):
+			raise ValueError('Expected "epochs" to be a None or aninteger. '
+				'Instead, we received: {}.'.format(epochs))
+
+		if epochs is not None:
+			if mode == 'additional':
+				epochs += completed_epochs
+			if completed_epochs >= epochs:
+				print('Epoch stopping-criterion met.')
+				return
+
+		#######################################################################
+		# Parse "elapsed" stopping criterion.
+
+		default_time_keeper = 'all'
+		clock = stop_when.get('elapsed')
+		if isinstance(clock, dict):
+			time_keeper = clock.get('clock', default_time_keeper)
+			if time_keeper not in timers:
+				raise ValueError('Invalid value for '
+					'"stop_when.elapsed.clock". Must be one of: {}. Received: '
+					'{}'.format(', '.join(timers), time_keeper))
+			clock_time = 0
+			for multiplier, value in (
+				(1, 'minutes'), (60, 'hours'), (1440, 'days')
+			):
+				if value not in clock or not clock[value]:
+					continue
+				if not isinstance(clock[value], (int, float)):
+					raise ValueError('Invalid value for "stop_when.clock.{}": '
+						'{}'.format(value, clock[value]))
+				clock_time += clock[value] * multiplier
+
+		elif isinstance(clock, (int, float)):
+			clock_time = clock  # Defaults to minutes.
+			time_keeper = 'default_time_keeper'
+		elif isinstance(clock, str) and clock in \
+			('inf', 'all', 'infinite', 'infinity'):
+			clock = None
+		elif clock:
+			raise ValueError('Invalid value for "stop_when.elapsed". Should '
+				'be a dictionary or numeric. Received: {}'.format(clock))
+
+		if clock:
+			if clock_time <= 0:
+				raise ValueError('"stop_when.elapsed" resolved to a '
+					'non-positive value: {}'.format(clock_time))
+
+			clock = {
+				'seconds' : clock_time*60,
+				'timer' : timers[time_keeper],
+				'mark' : 0
+			}
+
+			if mode == 'additional':
+				clock['mark'] += clock['timer']()
+
+			if (clock['timer']() - clock['mark']) > clock['seconds']:
+				print('Elapsed-time stopping criterion met.')
+				return
+
+		#######################################################################
+		# Local variables
+
+		# The name of the most recently saved weight file. If the weights
+		# change, this should be reset to None. Otherwise, saving weights can
+		# be as simple as copying the previously saved file.
+		saved_recent = None
+
+		session = {
+			'epochs' : 0,
+			'batches' : 0,
+			'samples' : 0,
+			'minutes' : time.perf_counter() / 60
+		}
+		last_checkpoint = session.copy()
+
+		epoch = completed_epochs - 1
+		train_func = self.retry(
+			self.model.backend.train,
+			self.auto_retry
+		)
 		#######################################################################
 		# Prepare to train
 
@@ -560,9 +667,12 @@ class Executor:
 					log=log
 				)
 
+		all_done = False
+
 		#######################################################################
 		# Main training loop.
-		while True:
+		timers['all'].resume()
+		while not all_done:
 			epoch += 1
 			if epochs is not None and epoch >= epochs:
 				print('Completed {} epochs.'.format(epochs))
@@ -572,6 +682,7 @@ class Executor:
 
 			###################################################################
 			# START: Train one epoch
+			timers['train'].resume()
 
 			# Create progress bar
 			train_loss = None
@@ -593,11 +704,14 @@ class Executor:
 							'Train, Epoch {}'.format(session['epochs']+1),
 							num_batches, batch)
 
+					timers['batch'].resume()
 					try:
 						prediction, batch_loss = train_func(
 							model=self.model, data=batch)
 					except RetryException:
 						continue
+					finally:
+						timers['batch'].pause()
 
 					if step and logger.isEnabledFor(logging.DEBUG):
 						print(prediction)
@@ -612,7 +726,8 @@ class Executor:
 					batch_size = len(get_any_value(batch))
 
 					if log is not None:
-						log.log_batch(batch_size, batch_loss, 'loss')
+						log.log_batch(batch_size, batch_loss, 'loss',
+							clocks=timers)
 
 					# Update our session statistics.
 					session['batches'] += 1
@@ -620,8 +735,9 @@ class Executor:
 					session['minutes'] = time.perf_counter() / 60
 
 					# Checkpoint if necessary
-					run_checkpoint('samples', 'batches', 'minutes',
-						allow_validation=True)
+					if run_checkpoint('samples', 'batches', 'minutes',
+						allow_validation=True):
+						print_times()
 
 					# How many entries we've processed this epoch.
 					new_entries = n_entries + batch_size
@@ -638,6 +754,13 @@ class Executor:
 						}
 
 					n_entries = new_entries
+
+					if clock and clock['seconds'] < \
+							(clock['timer'].get() - clock['mark']):
+						tqdm.tqdm.write('Timer expired. Finishing up '
+							'training.')
+						all_done = True
+						break
 
 					# Update the progress bar with the current loss.
 					# Note that `batch_loss` is, in some sense, just the
@@ -660,6 +783,7 @@ class Executor:
 							if self.NAN_IS_FATAL:
 								raise ValueError('Model loss is NaN.')
 
+			timers['train'].pause()
 			# END: Train one epoch
 			###################################################################
 
@@ -681,6 +805,8 @@ class Executor:
 				validation_loss,
 				status=TrainingHook.EPOCH_END
 			)
+
+			print_times()
 
 	###########################################################################
 	def evaluate(self, provider, callback=None, step=False):

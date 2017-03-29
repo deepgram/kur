@@ -32,6 +32,18 @@ class Timer:
 			self.restart()
 
 	###########################################################################
+	def __str__(self):
+		""" Returns a string representation of the current accumulated time.
+		"""
+		return str(self.get())
+
+	###########################################################################
+	def __float__(self):
+		""" Returns a float representation of the current accumulated time.
+		"""
+		return self.get()
+
+	###########################################################################
 	def resume(self):
 		""" Starts a previously paused timer.
 
@@ -43,11 +55,12 @@ class Timer:
 		self.mark = self._clock()
 
 	###########################################################################
-	def reset(self):
+	def reset(self, duration=0.):
 		""" Reset the current timer (zeros the accumulated time) without
 			changing its running state.
 		"""
-		self.duration = 0.
+		self.duration = float(duration)
+		self.mark = self._clock()
 
 	###########################################################################
 	def restart(self):
