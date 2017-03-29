@@ -708,7 +708,7 @@ class Kurfile:
 				'Expected each "include" to be a string or a dictionary. '
 				'Received: {}'.format(context or 'top-level', source))
 
-		logger.info('Parsing source: %s, included by %s.', source,
+		logger.info('Parsing source: %s, included by %s.', filename,
 			context or 'top-level')
 
 		if context:
@@ -746,18 +746,31 @@ class Kurfile:
 				'files. Instead we received: {}'.format(
 					expanded, new_sources))
 
+		def load_source(source):
+			return mergetools.deep_merge(
+				self.parse_source(
+					engine,
+					source=source,
+					context=expanded,
+					loaded=loaded
+				),
+				data,
+				strategy=strategy
+			)
 		for new_source in new_sources:
-			for x in glob.iglob(new_source, recursive=True):
-				data = mergetools.deep_merge(
-					self.parse_source(
-						engine,
-						source=x,
-						context=expanded,
-						loaded=loaded
-					),
-					data,
-					strategy=strategy
-				)
+			if isinstance(new_source, dict) and 'source' in new_source:
+				sub_sources = new_source.pop('source')
+				if not isinstance(sub_sources, (list, tuple)):
+					sub_sources = [sub_sources]
+				for sub_source in sub_sources:
+					for x in glob.iglob(sub_source, recursive=True):
+						new_source['source'] = x
+						data = load_source(dict(new_source))
+			elif isinstance(new_source, str):
+				for x in glob.iglob(new_source, recursive=True):
+					data = load_source(x)
+			else:
+				data = load_source(new_source)
 
 		return data
 
