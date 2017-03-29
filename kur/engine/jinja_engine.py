@@ -14,14 +14,47 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
 import ast
 import jinja2
 from .engine import Engine
 
 ###############################################################################
+def combine(value, new=None):
+	""" Jinja2 filter which merges dictionaries.
+	"""
+	new = new or {}
+	value = dict(value)
+	value.update(new)
+	return value
+
+###############################################################################
+def as_dict(value, key):
+	""" Jinja2 filter which constructs a dictionary from a key/value pair.
+	"""
+	return {key : value}
+
+###############################################################################
 class JinjaEngine(Engine):
 	""" An evaluation engine which uses Jinja2 for templating.
 	"""
+
+	###########################################################################
+	@staticmethod
+	def register_custom_filters(env):
+		""" Adds our custom filters to the Jinja2 engine.
+
+			Arguments
+			---------
+
+			env: jinja2.Environment instance. The environment to add the custom
+				filters to.
+		"""
+		env.filters['basename'] = os.path.basename
+		env.filters['dirname'] = os.path.dirname
+		env.filters['splitext'] = os.path.splitext
+		env.filters['combine'] = combine
+		env.filters['as_dict'] = as_dict
 
 	###########################################################################
 	def __init__(self, *args, **kwargs):
@@ -38,6 +71,7 @@ class JinjaEngine(Engine):
 
 		# Registering custom filters is described here:
 		#   http://jinja.pocoo.org/docs/dev/api/#custom-filters
+		self.register_custom_filters(self.env)
 
 		# Built-in Jinja2 filters are listed here:
 		#   http://jinja.pocoo.org/docs/dev/templates/#builtin-filters
