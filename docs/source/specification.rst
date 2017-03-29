@@ -1571,6 +1571,9 @@ Valid suppliers are:
 	  the end of the file, as in ``123-``. Percentages are allowed as well by
 	  *appending* a single percent sign to the end of the string, as in:
 	  ``10%``, ``20-30%``, ``90-%``.
+	- ``key``: str or None (default: None). The name of the key in the JSONL
+	  metadata file which contains the ground-truth transcripts. If None,
+	  defaults to "text".
 
   The speech recognition supplier will produce the following data sources that
   you can use in your model:
@@ -1585,7 +1588,8 @@ Valid suppliers are:
   search for a JSON-Lines (JSONL) file, each line of which should be a JSON
   directionary with the following keys:
 
-	- ``text``: the transcription.
+	- ``text``: the transcription (this can be changed using the ``key``
+	  argument to the supplier).
 	- ``duration_s``: the duration of the audio, in seconds.
 	- ``uuid``: a unique value used to identify the audio.
 
