@@ -173,7 +173,25 @@ def prepare_data(args):
 	num_entries = None
 	keys = sorted(batch.keys())
 	num_entries = len(batch[keys[0]])
-	for entry in range(num_entries):
+
+	# --single
+
+	num_samples = 0
+	if args.single:
+		num_samples = 1
+		num_batches = provider.num_batches
+		train_entries = provider.entries
+		logger.info("We are training with %s batches using %s samples of data", num_batches, train_entries)
+		batch_shape = {}
+		for k in keys:
+			batch_shape[k] = batch[k].shape
+		logger.info("A single batch consists of: %s", batch_shape)
+		logger.info("A single sample is printed below: ")
+	else:
+		num_samples = num_entries
+
+
+	for entry in range(num_samples):
 		print('Entry {}/{}:'.format(entry+1, num_entries))
 		for k in keys:
 			print('  {}: {}'.format(k, batch[k][entry]))
@@ -343,6 +361,11 @@ def parse_args():
 	subparser.add_argument('--assemble', action='store_true', help='Also '
 		'begin assembling the model to pull in compile-time, auxiliary data '
 		'sources.')
+	# --single
+	subparser.add_argument('--single', action='store_true', help='Only '
+		'display one single sample of dataset, '
+		'not a whole batch.')
+
 	subparser.set_defaults(func=prepare_data)
 
 	return parser.parse_args()
