@@ -364,7 +364,7 @@ def parse_args():
 	# --single
 	subparser.add_argument('--single', action='store_true', help='Only '
 		'display one single sample of dataset, '
-		'not a whole batch.')
+		'and data structure of the training set.')
 
 	subparser.set_defaults(func=prepare_data)
 
