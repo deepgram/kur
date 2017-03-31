@@ -31,11 +31,19 @@ class Statistic:
 		def __str__(self):
 			return self.name.lower()
 
-	def __init__(self, data_type, tag, name):
+	def __init__(self, data_type, tag, name, *, subtag=None):
 		if isinstance(data_type, str):
 			data_type = Statistic.Type.from_string(data_type)
 		self.data_type = data_type
 		self.tag = tag
+		self.subtag = subtag
 		self.name = name
+
+	def __repr__(self):
+		return 'Statistic(data_type="{}", tag="{}", name="{}")'.format(
+			self.data_type,
+			'{}.{}'.format(self.tag, self.subtag) if self.subtag else self.tag,
+			self.name
+		)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

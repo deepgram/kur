@@ -214,11 +214,16 @@ class BinaryLogger(PersistentLogger):
 			if len(parts) != 3:
 				continue
 
-			if parts[-1] == 'batches':
+			if parts[-1] in ('batch', 'time'):
 				continue
 
+			if '.' in parts[1]:
+				parts[1], subtag = parts[1].split('.', 1)
+			else:
+				subtag = None
+
 			try:
-				stat = Statistic(*parts)
+				stat = Statistic(*parts, subtag=subtag)
 			except KeyError:
 				continue
 
@@ -229,16 +234,21 @@ class BinaryLogger(PersistentLogger):
 	###########################################################################
 	def load_statistic(self, statistic):
 		path = os.path.expanduser(os.path.expandvars(self.path))
-		values = BinaryLogger.load_column(path, '{}_{}_{}'.format(
-			statistic.data_type, statistic.tag, statistic.name
+		values = BinaryLogger.load_column(path, '{}_{}{}_{}'.format(
+			statistic.data_type,
+			statistic.tag,
+			'.{}'.format(statistic.subtag) if statistic.subtag else '',
+			statistic.name
 		))
 
-		batches = BinaryLogger.load_column(path, '{}_{}_batch'.format(
-			statistic.data_type, statistic.tag
+		batches = BinaryLogger.load_column(path, '{}_{}{}_batch'.format(
+			statistic.data_type, statistic.tag,
+			'.{}'.format(statistic.subtag) if statistic.subtag else ''
 		))
 
-		timestamps = BinaryLogger.load_column(path, '{}_{}_time'.format(
-			statistic.data_type, statistic.tag
+		timestamps = BinaryLogger.load_column(path, '{}_{}{}_time'.format(
+			statistic.data_type, statistic.tag,
+			'.{}'.format(statistic.subtag) if statistic.subtag else ''
 		))
 
 		lens = [len(x) for x in (values, batches, timestamps) if x is not None]

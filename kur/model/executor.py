@@ -22,6 +22,7 @@ import time
 import traceback
 import numpy
 import tqdm
+from ..providers import Provider
 from ..utils import get_any_value, CriticalSection, parallelize, Timer
 from ..loggers import PersistentLogger
 from .hooks import TrainingHook
@@ -114,16 +115,24 @@ class Executor:
 		)
 
 		if with_provider is not None:
-			self.model.supplement_provider(with_provider)
+			if isinstance(with_provider, Provider):
+				self.model.supplement_provider(with_provider)
+			elif isinstance(with_provider, dict):
+				for provider in with_provider.values():
+					self.model.supplement_provider(provider)
+			else:
+				raise ValueError('Unexpected provider type: {}'
+					.format(with_provider))
 
 	###########################################################################
-	def test(self, provider, validating=False, hooks=None, step=False):
+	def test(self, providers, validating=False, hooks=None, step=False):
 		""" Tests/validates the model on some data.
 
 			# Arguments
 
-			provider: Provider instance. The data provider which serves the
-				data to be evaluated on.
+			providers: dict. The keys are provider names, and the values are
+				Provider instances. The data provider which serves the data to
+				be evaluated on.
 			validating: bool (default: False). If False, the console output
 				refers to this process as "testing"; otherwise, it is referred
 				to as "validating."
@@ -133,7 +142,47 @@ class Executor:
 			The average loss across the validation set.
 		"""
 
-		self.compile('test', with_provider=provider)
+		self.compile('test', with_provider=providers)
+
+		loss = {}
+		counts = {}
+		for k, provider in providers.items():
+			n_entries, test_loss = self.test_with_provider(
+				provider,
+				name=k if len(providers) > 1 else None,
+				validating=validating,
+				hooks=hooks,
+				step=step
+			)
+			#if 'total' not in test_loss:
+			#	test_loss['total'] = sum(test_loss.values())
+			loss[k] = test_loss
+			counts[k] = n_entries
+
+		total_count = sum(counts.values())
+		average = {}
+		for provider_name, loss_dict in loss.items():
+			for branch_name, loss_value in loss_dict.items():
+				weight = counts[provider_name] / total_count
+				contribution = loss_value * weight
+				if branch_name not in average:
+					average[branch_name] = 0
+				average[branch_name] += contribution
+
+		if len(providers) > 1:
+			logger.info(
+				'Overall %s loss: %.3f',
+				'validation' if validating else 'testing',
+				sum(average.values())
+			)
+
+		return average, loss
+
+	###########################################################################
+	def test_with_provider(self, provider, *, name=None,
+		validating=False, hooks=None, step=False):
+		""" Tests/validates the model on a single provider.
+		"""
 
 		if validating:
 			desc = ('Validating', 'Validation')
@@ -151,7 +200,10 @@ class Executor:
 		with tqdm.tqdm(
 					total=len(provider),
 					unit='samples',
-					desc='{}, loss=N/A'.format(desc[0])
+					desc='{}{}, loss=N/A'.format(
+						desc[0],
+						' "{}"'.format(name) if name else ''
+					)
 				) as pbar:
 
 			# Present each batch to the network.
@@ -193,8 +245,9 @@ class Executor:
 				n_entries = new_entries
 
 				# Update the progress bar
-				pbar.set_description('{}, loss={:.3f}'.format(
+				pbar.set_description('{}{}, loss={:.3f}'.format(
 					desc[0],
+					' "{}"'.format(name) if name else '',
 					sum(test_loss.values())
 				))
 				pbar.update(batch_size)
@@ -203,7 +256,11 @@ class Executor:
 			logger.warning('No data provided to validation/testing system.')
 			return None
 
-		logger.info('%s loss: %.3f', desc[1], sum(test_loss.values()))
+		logger.info('%s loss: %s%.3f',
+			desc[1],
+			'"{}"='.format(name) if name else '',
+			sum(test_loss.values())
+		)
 
 		if hooks and first_batch is not None:
 			prediction, batch = first_batch
@@ -213,7 +270,7 @@ class Executor:
 				prev = (new_prev, prev[1]) \
 					if not isinstance(new_prev, tuple) else new_prev
 
-		return test_loss
+		return n_entries, test_loss
 
 	###########################################################################
 	def train(self, *args, last_weights=None, log=None, training_hooks=None,
@@ -288,27 +345,35 @@ class Executor:
 			timers['validate'].resume()
 
 			# Continue with a validation run.
+			previous_num_batches = {}
 			try:
-				if num_batches is not None and \
-						hasattr(validation, 'num_batches'):
-					previous_num_batches = validation.num_batches
-					validation.num_batches = num_batches
+				if num_batches is not None:
+					for provider in validation:
+						if hasattr(provider, 'num_batches'):
+							previous_num_batches[id(provider)] = \
+								provider.num_batches
+							provider.num_batches = num_batches
 
-				validation_loss = self.test(
-					provider=validation,
+				average_loss, validation_loss = self.test(
+					providers=validation,
 					validating=True,
 					hooks=validation_hooks
 				)
 			finally:
-				if num_batches is not None and \
-						hasattr(validation, 'num_batches'):
-					validation.num_batches = previous_num_batches
+				if num_batches is not None:
+					for provider in validation:
+						if hasattr(provider, 'num_batches'):
+							provider.num_batches = \
+								previous_num_batches[id(provider)]
 
 			if validation_loss is None:
 				timers['validate'].pause()
 				return None
 
-			cur_validation_loss = sum(validation_loss.values())
+			cur_validation_loss = sum(average_loss.values())
+			validation_loss[None] = average_loss
+			logger.debug('Current validation loss: %.3f', cur_validation_loss)
+
 			if best_valid is not None:
 				if best_valid_loss is None or \
 						cur_validation_loss < best_valid_loss:

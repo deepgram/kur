@@ -32,7 +32,7 @@ from .optimizer import Optimizer, Adam
 from .loss import Loss
 from .providers import Provider, BatchProvider, ShuffleProvider
 from .supplier import Supplier
-from .utils import mergetools
+from .utils import mergetools, get_any_value, get_any_key
 from .loggers import Logger
 
 logger = logging.getLogger(__name__)
@@ -214,12 +214,15 @@ class Kurfile:
 		return seed
 
 	###########################################################################
-	def get_provider(self, section):
+	def get_provider(self, section, accept_many=False):
 		""" Creates the provider corresponding to a part of the Kurfile.
 
 			# Arguments
 
 			section: str. The name of the section to load the provider for.
+			accept_many: bool (default: False). If True, more than one data
+				supplier is allowed to be specified; otherwise, an exception is
+				raised if the data supplier is missing.
 
 			# Return value
 
@@ -234,12 +237,25 @@ class Kurfile:
 		else:
 			return None
 
-		supplier_list = section.get('data') or []
-		if not isinstance(supplier_list, (list, tuple)):
-			raise ValueError('"data" section should be a list.')
-		suppliers = [
-			Supplier.from_specification(x, kurfile=self) for x in supplier_list
-		]
+		supplier_list = section.get('data') or {}
+		if isinstance(supplier_list, (list, tuple)):
+			supplier_list = {'default' : supplier_list}
+		elif not isinstance(supplier_list, dict):
+			raise ValueError('"data" section should be a list or dictionary.')
+
+		if not accept_many and len(supplier_list) > 1:
+			raise ValueError('We only accept a single "data" entry for this '
+				'section, but found {}.'.format(len(supplier_list)))
+
+		suppliers = {}
+		for k, v in supplier_list.items():
+			if not isinstance(v, (list, tuple)):
+				raise ValueError('Data suppliers must form a list of '
+					'suppliers.')
+			suppliers[k] = [
+				Supplier.from_specification(entry, kurfile=self)
+				for entry in v
+			]
 
 		provider_spec = dict(section.get('provider') or {})
 		if 'name' in provider_spec:
@@ -247,10 +263,13 @@ class Kurfile:
 		else:
 			provider = Kurfile.DEFAULT_PROVIDER
 
-		return provider(
-			sources=Supplier.merge_suppliers(suppliers),
-			**provider_spec
-		)
+		return {
+			k : provider(
+				sources=Supplier.merge_suppliers(v),
+				**provider_spec
+			)
+			for k, v in suppliers.items()
+		}
 
 	###########################################################################
 	def get_training_function(self):
@@ -280,9 +299,9 @@ class Kurfile:
 			elif 'epochs' not in stop_when:
 				stop_when['epochs'] = epochs
 
-		provider = self.get_provider('train')
+		provider = get_any_value(self.get_provider('train'))
 
-		training_hooks = self.data['train'].get('hooks', [])
+		training_hooks = self.data['train'].get('hooks') or []
 		if not isinstance(training_hooks, (list, tuple)):
 			raise ValueError('"hooks" (in the "train" section) should '
 				'be a list of hook specifications.')
@@ -290,7 +309,7 @@ class Kurfile:
 			for spec in training_hooks]
 
 		if 'validate' in self.data:
-			validation = self.get_provider('validate')
+			validation = self.get_provider('validate', accept_many=True)
 			validation_weights = self.data['validate'].get('weights')
 			if validation_weights is None:
 				best_valid = None
@@ -404,11 +423,20 @@ class Kurfile:
 			raise ValueError('Cannot construct testing function. There is a '
 				'missing "test" section.')
 
-		provider = self.get_provider('test')
+		providers = self.get_provider('test', accept_many=True)
 
 		# No reason to shuffle things for this.
-		if isinstance(provider, ShuffleProvider):
-			provider.randomize = False
+		for provider in providers.values():
+			if isinstance(provider, ShuffleProvider):
+				provider.randomize = False
+		if 'default' in providers:
+			default_provider = providers['default']
+		else:
+			k = get_any_key(providers)
+			logger.info('Using multiple providers. Since there is no '
+				'"default" provider, the default one we will use to construct '
+				'the model is: %s', k)
+			default_provider = providers[k]
 
 		weights = self.data['test'].get('weights')
 		if weights is None:
@@ -431,7 +459,7 @@ class Kurfile:
 		if initial_weights is not None:
 			initial_weights = expand(initial_weights)
 
-		model = self.get_model(provider)
+		model = self.get_model(default_provider)
 		trainer = self.get_trainer(with_optimizer=False)
 
 		def func(**kwargs):
@@ -451,7 +479,7 @@ class Kurfile:
 					'test that the system works, but the results will be '
 					'terrible.')
 			defaults = {
-				'provider' : provider,
+				'providers' : providers,
 				'validating' : False,
 				'hooks' : hooks
 			}
@@ -543,7 +571,7 @@ class Kurfile:
 			raise ValueError('Cannot construct evaluation function. There is '
 				'a missing "evaluate" section.')
 
-		provider = self.get_provider('evaluate')
+		provider = get_any_value(self.get_provider('evaluate'))
 
 		# No reason to shuffle things for this.
 		if isinstance(provider, ShuffleProvider):

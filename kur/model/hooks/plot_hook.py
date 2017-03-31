@@ -16,6 +16,8 @@ limitations under the License.
 
 import os
 import logging
+import itertools
+from collections import OrderedDict
 
 import numpy
 
@@ -28,6 +30,23 @@ logger = logging.getLogger(__name__)
 class PlotHook(TrainingHook):
 	""" Hook for creating plots of loss.
 	"""
+
+	###########################################################################
+	@classmethod
+	def validation_style(self):
+		""" Returns an iterator over the formatting styles used by validation
+			plots.
+		"""
+		colors = ('m', 'r', 'g', 'k', 'b', 'y')
+		lines = ('-', '--', ':', '-.')
+		def formatter(it):
+			""" Formats the product correctly for use by pyplot.
+			"""
+			for line, point, color in it:
+				yield '{}{}{}'.format(color, point, line)
+		return formatter(
+			itertools.cycle(itertools.product(lines, ['o'], colors))
+		)
 
 	###########################################################################
 	@classmethod
@@ -106,9 +125,36 @@ class PlotHook(TrainingHook):
 		else:
 			logger.debug('Using per-batch training statistics for plotting.')
 
-		vbatch, vtime, vloss = log.load_statistic(
-			Statistic(Statistic.Type.VALIDATION, 'loss', 'total')
-		)
+		stats = log.enumerate_statistics()
+		validation_data = {}
+		for stat in stats:
+			if stat.data_type is not Statistic.Type.VALIDATION:
+				continue
+			if stat.name != 'total':
+				continue
+			if stat.tag != 'loss':
+				continue
+			vbatch, vtime, vloss = log.load_statistic(stat)
+			if all(x is None for x in (vbatch, vtime, vloss)):
+				logger.warning('Something is wrong with our statistics '
+					'enumeration. Skipping: %s', stat)
+				continue
+			validation_data[stat.subtag or ''] = {
+				'batch' : vbatch,
+				'time' : vtime,
+				'loss' : vloss
+			}
+		validation_data = OrderedDict(sorted(validation_data.items()))
+		if len(validation_data) == 2 and 'default' in validation_data:
+			validation_data = {'' : validation_data['']}
+
+		def format_title(k):
+			if not k:
+				if len(validation_data) > 1:
+					k = 'Overall'
+				else:
+					return ''
+			return ': {}'.format(k)
 
 		path = self.plots.get('loss_per_batch')
 		if path:
@@ -119,11 +165,22 @@ class PlotHook(TrainingHook):
 				batch = numpy.arange(1, len(loss)+1)
 			t_line, = plt.plot(batch, loss, 'co-', label='Training Loss')
 
-			if vbatch is None:
-				vbatch = numpy.arange(1, len(vloss)+1)
-			v_line, = plt.plot(vbatch, vloss, 'mo-', label='Validation Loss')
+			v_lines = []
+			for style, (k, data) in zip(
+				self.validation_style(),
+				validation_data.items()
+			):
+				if data['batch'] is None:
+					data['batch'] = numpy.arange(1, len(data['loss'])+1)
+				v_line, = plt.plot(
+					data['batch'],
+					data['loss'],
+					style,
+					label='Validation Loss{}'.format(format_title(k))
+				)
+				v_lines.append(v_line)
 
-			plt.legend(handles=[t_line, v_line])
+			plt.legend(handles=[t_line] + v_lines)
 			plt.savefig(path, transparent=True, bbox_inches='tight')
 			plt.clf()
 
@@ -134,22 +191,32 @@ class PlotHook(TrainingHook):
 			plt.xlabel('Time')
 			plt.ylabel('Loss')
 
+			t_line = []
 			if time is None:
 				logger.warning('No training timestamps available for '
 					'loss-per-time plot.')
-				t_line = None
 			else:
 				t_line, = plt.plot(time, loss, 'co-', label='Training Loss')
+				t_line = [t_line]
 
-			if vtime is None:
-				logger.warning('No validation timestamps available for '
-					'loss-per-time plot.')
-				v_line = None
-			else:
-				v_line, = plt.plot(vtime, vloss, 'mo-',
-					label='Validation Loss')
+			v_lines = []
+			for style, (k, data) in zip(
+				self.validation_style(),
+				validation_data.items()
+			):
+				if data['time'] is None:
+					logger.warning('No validation timestamps available for '
+						'loss-per-time plot with provider "%s".', k)
+					continue
+				v_line, = plt.plot(
+					data['time'],
+					data['loss'],
+					style,
+					label='Validation Loss{}'.format(format_title(k))
+				)
+				v_lines.append(v_line)
 
-			plt.legend(handles=[x for x in (t_line, v_line) if x is not None])
+			plt.legend(handles=t_line+v_lines)
 			plt.savefig(path, transparent=True, bbox_inches='tight')
 			plt.clf()
 
