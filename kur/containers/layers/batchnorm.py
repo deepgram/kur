@@ -34,6 +34,7 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 		"""
 		super().__init__(*args, **kwargs)
 		self.axis = None
+		self.momentum = 0.
 
 	###########################################################################
 	def _parse(self, engine):
@@ -44,6 +45,11 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 				self.axis = engine.evaluate(self.args['axis'], recursive=True)
 				if not isinstance(self.axis, int):
 					raise ParsingError('"axis" must be an integer.')
+			if 'momentum' in self.args:
+				self.momentum = engine.evaluate(self.args['momentum'],
+					recursive=True)
+				if not isinstance(self.momentum, (int, float)):
+					raise ParsingError('"momentum" must be numeric.')
 
 	###########################################################################
 	def _build(self, model):
@@ -67,6 +73,7 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 					center=True,
 					scale=True,
 					name=self.name,
+					momentum=self.momentum,
 					trainable=not self.frozen
 				)
 
@@ -100,7 +107,11 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 
 				output = model.data.add_layer(
 					self.name,
-					func(inputs[0]['shape'][-1], affine=True),
+					func(
+						inputs[0]['shape'][-1],
+						affine=True,
+						momentum=self.momentum
+					),
 					frozen=self.frozen
 				)(output)
 
