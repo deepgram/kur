@@ -1646,10 +1646,47 @@ Similarly, if you create a Python pickle, then the keys in the pickled
 dictionary must correspond to the names of the input and output containers in
 the model.
 
+Multi-Validation
+^^^^^^^^^^^^^^^^
+
+Imagine that you want to train on a given data set, but want to understand how
+validation loss varies across multiple, independent data sets. In this case,
+you can pass a dictionary to ``validate`` and ``test``:
+
+.. code-block:: yaml
+
+	validate: # or test
+	  data:
+	    DATASET_1:
+	      - SUPPLIER_1:
+	         # ...
+	      - SUPPLIER_2:
+	         # ...
+	      # ...
+	    DATASET_2:
+	      # ...
+
+You can call ``DATASET_`` anything you want. These are simply labels for each
+validation/testing set you want. Note that you *do not* need to use this syntax
+if you want to use traditional, single-validation paradigm; this is simply an
+additional syntax that Kur supports. You can still "stack" multiple data
+suppliers into each `DATASET_`.  .. _package_specification:
+
+All validation statistics will be saved separately for each `DATASET_` entry.
+Kur also calculates an average/global/overall loss as well (as if you had
+combined all validation sets). All plots (as from the plot hook) will include
+all validation datasets.
+
+The same `provider` is used for all multi-validation datasets. No need to
+defined multiple `provider` blocks. So if you use `provider: {num_batches:
+10}`, you will get 10 batches from *each* validation dataset. If you use
+`train: {checkpoint: {validation: 10}}`, then you will get 10 batches from
+*each* validation dataset during checkpointing.
+
 .. _package_specification:
 
 Standard Packaging
-``````````````````
+^^^^^^^^^^^^^^^^^^
 
 Many of the data suppliers accept a standard set of parameters to make things
 convenient for you. These parameters are: ``url``, ``checksum``, and ``path``,
