@@ -101,7 +101,7 @@ class TestExecutor:
 			model=simple_model,
 			loss=loss
 		)
-		trainer.test(provider=simple_data)
+		trainer.test(providers={'default' : simple_data})
 
 	###########################################################################
 	def test_evaluator(self, simple_model):
@@ -152,7 +152,7 @@ class TestExecutor:
 			model=ctc_model,
 			loss=ctc_loss
 		)
-		trainer.test(provider=ctc_data)
+		trainer.test(providers={'default' : ctc_data})
 
 	###########################################################################
 	def test_ctc_evaluating(self, ctc_model, ctc_eval_data):
@@ -194,7 +194,7 @@ class TestExecutor:
 			loss=loss
 		)
 		trainer.compile()
-		trainer.test(provider=uber_data)
+		trainer.test(providers={'default' : uber_data})
 
 	###########################################################################
 	def test_uber_evaluating(self, uber_model, uber_data, jinja_engine):
@@ -235,7 +235,7 @@ class TestExecutor:
 			model=embedding_model,
 			loss=loss
 		)
-		trainer.test(provider=embedding_data)
+		trainer.test(providers={'default' : embedding_data})
 
 	###########################################################################
 	def test_embedding_evaluating(self, embedding_model, embedding_data):

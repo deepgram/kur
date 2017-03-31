@@ -68,7 +68,20 @@ class BatchNormalization(Layer):	# pylint: disable=too-few-public-methods
 				)
 			else:
 				import keras.layers.normalization as L # pylint: disable=import-error
-				yield L.BatchNormalization(
+
+				###############################################################
+				# pylint: disable=too-few-public-methods,unused-argument
+				class CustomBatchNormalization(L.BatchNormalization):
+					""" Custom batch-normalization implementation
+					"""
+					def call(self, inputs, training=None):
+						""" Forces Keras to respect the way we want batch
+							normalization to be calculated.
+						"""
+						return super().call(inputs, training=False)
+				# pylint: enable=too-few-public-methods,unused-argument
+
+				yield CustomBatchNormalization(
 					axis=-1 if self.axis is None else self.axis,
 					center=True,
 					scale=True,
