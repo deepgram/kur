@@ -4,6 +4,14 @@ CHANGES
 master (unreleased)
 -------------------
 
+0.6.0 (2017.03.31)
+
+- Custom Jinja2 filters and better scope parsing during Kurfile loading.
+- Kurfile globbing.
+- Time-based stopping criteria.
+- Fixed serious batch normalization issue.
+- Multi-validation/testing support
+
 0.5.2 (2017.03.28)
 
 - Fixed a bug when processing meta-container inputs.
