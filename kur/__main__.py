@@ -107,7 +107,11 @@ def build(args):
 	if args.bare or args.compile == 'none':
 		provider = None
 	else:
-		provider = spec.get_provider(args.compile)
+		providers = spec.get_provider(
+			args.compile,
+			accept_many=args.compile == 'test'
+		)
+		provider = Kurfile.find_default_provider(providers)
 
 	spec.get_model(provider)
 
@@ -144,11 +148,15 @@ def prepare_data(args):
 
 	logger.info('Preparing data sources for: %s', args.target)
 
-	provider = spec.get_provider(args.target)
+	providers = spec.get_provider(
+		args.target,
+		accept_many=args.target == 'test'
+	)
 
 	if args.assemble:
 
-		spec.get_model(provider)
+		default_provider = Kurfile.find_default_provider(providers)
+		spec.get_model(default_provider)
 
 		if args.target == 'train':
 			target = spec.get_trainer(with_optimizer=True)
@@ -163,24 +171,28 @@ def prepare_data(args):
 
 		target.compile(assemble_only=True)
 
-	batch = None
-	for batch in provider:
-		break
-	if batch is None:
-		logger.error('No batches were produced.')
-		return 1
+	for k, provider in providers.items():
+		if len(providers) > 1:
+			print('Provider:', k)
 
-	num_entries = None
-	keys = sorted(batch.keys())
-	num_entries = len(batch[keys[0]])
-	for entry in range(num_entries):
-		print('Entry {}/{}:'.format(entry+1, num_entries))
-		for k in keys:
-			print('  {}: {}'.format(k, batch[k][entry]))
+		batch = None
+		for batch in provider:
+			break
+		if batch is None:
+			logger.error('No batches were produced.')
+			continue
 
-	if num_entries is None:
-		logger.error('No data sources was produced.')
-		return 1
+		num_entries = None
+		keys = sorted(batch.keys())
+		num_entries = len(batch[keys[0]])
+		for entry in range(num_entries):
+			print('Entry {}/{}:'.format(entry+1, num_entries))
+			for key in keys:
+				print('  {}: {}'.format(key, batch[key][entry]))
+
+		if num_entries is None:
+			logger.error('No data sources was produced.')
+			continue
 
 ###############################################################################
 def version(args):							# pylint: disable=unused-argument

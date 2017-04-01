@@ -416,6 +416,19 @@ class Kurfile:
 		return func
 
 	###########################################################################
+	@staticmethod
+	def find_default_provider(providers):
+		""" Finds the provider that will be used for constructing the model.
+		"""
+		if 'default' in providers:
+			return providers['default']
+		k = get_any_key(providers)
+		logger.info('Using multiple providers. Since there is no '
+			'"default" provider, the default one we will use to construct '
+			'the model is: %s', k)
+		return providers[k]
+
+	###########################################################################
 	def get_testing_function(self):
 		""" Returns a function that will test the model.
 		"""
@@ -424,19 +437,12 @@ class Kurfile:
 				'missing "test" section.')
 
 		providers = self.get_provider('test', accept_many=True)
+		default_provider = self.find_default_provider(providers)
 
 		# No reason to shuffle things for this.
 		for provider in providers.values():
 			if isinstance(provider, ShuffleProvider):
 				provider.randomize = False
-		if 'default' in providers:
-			default_provider = providers['default']
-		else:
-			k = get_any_key(providers)
-			logger.info('Using multiple providers. Since there is no '
-				'"default" provider, the default one we will use to construct '
-				'the model is: %s', k)
-			default_provider = providers[k]
 
 		weights = self.data['test'].get('weights')
 		if weights is None:
