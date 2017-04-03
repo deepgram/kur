@@ -95,6 +95,13 @@ class TorchModel:
 		it.
 	"""
 
+	DATA_CAST = {
+		'int' : lambda x: x.int(),
+		'long' : lambda x: x.long(),
+		'float' : lambda x: x.float(),
+		'double' : lambda x: x.double()
+	}
+
 	###########################################################################
 	def __init__(self, gpu=None):
 		""" Creates a new model.
@@ -106,6 +113,7 @@ class TorchModel:
 		self.gpu = gpu
 		self._reuse = False
 		self.final_model = None
+		self.info = []
 
 	###########################################################################
 	@property
@@ -152,7 +160,7 @@ class TorchModel:
 		return nn.DataParallel(self.model, devices).cuda()
 
 	###########################################################################
-	def to_torch(self, tensor):
+	def to_torch(self, tensor, *, location=None, data_type=None):
 		""" Creates a Torch tensor from an array.
 
 			# Arguments
@@ -169,9 +177,10 @@ class TorchModel:
 			tensor = numpy.array(tensor)
 		if isinstance(tensor, numpy.ndarray):
 			tensor = torch.from_numpy(tensor)
-		tensor = tensor.float()
+		tensor = self.DATA_CAST.get(data_type or 'float')(tensor)
 		if self.gpu:
-			tensor = tensor.cuda()
+			if location != 'cpu':
+				tensor = tensor.cuda()
 		return tensor
 
 	###########################################################################
@@ -179,8 +188,10 @@ class TorchModel:
 		""" Performs the forward pass.
 		"""
 		inputs = tuple(
-			Variable(self.to_torch(data[k]))
-			for k in self.inputs
+			Variable(self.to_torch(
+				data[k], location=info['location'], data_type=info['type']
+			))
+			for k, info in zip(self.inputs, self.info)
 		)
 		return self.final_model(*inputs)
 
@@ -209,8 +220,10 @@ class TorchModel:
 				output to compare against.
 		"""
 		inputs = tuple(
-			Variable(self.to_torch(data[k]))
-			for k in self.inputs
+			Variable(self.to_torch(
+				data[k], location=info['location'], data_type=info['type']
+			))
+			for k, info in zip(self.inputs, self.info)
 		)
 		predictions = self.final_model(*inputs)
 
@@ -237,7 +250,7 @@ class TorchModel:
 		return module
 
 	###########################################################################
-	def placeholder(self, name, create=True):
+	def placeholder(self, name, *, create=True, location=None, data_type=None):
 		""" Creates a new input placeholder, or retrieves an existing one.
 		"""
 
@@ -249,6 +262,10 @@ class TorchModel:
 				return None
 			index = len(self.inputs)
 			self.inputs.append(name)
+			self.info.append({
+				'location' : location,
+				'type' : data_type
+			})
 
 		#######################################################################
 		def calculate(_, *inputs):
