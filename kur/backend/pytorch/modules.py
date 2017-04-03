@@ -306,6 +306,21 @@ class TorchModel:
 		)
 
 	###########################################################################
+	def clip_gradients(self, clip_type, clip_value):
+		if clip_type == 'norm':
+			norm_type = 2
+		elif clip_type == 'abs':
+			norm_type = 'inf'
+		else:
+			raise ValueError('Clip type must be "norm" or "abs".')
+
+		nn.utils.clip_grad_norm(
+			self.get_trainable_parameters(),
+			clip_value,
+			norm_type
+		)
+
+	###########################################################################
 	def add_operation(self, operation, name=None):# pylint: disable=no-self-use
 		""" Adds a new operation to the graph.
 

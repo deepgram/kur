@@ -334,7 +334,11 @@ class PyTorchBackend(Backend):
 			torch_losses = self.process_loss(model, loss)
 
 			key = 'train'
-			result = {'loss' : torch_losses, 'optimizer' : torch_optimizer}
+			result = {
+				'loss' : torch_losses,
+				'optimizer' : torch_optimizer,
+				'kur_optimizer' : optimizer
+			}
 
 		result.update({
 			'model' : model.data
@@ -431,6 +435,7 @@ class PyTorchBackend(Backend):
 		torch_model = model.compiled['train']['model']
 		losses = model.compiled['train']['loss']
 		optimizer = model.compiled['train']['optimizer']
+		kur_optimizer = model.compiled['train']['kur_optimizer']
 
 		if optimizer:
 			optimizer.zero_grad()
@@ -439,6 +444,13 @@ class PyTorchBackend(Backend):
 
 		if optimizer:
 			torch_model.backprop(losses)
+
+			if kur_optimizer.clip_type:
+				torch_model.clip_gradients(
+					kur_optimizer.clip_type,
+					kur_optimizer.clip_value
+				)
+
 			optimizer.step()
 
 		metrics = {
