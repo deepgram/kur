@@ -132,19 +132,9 @@ class Ctc(Loss):
 		"""
 		super().__init__(**kwargs)
 
-		if variant is None:
-			self.variant = None
-		elif variant == 'warp':
-			self.variant = 'warp'
-			if not can_import('ctc'):
-				logger.error('The warp-CTC loss function was requested, but '
-					'we cannot find the "ctc" library. See our '
-					'troubleshooting page for helpful tips.')
-				raise ImportError('Cannot find the "ctc" library, which is '
-					'needed when using the "warp" variant of the CTC loss '
-					'function.')
-		else:
+		if variant not in {None, 'warp'}:
 			raise ValueError('Unsupported CTC variant: {}'.format(variant))
+		self.variant = variant
 
 		self.input_length = input_length
 		self.output_length = output_length
@@ -234,7 +224,16 @@ class Ctc(Loss):
 					transcript_length
 				)
 			else:
-				import ctc						# pylint: disable=import-error
+				try:
+					import ctc					# pylint: disable=import-error
+				except ImportError:
+					logger.error('The warp-CTC loss function was requested,  '
+						'but we cannot find the "ctc" library. See our '
+						'troubleshooting page for helpful tips.')
+					raise ImportError('Cannot find the "ctc" library, which '
+						'is needed when using the "warp" variant of the CTC '
+						'loss function.')
+
 				out = ctc.cpu_ctc_th(
 					output.dimshuffle((1, 0, 2)),
 					K.squeeze(utterance_length, -1),
@@ -252,6 +251,87 @@ class Ctc(Loss):
 				),
 				out
 			)
+
+		elif backend.get_name() == 'pytorch':
+
+			if self.variant != 'warp':
+				logger.error('PyTorch does not include a native CTC loss '
+					'function yet. However, PyTorch bindings to Warp CTC are '
+					'available (SeanNaren/warp-ctc). Try installing that, and '
+					'then settings variant=warp.')
+				raise ValueError('Only Warp CTC is supported for PyTorch '
+					'right now.')
+
+			ctc_scaled = 'ctc_scaled_{}'.format(self.input_length)
+			flattened_labels = 'ctc_flattened_labels_{}'.format(target)
+			transcript_length = model.data.placeholder(
+				self.output_length,
+				location='cpu',
+				data_type='int'
+			)
+			transcript = model.data.placeholder(
+				flattened_labels,
+				location='cpu',
+				data_type='int'
+			)
+			utterance_length = model.data.placeholder(
+				self.input_length if self.relative_to is None else ctc_scaled,
+				location='cpu',
+				data_type='int'
+			)
+
+			if self.relative_to is not None:
+				model.add_data_source(
+					ctc_scaled,
+					ScaledSource(
+						model,
+						relative_to=self.relative_to,
+						to_this=target,
+						scale_this=self.input_length
+					)
+				)
+
+			if self.variant == 'warp':
+				model.add_data_source(
+					flattened_labels,
+					FlattenSource(
+						self.output,
+						self.output_length
+					)
+				)
+
+			try:
+				from warpctc_pytorch import CTCLoss	# pytorch: disable=import-error
+			except ImportError:
+				logger.error('The warp-CTC loss function was requested,  '
+					'but we cannot find the "warpctc_pytorch" library. See '
+					'out troubleshooting page for helpful tips.')
+				raise ImportError('Cannot find the "warpctc_pytorch" library, '
+					'which is needed when using the "warp" variant of the CTC '
+					'loss function.')
+
+			loss = model.data.move(CTCLoss())
+
+			def get_ctc_loss(inputs, output):
+				""" Computes CTC loss.
+				"""
+				return loss(
+					output.transpose(1, 0).contiguous(),
+					inputs[0][0]+1,		# transcript[0]+1
+					inputs[1].squeeze(1),	# K.squeeze(utterance_length, -1),
+					inputs[2].squeeze(1)	# K.squeeze(transcript_length, -1)
+				)
+
+			return [
+				[
+					(self.output if self.variant is None \
+						else flattened_labels, transcript),
+					(self.input_length if self.relative_to is None \
+						else ctc_scaled, utterance_length),
+					(self.output_length, transcript_length)
+				],
+				get_ctc_loss
+			]
 
 		else:
 			raise ValueError('Unsupported backend "{}" for loss function "{}"'
