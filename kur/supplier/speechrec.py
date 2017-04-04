@@ -89,16 +89,30 @@ class Utterance(DerivedSource):
 		ensures that all data products are rectangular tensors (rather than
 		ragged arrays).
 	"""
-	def __init__(self, source, raw, fill=None):
+	def __init__(self, source, raw, fill=None, bucket=None):
 		super().__init__()
 		self.source = source
 		self.raw = raw
+
 		self.fill = fill or 'zero'
 		assert isinstance(self.fill, str) and self.fill in ('zero', 'loop')
 		logger.debug('Utterance source is using fill mode "%s".', self.fill)
+
+		if bucket:
+			if not isinstance(bucket, (float, int)) or bucket <= 0:
+				raise ValueError('"bucket" must be a positive number.')
+			logger.debug('Utterance source is using bucket: %.3f sec', bucket)
+			# 10ms audio frames mean there are 100 frames per second.
+			# So convert seconds to frames.
+			bucket = round(bucket * 100)
+			logger.debug('This bucket is equivalent to: %d frames', bucket)
+		self.bucket = bucket
+
 	def derive(self, inputs):
 		utterances, = inputs
 		max_len = max(len(x) for x in utterances)
+		if self.bucket:
+			max_len = (max_len-1) - ((max_len-1) % self.bucket) + self.bucket
 
 		if self.fill == 'zero':
 			output = numpy.zeros(
@@ -488,7 +502,7 @@ class SpeechRecognitionSupplier(Supplier):
 	def __init__(self, url=None, path=None, checksum=None, unpack=None, 
 		type=None, normalization=None, min_duration=None, max_duration=None,
 		max_frequency=None, vocab=None, samples=None, fill=None, key=None,
-		*args, **kwargs):
+		bucket=None, *args, **kwargs):
 		""" Creates a new speech recognition supplier.
 
 			# Arguments
@@ -517,7 +531,12 @@ class SpeechRecognitionSupplier(Supplier):
 			'transcript' : Transcript('transcript_raw'),
 			'utterance_raw' : utterance_raw,
 			'utterance_length' : UtteranceLength('utterance_raw'),
-			'utterance' : Utterance('utterance_raw', utterance_raw, fill=fill),
+			'utterance' : Utterance(
+				'utterance_raw',
+				utterance_raw,
+				fill=fill,
+				bucket=bucket
+			),
 			'duration' : VanillaSource(numpy.array(self.data['duration'])),
 			'audio_source' : VanillaSource(numpy.array(self.data['audio']))
 		}
