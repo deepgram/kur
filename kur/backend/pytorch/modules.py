@@ -416,11 +416,24 @@ def bundle(*x):
 	return x
 
 ###############################################################################
-def swap_channels(x):
+def move_channel_forward(x):
+	ndim = x.dim()
+	permutation = (0, ndim-1) + tuple(range(1, ndim-1))
+	return x.permute(*permutation)
+
+###############################################################################
+def move_channel_backward(x):
+	ndim = x.dim()
+	permutation = (0, ) + tuple(range(2, ndim)) + (1, )
+	return x.permute(*permutation)
+
+###############################################################################
+class swap_channels:
 	""" Swaps the dimensions between Theano/PyTorch and TensorFlow dimension
 		orderings.
 	"""
-	return torch.transpose(x, 1, x.dim()-1)
+	begin = move_channel_forward
+	end = move_channel_backward
 
 ###############################################################################
 def parallel(layer):

@@ -105,7 +105,7 @@ class Dropout(Layer):	# pylint: disable=too-few-public-methods
 
 				if func is not nn.Dropout:
 					output = model.data.add_operation(
-						swap_channels
+						swap_channels.begin
 					)(output)
 
 				output = model.data.add_layer(
@@ -115,7 +115,7 @@ class Dropout(Layer):	# pylint: disable=too-few-public-methods
 
 				if func is not nn.Dropout:
 					output = model.data.add_operation(
-						swap_channels
+						swap_channels.end
 					)(output)
 
 				return {

@@ -203,7 +203,7 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 				"""
 				assert len(inputs) == 1
 				output = model.data.add_operation(
-					swap_channels
+					swap_channels.begin
 				)(inputs[0]['layer'])
 				output = model.data.add_layer(
 					self.name,
@@ -216,7 +216,7 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 					)
 				)(output)
 				output = model.data.add_operation(
-					swap_channels
+					swap_channels.end
 				)(output)
 				return {
 					'shape' : self.shape([inputs[0]['shape']]),
