@@ -207,7 +207,13 @@ class PyTorchBackend(Backend):
 			assembly.
 		"""
 		from .pytorch.modules import TorchModel
-		data = TorchModel(gpu=self.devices)
+		if self.parallel:
+			os.environ['CUDA_VISIBLE_DEVICES'] = \
+				','.join(str(x) for x in self.devices)
+			devices = tuple(range(self.parallel))
+		else:
+			devices = None
+		data = TorchModel(gpu=devices)
 		data.allow_reuse = True
 		return data
 
