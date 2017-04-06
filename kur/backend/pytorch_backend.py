@@ -50,6 +50,20 @@ class PyTorchBackend(Backend):
 		return 'pytorch'
 
 	###########################################################################
+	@property
+	def version(self):
+		""" Returns the PyTorch version, as a tuple of (MAJOR, MINOR, PATCH).
+		"""
+		import torch							# pylint: disable=import-error
+		version = torch.__version__
+		match = re.match(r'([0-9]+)\.([0-9]+)\.([0-9]+)\.*', version)
+		if not match:
+			logger.warning('Unable to infer PyTorch version. We '
+				'cannot check for version incompatibilities.')
+			return (0, 0, 0)
+		return tuple(int(x) for x in match.groups())
+
+	###########################################################################
 	def save(self, model, filename):
 		""" Saves the model weights to the given filename.
 
@@ -330,6 +344,15 @@ class PyTorchBackend(Backend):
 			else:
 				torch_optimizer = optimizer.get_optimizer(self)(
 					trainables)
+
+			if optimizer.clip_type:
+				if self.version < (0, 1, 10):
+					# Of course, we could always clip the gradients ourselves,
+					# but let's just rely on PyTorch for that.
+					logger.warning('Gradient clipping is only supported on '
+						'PyTorch versions >= 0.1.10. We will ignore the '
+						'optimizer\'s "clip" setting.')
+					optimizer.clip_type = None
 
 			torch_losses = self.process_loss(model, loss)
 
