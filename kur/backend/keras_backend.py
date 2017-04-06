@@ -736,6 +736,7 @@ class KerasBackend(Backend):
 			logger.info('Waiting for model to finish compiling...')
 			for batch in provider:
 				self.run_batch(model, batch, key, False)
+			logger.info('Model is ready for use.')
 
 		finally:
 			if weight_path and os.path.isdir(weight_path):

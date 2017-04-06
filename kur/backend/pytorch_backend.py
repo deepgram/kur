@@ -389,6 +389,7 @@ class PyTorchBackend(Backend):
 		logger.info('Waiting for model to be ready to use...')
 		for batch in provider:
 			model.data.predict(batch)
+		logger.info('Model is ready for use.')
 
 	###########################################################################
 	def summary(self, model, file=None):
