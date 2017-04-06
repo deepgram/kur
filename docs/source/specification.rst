@@ -1612,6 +1612,12 @@ Valid suppliers are:
 	- ``key``: str or None (default: None). The name of the key in the JSONL
 	  metadata file which contains the ground-truth transcripts. If None,
 	  defaults to "text".
+	- ``bucket``: float or None (default: None). If not None, then the number
+	  of frames of audio in each batch are rounded up to the nearest multiple
+	  of ``bucket`` seconds. Otherwise, no additional rounding/padding is
+	  applied. The number of frames of required audio are derived from the
+	  bucket time (in seconds) by assuming that each audio frame has duration
+	  10ms.
 
   The speech recognition supplier will produce the following data sources that
   you can use in your model:
