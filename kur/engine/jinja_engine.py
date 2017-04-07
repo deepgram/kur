@@ -36,6 +36,12 @@ def as_dict(value, key):
 	return {key : value}
 
 ###############################################################################
+def ternary(value, result_true, result_false):
+	""" Implements a ternary if/else conditional.
+	"""
+	return result_true if value else result_false
+
+###############################################################################
 # pylint: disable=protected-access
 def gpu_count():
 	""" Returns the number of GPU devices available on the system.
@@ -77,6 +83,8 @@ class JinjaEngine(Engine):
 		env.filters['splitext'] = os.path.splitext
 		env.filters['combine'] = combine
 		env.filters['as_dict'] = as_dict
+		env.filters['ternary'] = ternary
+
 		env.globals['gpu_count'] = gpu_count
 
 	###########################################################################
