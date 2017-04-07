@@ -1770,6 +1770,8 @@ given to the provider as parameters. Valid provider names are:
 	  its best to use fixed-sized batches, but may occassionally return smaller
 	  batches (particularly at the end of the epoch if the length of the
 	  training set is not evenly divisible by the batch size).
+	- ``reverse``: A boolean indicating whether or not the sorting (if any)
+	  should be reversed.
 
 If the ``provider`` section is not given, or if ``name`` is not specified, then
 a ``batch_provider`` is created as a default provider.

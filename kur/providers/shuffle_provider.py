@@ -70,7 +70,7 @@ class ShuffleProvider(Provider): \
 
 	###########################################################################
 	def __init__(self, *args, randomize=True, sort_by=None, sortagrad=None,
-		shuffle_after=None, **kwargs):
+		shuffle_after=None, reverse=None, **kwargs):
 		""" Create a new data provider that can shuffle shuffleable sources.
 
 			# Arguments
@@ -110,6 +110,8 @@ class ShuffleProvider(Provider): \
 			self.randomize = True
 		else:
 			self.randomize = False
+
+		self.reverse = reverse
 
 		if sortagrad:
 			if sort_by or shuffle_after:
@@ -197,6 +199,9 @@ class ShuffleProvider(Provider): \
 						indices = numpy.array(
 							[numpy.ravel(x)[0] for x in indices]
 						)
+					if self.reverse:
+						logger.info('Reverse shuffling.')
+						indices = indices[::-1]
 					for source in self.sources:
 						source.shuffle(indices)
 
@@ -206,6 +211,9 @@ class ShuffleProvider(Provider): \
 			else:
 				logger.debug('Shuffling...')
 				indices = numpy.random.permutation(self._shuffle_len)
+				if self.reverse:
+					logger.info('Reverse shuffling.')
+					indices = indices[::-1]
 				for source in self.sources:
 					source.shuffle(indices)
 
