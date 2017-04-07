@@ -56,7 +56,7 @@ class ForEach(Operator):				# pylint: disable=too-few-public-methods
 		target = engine.evaluate(self.args['iterate'])
 
 		# Parse children
-		for item in range(self.items):
+		for item in self.items:
 			item = engine.evaluate(item, recursive=True)
 			with engine.scope(**{self.loop_var : item}):
 				for entry in target:
