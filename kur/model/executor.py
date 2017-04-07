@@ -847,6 +847,13 @@ class Executor:
 								'switching optimizers or backend.', k)
 							if self.NAN_IS_FATAL:
 								raise ValueError('Model loss is NaN.')
+						elif math.isinf(v):
+							logger.error('Received infinite loss value for '
+								'model output "%s". Make sure that your '
+								'learning rate is not too high, and that you '
+								'clip your gradients.', k)
+							if self.NAN_IS_FATAL:
+								raise ValueError('Model loss is infinite.')
 
 			timers['train'].pause()
 			# END: Train one epoch
