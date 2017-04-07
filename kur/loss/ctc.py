@@ -320,7 +320,7 @@ class Ctc(Loss):
 					inputs[0][0]+1,		# transcript[0]+1
 					inputs[1].squeeze(1),	# K.squeeze(utterance_length, -1),
 					inputs[2].squeeze(1)	# K.squeeze(transcript_length, -1)
-				)
+				) / output.size(0)
 
 			return [
 				[
