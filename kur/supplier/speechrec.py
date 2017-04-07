@@ -184,11 +184,11 @@ class RawUtterance(ChunkSource):
 		self.features = None
 		self.max_frequency = max_frequency
 
-		self._init_normalizer(normalization)
-
 		assert isinstance(data_cpus, int)
 		self.data_cpus = max(1, data_cpus)
-		self.pool = ProcessPoolExecutor(data_cpus)
+		self.pool = ProcessPoolExecutor(self.data_cpus)
+
+		self._init_normalizer(normalization)
 
 	###########################################################################
 	def _init_normalizer(self, params):
