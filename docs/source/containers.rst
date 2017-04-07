@@ -223,6 +223,31 @@ or::
   ...]``. Negative numbers count from the back, so if ``DIMENSION`` is -1, your
   data will be shaped to be ``[..., 1]``.
 
+Squeeze
+-------
+
+**Description**. A "squeeze" layer removes a length 1 dimension from the data
+tensor.
+
+**Purpose**. Like the expand layer, a squeeze layer is also useful for
+manipulating shapes in your model. In fact, it is operational the inverse of
+the expand layer. If you have data tensor of shape ``[width, height, 1]``, as
+might come out of a 2D convolution with 1 kernel, you can cast it to a tensor
+of shape ``[width, height]`` with a ``squeeze: -1`` (or ``squeeze: 2``) layer.
+
+**Usage**::
+
+	squeeze: DIMENSION
+
+or::
+
+	squeeze:
+	  dimension: DIMENSION
+
+- ``DIMENSION``: the index to remove a length-1 dimension at (zero-based
+  index). Negative numbers count from the back, so if ``DIMENSION`` is -1, the
+  last dimension of the data will be removed if it is length 1.
+
 Flatten
 -------
 

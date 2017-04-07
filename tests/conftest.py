@@ -234,6 +234,8 @@ def uber_model(a_backend):
 			# Shape: (32, 32)
 			{'transpose' : [0, 1]},
 			{'expand' : -1},
+			{'squeeze' : -1},
+			{'expand' : -1},
 			{'debug' : 'hello world'},
 			# Shape: (32, 32, 1)
 			{'for' : {'with_index' : 'idx', 'range' : 2, 'iterate' : [
