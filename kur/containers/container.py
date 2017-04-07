@@ -14,9 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
 import warnings
 from . import ParsingError
 from ..utils import get_subclasses
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 class Container:
@@ -108,6 +111,7 @@ class Container:
 		self.args = None
 		self.sink = False
 		self.freeze = None
+		self.when = True
 
 		self.parent = None
 		self.children = []
@@ -295,7 +299,11 @@ class Container:
 		if not self._parsed:
 			raise ParsingError('Container must be parsed before being built.')
 		if self._built is None or rebuild:
-			self._built = list(self._build(model))
+			if not self.when:
+				logger.debug('Suppressing container: %s', self.name)
+				self._built = tuple()
+			else:
+				self._built = list(self._build(model))
 		yield from self._built
 
 	###########################################################################
@@ -393,6 +401,16 @@ class Container:
 			self.sink = sink
 		else:
 			self.sink = False
+
+		if 'when' in self.data:
+			when_evaluated = engine.evaluate(self.data['when'], recursive=True)
+			self.when = bool(when_evaluated)
+			logger.debug('Container "%s" when: "%s" -> "%s" = %s', self.name,
+				self.data['when'], when_evaluated, self.when)
+			if not self.when:
+				logger.info('Container will be suppressed: %s', self.name)
+		else:
+			self.when = True
 
 	###########################################################################
 	def _build(self, model):

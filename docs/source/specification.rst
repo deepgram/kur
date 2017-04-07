@@ -87,6 +87,7 @@ container looks like this:
 	  inputs: INPUTS
 	  sink: SINK
 	  freeze: FREEZE
+	  when: WHEN
 
 There are many different kinds of containers, which we describe on the
 :doc:`containers` page. The parameters that are given to the container (e.g.,
@@ -356,6 +357,14 @@ allowing its parameters to vary during training. If the ``for`` loop did *not*
 have a ``freeze`` value specified, then all three ``dense`` layers would be
 trainable (not frozen), because they would inherit the global default of
 ``freeze: no``.
+
+When
+----
+
+``when`` allows for conditional layers. When the layer is parsed, the value of
+``when`` is evaluated. If it evaluates to---or can be cast to---a boolean True,
+then the container is kept; otherwise, that container is skipped. If ``when``
+is not specified, it defaults to True.
 
 Templates
 =========
