@@ -1627,6 +1627,9 @@ Valid suppliers are:
 	  applied. The number of frames of required audio are derived from the
 	  bucket time (in seconds) by assuming that each audio frame has duration
 	  10ms.
+	- ``data_cpus``: integer or None (default: None). The number of CPUs to use
+	  during audio processing. If None, it will use N-1 cores, where N is the
+	  number of cores available.
 
   The speech recognition supplier will produce the following data sources that
   you can use in your model:
