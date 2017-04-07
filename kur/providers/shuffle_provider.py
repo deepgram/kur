@@ -211,9 +211,6 @@ class ShuffleProvider(Provider): \
 			else:
 				logger.debug('Shuffling...')
 				indices = numpy.random.permutation(self._shuffle_len)
-				if self.reverse:
-					logger.info('Reverse shuffling.')
-					indices = indices[::-1]
 				for source in self.sources:
 					source.shuffle(indices)
 
