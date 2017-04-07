@@ -244,29 +244,33 @@ class RawUtterance(ChunkSource):
 		self.norm = norm
 
 	###########################################################################
-	def load_audio(self, paths):
+	def load_audio(self, partial_paths):
 		""" Loads unnormalized audio data.
 		"""
 
 		# Resolve each path.
-		partial_paths = [SpeechRecognitionSupplier.find_audio_path(partial_path) for partial_path in paths]
+		paths = [
+			SpeechRecognitionSupplier.find_audio_path(partial_path)
+			for partial_path in partial_paths
+		]
 
-		for partial_path in partial_paths:
-			if partial_path is None:
+		for path, partial_path in zip(paths, partial_paths):
+			if path is None:
 				logger.error('Could not find audio file that---ignoring '
 						'extension---begins with: %s', partial_path)
+		paths = [path for path in paths if path]
 
-		n_paths = len(partial_paths)
+		n_paths = len(paths)
 		n_cpus = min(n_paths, self.data_cpus)
 		n = n_paths // n_cpus  # paths per cpu
 		args = (self.feature_type, self.max_frequency, 'suppress')  # arguments to be passed into worker function
 
 		# Split the paths to be processed as evenly as possible 
-		x = [(args, partial_paths[i * n:(i+1) * n]) for i in range(n_cpus - 1)]
+		x = [(args, paths[i * n:(i+1) * n]) for i in range(n_cpus - 1)]
 
 		# In case n_paths is not evenly divisible by n_cpus, we handle the last
 		# element outside of the above list comprehension
-		x.append((args, partial_paths[(n_cpus - 1) * n:])) 
+		x.append((args, paths[(n_cpus - 1) * n:])) 
 	
 		# actually load audio via process pool
 		result = self.pool.map(_load_single, x)
