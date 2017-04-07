@@ -21,6 +21,9 @@ import logging
 import random
 
 import numpy
+import multiprocessing
+
+from concurrent.futures import ProcessPoolExecutor
 
 from ..sources import DerivedSource, VanillaSource, ChunkSource
 from . import Supplier
@@ -30,6 +33,24 @@ from ..utils import get_audio_features
 from ..utils import Normalize
 
 logger = logging.getLogger(__name__)
+
+###############################################################################
+def _load_single(args):
+	"""
+	This function is called through an instance of ProcessPoolExecutor
+	in the RawUtterance source.  We do not make this function an instance
+	method of RawUtterance in order to avoid unnecessary pickling of 
+	RawUtterance instances which would fail due to the presence of some
+	unpickleable instance variables.
+	"""
+	(feature_type, high_freq, on_error), paths = args
+	result = [None] * len(paths)
+	for i, path in enumerate(paths):
+		result[i] = get_audio_features(path, feature_type=feature_type, high_freq=high_freq, on_error=on_error)
+		if result[i] is None:
+			logger.error('Failed to load audio file at path: %s', path)
+	return result
+
 
 ###############################################################################
 def loop_copy(src, dest):
@@ -152,7 +173,7 @@ class RawUtterance(ChunkSource):
 
 	###########################################################################
 	def __init__(self, audio_paths, feature_type=None,
-		normalization=None, max_frequency=None, *args, **kwargs):
+		normalization=None, max_frequency=None, data_cpus=1, *args, **kwargs):
 		""" Creates a new raw utterance source.
 		"""
 
@@ -164,6 +185,9 @@ class RawUtterance(ChunkSource):
 		self.max_frequency = max_frequency
 
 		self._init_normalizer(normalization)
+
+		self.data_cpus = data_cpus
+		self.pool = ProcessPoolExecutor(data_cpus)
 
 	###########################################################################
 	def _init_normalizer(self, params):
@@ -222,22 +246,32 @@ class RawUtterance(ChunkSource):
 	def load_audio(self, paths):
 		""" Loads unnormalized audio data.
 		"""
-		# Resolve and load each path.
-		result = [None] * len(paths)
-		for i, partial_path in enumerate(paths):
-			path = SpeechRecognitionSupplier.find_audio_path(partial_path)
-			if path is None:
+
+		# Resolve each path.
+		partial_paths = [SpeechRecognitionSupplier.find_audio_path(partial_path) for partial_path in paths]
+
+		for partial_path in partial_paths:
+			if partial_path is None:
 				logger.error('Could not find audio file that---ignoring '
-					'extension---begins with: %s', partial_path)
-			else:
-				result[i] = get_audio_features(
-					path,
-					feature_type=self.feature_type,
-					high_freq=self.max_frequency,
-					on_error='suppress'
-				)
-				if result[i] is None:
-					logger.error('Failed to load audio file at path: %s', path)
+						'extension---begins with: %s', partial_path)
+
+		n_paths = len(partial_paths)
+		n_cpus = min(n_paths, self.data_cpus)
+		n = n_paths // n_cpus  # paths per cpu
+		args = (self.feature_type, self.max_frequency, 'suppress')  # arguments to be passed into worker function
+
+		# Split the paths to be processed as evenly as possible 
+		x = [(args, partial_paths[i * n:(i+1) * n]) for i in range(n_cpus - 1)]
+
+		# In case n_paths is not evenly divisible by n_cpus, we handle the last
+		# element outside of the above list comprehension
+		x.append((args, partial_paths[(n_cpus - 1) * n:])) 
+	
+		# actually load audio via process pool
+		result = self.pool.map(_load_single, x)
+	
+		# flatten the result, which is a list of lists
+		result  =  [x for y in result for x in y]
 
 		# Clean up bad audio
 		if any(x is None for x in result):
@@ -502,7 +536,7 @@ class SpeechRecognitionSupplier(Supplier):
 	def __init__(self, url=None, path=None, checksum=None, unpack=None, 
 		type=None, normalization=None, min_duration=None, max_duration=None,
 		max_frequency=None, vocab=None, samples=None, fill=None, key=None,
-		bucket=None, *args, **kwargs):
+		bucket=None, data_cpus=None, *args, **kwargs):
 		""" Creates a new speech recognition supplier.
 
 			# Arguments
@@ -516,11 +550,13 @@ class SpeechRecognitionSupplier(Supplier):
 		self.downselect(samples)
 
 		logger.debug('Creating sources.')
+		data_cpus = multiprocessing.cpu_count() - 1 if not data_cpus else data_cpus
 		utterance_raw = RawUtterance(
 			self.data['audio'],
 			feature_type=type or SpeechRecognitionSupplier.DEFAULT_TYPE,
 			normalization=normalization,
-			max_frequency=max_frequency
+			max_frequency=max_frequency,
+			data_cpus=data_cpus
 		)
 		self.sources = {
 			'transcript_raw' : RawTranscript(
