@@ -186,7 +186,8 @@ class RawUtterance(ChunkSource):
 
 		self._init_normalizer(normalization)
 
-		self.data_cpus = data_cpus
+		assert isinstance(data_cpus, int)
+		self.data_cpus = max(1, data_cpus)
 		self.pool = ProcessPoolExecutor(data_cpus)
 
 	###########################################################################
@@ -550,7 +551,7 @@ class SpeechRecognitionSupplier(Supplier):
 		self.downselect(samples)
 
 		logger.debug('Creating sources.')
-		data_cpus = multiprocessing.cpu_count() - 1 if not data_cpus else data_cpus
+		data_cpus = max(1, multiprocessing.cpu_count() - 1 if not data_cpus else data_cpus)
 		utterance_raw = RawUtterance(
 			self.data['audio'],
 			feature_type=type or SpeechRecognitionSupplier.DEFAULT_TYPE,
