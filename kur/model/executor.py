@@ -348,7 +348,7 @@ class Executor:
 			previous_num_batches = {}
 			try:
 				if num_batches is not None:
-					for provider in validation:
+					for provider in validation.values():
 						if hasattr(provider, 'num_batches'):
 							previous_num_batches[id(provider)] = \
 								provider.num_batches
@@ -361,7 +361,7 @@ class Executor:
 				)
 			finally:
 				if num_batches is not None:
-					for provider in validation:
+					for provider in validation.values():
 						if hasattr(provider, 'num_batches'):
 							provider.num_batches = \
 								previous_num_batches[id(provider)]
