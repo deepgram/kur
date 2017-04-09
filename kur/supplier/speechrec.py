@@ -42,7 +42,7 @@ def _init_data_worker():
 ###############################################################################
 def _load_single(args):
 	"""
-	This function is called through an instance of ProcessPoolExecutor
+	This function is called through an instance of multiprocessing.Pool 
 	in the RawUtterance source.  We do not make this function an instance
 	method of RawUtterance in order to avoid unnecessary pickling of 
 	RawUtterance instances which would fail due to the presence of some
