@@ -167,6 +167,7 @@ class TestExecutor:
 		evaluator.evaluate(provider=ctc_eval_data)
 
 	###########################################################################
+	@pytest.mark.xfail(reason='SIGSEGV on some platforms.')
 	def test_uber_train(self, uber_model, uber_data, jinja_engine, loss,
 		optimizer):
 		""" Tests that we can compile and train a diverse model.
