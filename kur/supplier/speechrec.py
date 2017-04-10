@@ -23,7 +23,7 @@ import random
 import numpy
 import multiprocessing
 
-from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import Pool
 
 from ..sources import DerivedSource, VanillaSource, ChunkSource
 from . import Supplier
@@ -35,9 +35,14 @@ from ..utils import Normalize
 logger = logging.getLogger(__name__)
 
 ###############################################################################
+def _init_data_worker():
+	import signal
+	signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+###############################################################################
 def _load_single(args):
 	"""
-	This function is called through an instance of ProcessPoolExecutor
+	This function is called through an instance of multiprocessing.Pool 
 	in the RawUtterance source.  We do not make this function an instance
 	method of RawUtterance in order to avoid unnecessary pickling of 
 	RawUtterance instances which would fail due to the presence of some
@@ -186,7 +191,7 @@ class RawUtterance(ChunkSource):
 
 		assert isinstance(data_cpus, int)
 		self.data_cpus = max(1, data_cpus)
-		self.pool = ProcessPoolExecutor(self.data_cpus)
+		self.pool = Pool(data_cpus, _init_data_worker)
 
 		self._init_normalizer(normalization)
 
@@ -273,8 +278,12 @@ class RawUtterance(ChunkSource):
 		x.append((args, paths[(n_cpus - 1) * n:])) 
 	
 		# actually load audio via process pool
-		result = self.pool.map(_load_single, x)
-	
+		try:
+			result = self.pool.map(_load_single, x)
+		except KeyboardInterrupt:
+			self.pool.terminate()
+			self.pool.join()
+
 		# flatten the result, which is a list of lists
 		result  =  [x for y in result for x in y]
 
