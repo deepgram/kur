@@ -31,19 +31,33 @@ class Statistic:
 		def __str__(self):
 			return self.name.lower()
 
-	def __init__(self, data_type, tag, name, *, subtag=None):
+	def __init__(self, data_type, tags, name):
 		if isinstance(data_type, str):
 			data_type = Statistic.Type.from_string(data_type)
 		self.data_type = data_type
-		self.tag = tag
-		self.subtag = subtag
+
+		if tags is None:
+			tags = ()
+		elif isinstance(tags, str):
+			tags = (tags, )
+		else:
+			tags = tuple(tags)
+		self.tags = tags
+
 		self.name = name
 
+	def copy(self, *, data_type=None, tags=None, name=None):
+		""" Clones the statistic, optionally changing some of its properties.
+		"""
+		return Statistic(
+			data_type or self.data_type,
+			tags or self.tags,
+			name or self.name
+		)
+
 	def __repr__(self):
-		return 'Statistic(data_type="{}", tag="{}", name="{}")'.format(
-			self.data_type,
-			'{}.{}'.format(self.tag, self.subtag) if self.subtag else self.tag,
-			self.name
+		return 'Statistic(data_type="{}", tags={}, name="{}")'.format(
+			self.data_type, self.tags, self.name
 		)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

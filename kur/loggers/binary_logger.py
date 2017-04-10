@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 import os
+import re
+import shutil
 import logging
 
 import yaml
@@ -123,14 +125,82 @@ class BinaryLogger(PersistentLogger):
 		return self.best_validation_loss
 
 	###########################################################################
+	@staticmethod
+	def get_filename_from_statistic(statistic, *, legacy=False):
+		if legacy:
+			return '{}_{}_{}'.format(
+				str(statistic.data_type),
+				'.'.join(statistic.tags),
+				statistic.name
+			)
+		return '{}_{}_{}'.format(
+			str(statistic.data_type).replace('_', '__'),
+			'.'.join(
+					tag.replace('_', '__').replace('.', '..')
+					for tag in statistic.tags
+				)
+				if statistic.tags else 'null',
+			statistic.name.replace('_', '__')
+		)
+
+	###########################################################################
+	@staticmethod
+	def get_statistic_from_filename(filename, *, was_legacy=None):
+
+		parts = re.split(r'(?<=[^_])_(?=[^_])', filename)
+		if len(parts) != 3:
+			parts = filename.split('_', 1)
+			if len(parts) != 2:
+				raise KeyError('Failed to parse filename.')
+			data_type = parts[0]
+			parts = parts[1].rsplit('_', 1)
+			if len(parts) != 2:
+				raise KeyError('Failed to parse filename.')
+
+			tags, name = parts
+			tags = tags.split('.')
+
+			if was_legacy is None:
+				logger.warning('Parsed a legacy statistic filename: %s',
+					filename)
+			else:
+				was_legacy.legacy = True
+			return Statistic(data_type, tags, name)
+
+		parts = [part.replace('__', '_') for part in parts]
+
+		data_type = parts[0]
+
+		tags = re.split(r'(?<=[^.])\.(?=[^.])', parts[1])
+		tags = [tag.replace('..', '.') for tag in tags]
+		if len(tags) == 1 and tags[0] == 'null':
+			tags = None
+
+		name = parts[2]
+
+		return Statistic(data_type, tags, name)
+
+	###########################################################################
 	def process(self, data, data_type, tag=None):
 		""" Processes training statistics.
 		"""
 		path = os.path.expanduser(os.path.expandvars(self.path))
 		for k, v in data.items():
-			column = '{}_{}_{}'.format(data_type, tag, k)
+			stat = Statistic(data_type, tag, k)
 
+			column = self.get_filename_from_statistic(stat)
 			filename = os.path.join(path, column)
+
+			# Handle deprecated paths.
+			if not os.path.isfile(filename):
+				old_column = self.get_filename_from_statistic(stat,
+					legacy=True)
+				old_filename = os.path.join(path, old_column)
+				if os.path.isfile(old_filename):
+					logger.warning('Your log paths use a deprecated naming '
+						'scheme. We are upgrading it now, leaving the '
+						'original file as a backup: %s', old_filename)
+					shutil.copy(old_filename, filename)
 
 			logger.debug('Adding data to binary column: %s', column)
 			idx.save(filename, v, append=True)
@@ -202,6 +272,8 @@ class BinaryLogger(PersistentLogger):
 
 		result = []
 
+		legacy = lambda: None
+
 		path = os.path.expanduser(os.path.expandvars(self.path))
 		for filename in os.listdir(path):
 			if filename == self.SUMMARY:
@@ -210,20 +282,17 @@ class BinaryLogger(PersistentLogger):
 			if not os.path.isfile(os.path.join(path, filename)):
 				continue
 
-			parts = filename.split('_', 2)
-			if len(parts) != 3:
-				continue
-
-			if parts[-1] in ('batch', 'time'):
-				continue
-
-			if '.' in parts[1]:
-				parts[1], subtag = parts[1].split('.', 1)
-			else:
-				subtag = None
-
 			try:
-				stat = Statistic(*parts, subtag=subtag)
+				legacy.legacy = False
+				stat = self.get_statistic_from_filename(filename,
+					was_legacy=legacy)
+				if legacy.legacy and os.path.isfile(os.path.join(
+					path,
+					self.get_filename_from_statistic(stat)
+				)):
+					# If this is a legacy filename, but a "modern" filename
+					# exists, then just enumerate the modern one and skip this.
+					continue
 			except KeyError:
 				continue
 
@@ -234,22 +303,22 @@ class BinaryLogger(PersistentLogger):
 	###########################################################################
 	def load_statistic(self, statistic):
 		path = os.path.expanduser(os.path.expandvars(self.path))
-		values = BinaryLogger.load_column(path, '{}_{}{}_{}'.format(
-			statistic.data_type,
-			statistic.tag,
-			'.{}'.format(statistic.subtag) if statistic.subtag else '',
-			statistic.name
-		))
 
-		batches = BinaryLogger.load_column(path, '{}_{}{}_batch'.format(
-			statistic.data_type, statistic.tag,
-			'.{}'.format(statistic.subtag) if statistic.subtag else ''
-		))
+		def load_with_legacy_support(statistic):
+			result = BinaryLogger.load_column(path,
+				self.get_filename_from_statistic(statistic)
+			)
+			if result is None:
+				result = BinaryLogger.load_column(path,
+					self.get_filename_from_statistic(statistic, legacy=True)
+				)
+				if result is not None:
+					logger.warning('Loading deprecated log path.')
+			return result
 
-		timestamps = BinaryLogger.load_column(path, '{}_{}{}_time'.format(
-			statistic.data_type, statistic.tag,
-			'.{}'.format(statistic.subtag) if statistic.subtag else ''
-		))
+		values = load_with_legacy_support(statistic)
+		batches = load_with_legacy_support(statistic.copy(name='batch'))
+		timestamps = load_with_legacy_support(statistic.copy(name='time'))
 
 		lens = [len(x) for x in (values, batches, timestamps) if x is not None]
 		if not lens:

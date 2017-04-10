@@ -132,14 +132,15 @@ class PlotHook(TrainingHook):
 				continue
 			if stat.name != 'total':
 				continue
-			if stat.tag != 'loss':
+			if not stat.tags or stat.tags[0] != 'loss':
 				continue
 			vbatch, vtime, vloss = log.load_statistic(stat)
 			if all(x is None for x in (vbatch, vtime, vloss)):
 				logger.warning('Something is wrong with our statistics '
 					'enumeration. Skipping: %s', stat)
 				continue
-			validation_data[stat.subtag or ''] = {
+			k = stat.tags[1] if len(stat.tags) > 1 else ''
+			validation_data[k] = {
 				'batch' : vbatch,
 				'time' : vtime,
 				'loss' : vloss
@@ -180,7 +181,11 @@ class PlotHook(TrainingHook):
 				)
 				v_lines.append(v_line)
 
-			plt.legend(handles=[t_line] + v_lines)
+			plt.legend(
+				handles=[t_line] + v_lines,
+				fontsize=6,
+				markerscale=0.5
+			)
 			plt.savefig(path, transparent=True, bbox_inches='tight')
 			plt.clf()
 
@@ -216,7 +221,11 @@ class PlotHook(TrainingHook):
 				)
 				v_lines.append(v_line)
 
-			plt.legend(handles=t_line+v_lines)
+			plt.legend(
+				handles=t_line+v_lines,
+				fontsize=6,
+				markerscale=0.5
+			)
 			plt.savefig(path, transparent=True, bbox_inches='tight')
 			plt.clf()
 

@@ -228,9 +228,11 @@ class Logger:
 		""" Helper function for pushing data into the storage queue.
 		"""
 		data = dict(data)
+		if not isinstance(tag, tuple):
+			tag = (tag, )
 		if tag not in self.data[data_type]:
 			self.data[data_type][tag] = deque()
-		if tag.startswith('loss'):
+		if tag[0].startswith('loss'):
 			if 'total' not in data:
 				data['total'] = sum(data.values())
 		data['batch'] = self.batches
@@ -278,7 +280,7 @@ class Logger:
 		if clocks is not None:
 			self.record_clocks(clocks)
 		for k, v in data.items():
-			self._push('validation', '{}.{}'.format(tag, k) if k else tag, v)
+			self._push('validation', (tag, k) if k else tag, v)
 		self.flush()
 
 	###########################################################################
