@@ -123,6 +123,8 @@ class Ctc(Loss):
 	""" Connectionist Temporal Classification loss function
 	"""
 
+	KNOWN_VARIANTS = {'warp'}
+
 	###########################################################################
 	def __init__(self, input_length, output_length, output, relative_to=None,
 		variant=None, **kwargs):
@@ -132,8 +134,21 @@ class Ctc(Loss):
 		"""
 		super().__init__(**kwargs)
 
-		if variant not in {None, 'warp'}:
-			raise ValueError('Unsupported CTC variant: {}'.format(variant))
+		if variant is None:
+			variant = set()
+		elif isinstance(variant, str):
+			variant = {variant}
+		elif isinstance(variant, (list, tuple, set)):
+			variant = set(variant)
+		else:
+			raise ValueError('Unexpected or unsupport CTC variant type: {}'
+				.format(variant))
+
+		for x in variant:
+			if x not in Ctc.KNOWN_VARIANTS:
+				logger.warning('Ignoring an unknown variant to the CTC loss '
+					'function: %s', x)
+
 		self.variant = variant
 
 		self.input_length = input_length
@@ -152,13 +167,7 @@ class Ctc(Loss):
 
 			import keras.backend as K
 
-			if self.variant is None:
-
-				# Just use the built-in Keras CTC loss function.
-				logger.debug('Attaching built-in Keras CTC loss function to '
-					'model output "%s".', target)
-
-			elif self.variant == 'warp':
+			if 'warp' in self.variant:
 
 				# Just use the built-in Keras CTC loss function.
 				logger.info('Attaching Warp-CTC loss function to model '
@@ -171,9 +180,9 @@ class Ctc(Loss):
 						'with the Theano backend to Keras.')
 
 			else:
-				raise ValueError('Unsupported variant "{}" on loss function '
-					'"{}" for backend "{}".'.format(self.variant,
-						self.get_name(), backend.get_name()))
+				# Just use the built-in Keras CTC loss function.
+				logger.debug('Attaching built-in Keras CTC loss function to '
+					'model output "%s".', target)
 
 			ctc_scaled = 'ctc_scaled_{}'.format(self.input_length)
 			flattened_labels = 'ctc_flattened_labels_{}'.format(target)
@@ -186,8 +195,8 @@ class Ctc(Loss):
 			transcript = K.placeholder(
 				ndim=2,
 				dtype='int32',
-				name=self.output if self.variant is None \
-					else flattened_labels
+				name=flattened_labels if 'warp' in self.variant \
+					else self.output
 			)
 			utterance_length = K.placeholder(
 				ndim=2,
@@ -207,7 +216,7 @@ class Ctc(Loss):
 					)
 				)
 
-			if self.variant == 'warp':
+			if 'warp' in self.variant:
 				model.add_data_source(
 					flattened_labels,
 					FlattenSource(
@@ -216,14 +225,6 @@ class Ctc(Loss):
 					)
 				)
 
-			if self.variant is None:
-				out = K.ctc_batch_cost(
-					transcript,
-					output,
-					utterance_length,
-					transcript_length
-				)
-			else:
 				try:
 					import ctc					# pylint: disable=import-error
 				except ImportError:
@@ -240,12 +241,19 @@ class Ctc(Loss):
 					transcript[0]+1,
 					K.squeeze(transcript_length, -1)
 				)
+			else:
+				out = K.ctc_batch_cost(
+					transcript,
+					output,
+					utterance_length,
+					transcript_length
+				)
 
 			return (
 				(
 					(self.output_length, transcript_length),
-					(self.output if self.variant is None \
-						else flattened_labels, transcript),
+					(flattened_labels if 'warp' in self.variant \
+						else self.output, transcript),
 					(self.input_length if self.relative_to is None \
 						else ctc_scaled, utterance_length)
 				),
@@ -254,7 +262,7 @@ class Ctc(Loss):
 
 		elif backend.get_name() == 'pytorch':
 
-			if self.variant != 'warp':
+			if 'warp' not in self.variant:
 				logger.error('PyTorch does not include a native CTC loss '
 					'function yet. However, PyTorch bindings to Warp CTC are '
 					'available (SeanNaren/warp-ctc). Try installing that, and '
@@ -291,7 +299,7 @@ class Ctc(Loss):
 					)
 				)
 
-			if self.variant == 'warp':
+			if 'warp' in self.variant:
 				model.add_data_source(
 					flattened_labels,
 					FlattenSource(
@@ -324,8 +332,8 @@ class Ctc(Loss):
 
 			return [
 				[
-					(self.output if self.variant is None \
-						else flattened_labels, transcript),
+					(flattened_labels if 'warp' in self.variant \
+						else self.output, transcript),
 					(self.input_length if self.relative_to is None \
 						else ctc_scaled, utterance_length),
 					(self.output_length, transcript_length)
