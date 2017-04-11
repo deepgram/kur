@@ -520,7 +520,14 @@ class Kurfile:
 			raise ValueError('Cannot construct optimizer. There is a missing '
 				'"train" section.')
 
-		spec = dict(self.data['train'].get('optimizer', {}))
+		spec = self.data['train'].get('optimizer', {})
+		if isinstance(spec, str):
+			spec = {'name' : spec}
+		elif not isinstance(spec, dict):
+			raise ValueError('Invalid value for optimizer: {}'.format(spec))
+		else:
+			spec = dict(spec)
+
 		if 'name' in spec:
 			optimizer = Optimizer.get_optimizer_by_name(spec.pop('name'))
 		else:
