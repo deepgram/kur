@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import colorsys
 import os
 import logging
 import itertools
@@ -30,20 +31,31 @@ logger = logging.getLogger(__name__)
 class PlotHook(TrainingHook):
 	""" Hook for creating plots of loss.
 	"""
-
 	###########################################################################
 	@classmethod
 	def validation_style(self):
 		""" Returns an iterator over the formatting styles used by validation
 			plots.
+			n is the number of colors to choose from for styling.
 		"""
-		colors = ('m', 'r', 'g', 'k', 'b', 'y')
+		
+		def taste_the_rainbow():
+			n_hues = 7
+			h = [x * 1.0 / n_hues for x in range(n_hues)]  # All possible hues
+			sv = [0.7, 1.0]  # all possible saturation and values
+			hsv = [(x, y, y) for x, y in itertools.product(h, sv)]
+			return numpy.array(list(map(lambda x: colorsys.hsv_to_rgb(*x) + (1, ), hsv)))
+	
+		# Too many colors means neighboring colors that are 
+		# hard to distinguish between, so we cap n.
+		colors = taste_the_rainbow()
+
 		lines = ('-', '--', ':', '-.')
 		def formatter(it):
 			""" Formats the product correctly for use by pyplot.
 			"""
 			for line, point, color in it:
-				yield '{}{}{}'.format(color, point, line)
+				yield color, '{}{}'.format(point, line)
 		return formatter(
 			itertools.cycle(itertools.product(lines, ['o'], colors))
 		)
@@ -167,7 +179,7 @@ class PlotHook(TrainingHook):
 			t_line, = plt.plot(batch, loss, 'co-', label='Training Loss')
 
 			v_lines = []
-			for style, (k, data) in zip(
+			for (color, style), (k, data) in zip(
 				self.validation_style(),
 				validation_data.items()
 			):
@@ -177,7 +189,8 @@ class PlotHook(TrainingHook):
 					data['batch'],
 					data['loss'],
 					style,
-					label='Validation Loss{}'.format(format_title(k))
+					label='Validation Loss{}'.format(format_title(k)),
+					color=color
 				)
 				v_lines.append(v_line)
 
@@ -205,7 +218,7 @@ class PlotHook(TrainingHook):
 				t_line = [t_line]
 
 			v_lines = []
-			for style, (k, data) in zip(
+			for (color, style), (k, data) in zip(
 				self.validation_style(),
 				validation_data.items()
 			):
@@ -217,7 +230,8 @@ class PlotHook(TrainingHook):
 					data['time'],
 					data['loss'],
 					style,
-					label='Validation Loss{}'.format(format_title(k))
+					label='Validation Loss{}'.format(format_title(k)),
+					color=color
 				)
 				v_lines.append(v_line)
 
