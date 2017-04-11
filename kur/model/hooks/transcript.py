@@ -88,7 +88,7 @@ class TranscriptHook(EvaluationHook):
 
 		has_truth = truth is not None and \
 			'transcript_raw' in truth and \
-			len(data['transcript_raw']) > 1
+			len(truth['transcript_raw']) > 1
 
 		k = model.provider.keys.index('transcript_raw')
 		vocab = model.provider.sources[k].vocab
