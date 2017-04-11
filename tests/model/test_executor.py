@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import sys
+
 import pytest
 
 from kur.loss import MeanSquaredError, Ctc
@@ -167,11 +169,18 @@ class TestExecutor:
 		evaluator.evaluate(provider=ctc_eval_data)
 
 	###########################################################################
-	@pytest.mark.xfail(reason='SIGSEGV on some platforms.')
 	def test_uber_train(self, uber_model, uber_data, jinja_engine, loss,
 		optimizer):
 		""" Tests that we can compile and train a diverse model.
 		"""
+		if all((
+			uber_model.get_backend().get_name() == 'keras',
+			uber_model.get_backend().keras_version() == 2,
+			uber_model.get_backend().get_toolchain() == 'tensorflow',
+			sys.version_info < (3, 5)
+		)):
+			pytest.skip('Occassional SIGSEGV')
+
 		uber_model.parse(jinja_engine)
 		uber_model.register_provider(uber_data)
 		uber_model.build()
