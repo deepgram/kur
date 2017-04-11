@@ -51,8 +51,19 @@ class PersistentLogger(Logger):
 
 			# Return value
 
-			If historical validation loss is present in the log, it is returned.
-			Otherwise, None is returned.
+			If historical validation loss is present in the log, it is
+			returned. Otherwise, None is returned.
+		"""
+		raise NotImplementedError
+
+	###########################################################################
+	def get_latest_timestamp(self):
+		""" Returns the latest timestamp.
+
+			# Return value
+
+			If historical timestamps exist, the latest one should be returned.
+			Otherwise, return zero.
 		"""
 		raise NotImplementedError
 

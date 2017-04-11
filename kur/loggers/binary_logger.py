@@ -80,7 +80,7 @@ class BinaryLogger(PersistentLogger):
 					logger.debug('Loading old-style binary logger.')
 					has_summary = False
 
-				_, _, training_loss = self.load_statistic(
+				_, training_time, training_loss = self.load_statistic(
 					Statistic(Statistic.Type.TRAINING, 'loss', 'total')
 				)
 				if training_loss is None:
@@ -92,13 +92,28 @@ class BinaryLogger(PersistentLogger):
 					if not has_summary:
 						self.epochs = len(training_loss)
 
-				_, _, validation_loss = self.load_statistic(
+				_, validation_time, validation_loss = self.load_statistic(
 					Statistic(Statistic.Type.VALIDATION, 'loss', 'total')
 				)
 				if validation_loss is None:
 					self.best_validation_loss = None
 				else:
 					self.best_validation_loss = validation_loss.min()
+
+				_, batch_time, _ = self.load_statistic(
+					Statistic(Statistic.Type.BATCH, 'loss', 'total')
+				)
+
+				if batch_time is not None:
+					self.latest_timestamp = batch_time[-1]
+				elif validation_time is not None:
+					self.latest_timestamp = validation_time[-1]
+				elif training_time is not None:
+					self.latest_timestamp = training_time[-1]
+				else:
+					self.latest_timestamp = 0
+
+				self.timestamper.duration = self.latest_timestamp
 
 			else:
 				raise ValueError('Binary logger stores its information in a '
@@ -123,6 +138,12 @@ class BinaryLogger(PersistentLogger):
 		""" Returns the best historical validation loss.
 		"""
 		return self.best_validation_loss
+
+	###########################################################################
+	def get_latest_timestamp(self):
+		""" Returns the latest timestamp.
+		"""
+		return self.latest_timestamp
 
 	###########################################################################
 	@staticmethod
