@@ -186,7 +186,7 @@ def prepare_data(args):
 		keys = sorted(batch.keys())
 		num_entries = len(batch[keys[0]])
 		for entry in range(num_entries):
-		        if args.number == None or (args.number < num_entries and entry < args.number) or (entry - num_entries >= args.number):
+		        if args.number is None or (args.number < num_entries and entry < args.number) or (entry - num_entries >= args.number):
 				print('Entry {}/{}:'.format(entry+1, num_entries))
 				for key in keys:
 					print('  {}: {}'.format(key, batch[key][entry]))
