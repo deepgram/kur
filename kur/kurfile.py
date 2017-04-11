@@ -145,7 +145,7 @@ class Kurfile:
 					break
 			else:
 				warnings.warn('Unexpected section in Kurfile: "{}". '
-					'This section will be ignored.', SyntaxWarning)
+					'This section will be ignored.'.format(key), SyntaxWarning)
 
 	###########################################################################
 	def get_model(self, provider=None):
