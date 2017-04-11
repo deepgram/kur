@@ -481,7 +481,22 @@ class PyTorchBackend(Backend):
 					kur_optimizer.clip_value
 				)
 
-			optimizer.step()
+			step_done = False
+			if kur_optimizer.scale_rate:
+				if kur_optimizer.scale_rate in data:
+					factor = data[kur_optimizer.scale_rate].mean()
+					for param_group in optimizer.param_groups:
+						param_group['lr'] *= factor
+					optimizer.step()
+					for param_group in optimizer.param_groups:
+						param_group['lr'] /= factor
+					step_done = True
+				else:
+					logger.warning('The optimizer "scale_rate" was specified, '
+						'but no such data column was found: %s. Ignoring '
+						'this.', kur_optimizer.scale_rate)
+			if not step_done:
+				optimizer.step()
 
 		metrics = {
 			k : loss.data.cpu().numpy().squeeze(-1)

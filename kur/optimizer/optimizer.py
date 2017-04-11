@@ -83,7 +83,7 @@ class Optimizer:
 		raise ValueError('No such optimizer with name "{}"'.format(name))
 
 	###########################################################################
-	def __init__(self, clip=None):
+	def __init__(self, *, clip=None, scale_rate=None):
 		""" Creates a new optimizer.
 		"""
 		if clip is None:
@@ -106,6 +106,11 @@ class Optimizer:
 		else:
 			raise ValueError('"clip" expected a dictionary with key "norm" or '
 				'"value". Instead, we got: {}'.format(clip))
+
+		if not isinstance(scale_rate, (str, type(None))):
+			raise ValueError('"scale_rate" must be a string or None. Got: {}'
+				.format(scale_rate))
+		self.scale_rate = scale_rate
 
 	###########################################################################
 	def get_optimizer(self, backend):

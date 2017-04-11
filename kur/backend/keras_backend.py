@@ -696,7 +696,8 @@ class KerasBackend(Backend):
 			},
 			'shapes' : {
 				'input' : input_shapes
-			}
+			},
+			'kur_optimizer' : optimizer
 		}
 
 		if logger.isEnabledFor(logging.DEBUG):
@@ -793,6 +794,26 @@ class KerasBackend(Backend):
 	def train(self, model, data):
 		""" Fits the given model on a batch of data.
 		"""
+		kur_optimizer = model.compiled['train']['kur_optimizer']
+		if kur_optimizer.scale_rate:
+			if kur_optimizer.scale_rate in data:
+				import keras.backend as K		# pylint: disable=import-error
+				factor = data[kur_optimizer.scale_rate].mean()
+				keras_optimizer = kur_optimizer.optimizer
+				K.set_value(
+					keras_optimizer.lr,
+					K.get_value(keras_optimizer.lr) * factor
+				)
+				result = self.run_batch(model, data, 'train', True)
+				K.set_value(
+					keras_optimizer.lr,
+					K.get_value(keras_optimizer.lr) / factor
+				)
+				return result
+			else:
+				logger.warning('The optimizer "scale_rate" was specified, but '
+					'no such data column was found: %s. Ignoring this.',
+					kur_optimizer.scale_rate)
 		return self.run_batch(model, data, 'train', True)
 
 	###########################################################################
