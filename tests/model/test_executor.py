@@ -173,12 +173,10 @@ class TestExecutor:
 		optimizer):
 		""" Tests that we can compile and train a diverse model.
 		"""
-		if all((
-			uber_model.get_backend().get_name() == 'keras',
-			uber_model.get_backend().keras_version() == 2,
-			uber_model.get_backend().get_toolchain() == 'tensorflow',
-			sys.version_info < (3, 5)
-		)):
+		if uber_model.get_backend().get_name() == 'keras' and \
+			uber_model.get_backend().keras_version() == 2 and \
+			uber_model.get_backend().get_toolchain() == 'tensorflow' and \
+			sys.version_info < (3, 5):
 			pytest.skip('Occassional SIGSEGV')
 
 		uber_model.parse(jinja_engine)
