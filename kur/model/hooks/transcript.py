@@ -82,6 +82,13 @@ class TranscriptHook(EvaluationHook):
 		"""
 
 		data, truth = current
+		if data is None or 'asr' not in data or len(data['asr']) == 0:
+			logger.warning('Transcript hook called without any data.')
+			return data
+
+		has_truth = truth is not None and \
+			'transcript_raw' in truth and \
+			len(data['transcript_raw']) > 1
 
 		k = model.provider.keys.index('transcript_raw')
 		vocab = model.provider.sources[k].vocab
@@ -101,10 +108,11 @@ class TranscriptHook(EvaluationHook):
 			)),
 			'truth' : Transcript(separator.join(
 				rev.get(i, '') for i in truth['transcript_raw'][0]
-			)) if truth is not None else None
+			)) if has_truth else None
 		}
 		print('Prediction: "{}"'.format(result['prediction']))
-		print('Truth: "{}"'.format(result['truth']))
+		if has_truth:
+			print('Truth: "{}"'.format(result['truth']))
 
 		return (result['prediction'], result['truth'])
 

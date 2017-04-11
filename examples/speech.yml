@@ -182,7 +182,11 @@ validate: &validate
 test: *validate
 
 ###############################################################################
-evaluate: *validate
+evaluate:
+  <<: *validate
+  provider:
+    <<: *provider
+    force_batch_size: no
 
 ###############################################################################
 loss:
