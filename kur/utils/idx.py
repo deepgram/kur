@@ -14,11 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
 import gzip
 import os
 import struct
 import warnings
 import numpy
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 def _read(fh, num_bytes):
@@ -36,6 +39,11 @@ def save(filename, data, append=False):
 	"""
 	if not isinstance(data, numpy.ndarray):
 		data = numpy.array(data)
+
+	data_type_decode = {
+		0x0D : 'float',
+		0x0C : 'integer'
+	}
 
 	data_info = {
 		'f' : (0x0D, '>f4'),
@@ -62,6 +70,13 @@ def save(filename, data, append=False):
 			if magic[0] != 0 or magic[1] != 0:
 				raise IOError('Bad header in IDX file.')
 			if magic[2] != data_type[0]:
+				logger.error('Data type mis-match. The file previously had %s '
+					'data in it, but we are trying to put %s data in it: %s',
+					data_type_decode.get(magic[2]) or \
+						'unknown-{}'.format(magic[2]),
+					data_type_decode.get(data_type[0]),
+					filename
+				)
 				raise IOError('Data type mis-match.')
 			if magic[3] != data.ndim:
 				raise IOError('Data dimensionality mis-match.')
