@@ -77,7 +77,7 @@ class PlotHook(TrainingHook):
 		except:
 			logger.exception('Failed to import "matplotlib". Make sure it is '
 				'installed, and if you have continued trouble, please check '
-				'out our troubleshooting page: https://kur.deepgram.com/'
+				'out our troubleshooting page: http://kur.deepgram.com/'
 				'troubleshooting.html#plotting')
 			raise
 

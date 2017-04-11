@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-__homepage__ = 'https://kur.deepgram.com'
+__homepage__ = 'http://kur.deepgram.com'
 from .version import __version__
 
 from . import utils
