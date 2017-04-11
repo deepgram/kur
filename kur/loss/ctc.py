@@ -123,7 +123,7 @@ class Ctc(Loss):
 	""" Connectionist Temporal Classification loss function
 	"""
 
-	KNOWN_VARIANTS = {'warp'}
+	KNOWN_VARIANTS = {'warp', 'loss_scale'}
 
 	###########################################################################
 	def __init__(self, input_length, output_length, output, relative_to=None,
@@ -249,6 +249,12 @@ class Ctc(Loss):
 					transcript_length
 				)
 
+			if 'loss_scale' in self.variant:
+				logger.debug('Loss scaling is active.')
+				out = out * K.mean(
+					K.cast(utterance_length, K.dtype(out))
+				) / 100
+
 			return (
 				(
 					(self.output_length, transcript_length),
@@ -320,7 +326,7 @@ class Ctc(Loss):
 
 			loss = model.data.move(CTCLoss())
 
-			def get_ctc_loss(inputs, output):
+			def basic_ctc_loss(inputs, output):
 				""" Computes CTC loss.
 				"""
 				return loss(
@@ -329,6 +335,19 @@ class Ctc(Loss):
 					inputs[1].squeeze(1),	# K.squeeze(utterance_length, -1),
 					inputs[2].squeeze(1)	# K.squeeze(transcript_length, -1)
 				) / output.size(0)
+
+			if 'loss_scale' in self.variant:
+				logger.debug('Loss scaling is active.')
+
+				def loss_scale(inputs, output):
+					""" Computes CTC loss.
+					"""
+					return basic_ctc_loss(inputs, output) * \
+						(inputs[1].float().mean() / 100)
+
+				get_ctc_loss = loss_scale
+			else:
+				get_ctc_loss = basic_ctc_loss
 
 			return [
 				[
