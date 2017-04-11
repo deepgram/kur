@@ -25,11 +25,25 @@ class Timer:
 	def __init__(self, started=True):
 		""" Creates a new Timer.
 		"""
-		self.duration = 0.
+		self._duration = 0.
 		self.mark = 0.
 		self.started = False
 		if started:
 			self.restart()
+
+	###########################################################################
+	@property
+	def duration(self):
+		""" Return the current duration.
+		"""
+		return self._duration
+
+	###########################################################################
+	@duration.setter
+	def duration(self, value):
+		""" Set the duration, ensuring that we cast it to float.
+		"""
+		self._duration = float(value)
 
 	###########################################################################
 	def __str__(self):
@@ -59,7 +73,7 @@ class Timer:
 		""" Reset the current timer (zeros the accumulated time) without
 			changing its running state.
 		"""
-		self.duration = float(duration)
+		self.duration = duration
 		self.mark = self._clock()
 
 	###########################################################################
