@@ -186,9 +186,11 @@ def prepare_data(args):
 		keys = sorted(batch.keys())
 		num_entries = len(batch[keys[0]])
 		for entry in range(num_entries):
-			print('Entry {}/{}:'.format(entry+1, num_entries))
-			for key in keys:
-				print('  {}: {}'.format(key, batch[key][entry]))
+			if args.number is None or entry < args.number or \
+				(entry - num_entries >= args.number):
+				print('Entry {}/{}:'.format(entry+1, num_entries))
+				for key in keys:
+					print('  {}: {}'.format(key, batch[key][entry]))
 
 		if num_entries is None:
 			logger.error('No data sources was produced.')
@@ -355,6 +357,8 @@ def parse_args():
 	subparser.add_argument('--assemble', action='store_true', help='Also '
 		'begin assembling the model to pull in compile-time, auxiliary data '
 		'sources.')
+	subparser.add_argument('-n', '--number', type=int,
+		help='Number of samples to print (default: the entire batch).')	
 	subparser.set_defaults(func=prepare_data)
 
 	return parser.parse_args()
