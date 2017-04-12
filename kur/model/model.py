@@ -550,7 +550,11 @@ class Model:
 			result.extend(self.enumerate_nodes(child))
 		if result:
 			if root.inputs:
-				result[0].inputs = root.inputs
+				result[0] = CollapsedContainer(
+					inputs=root.inputs,
+					container=result[0].container,
+					names=result[0].names
+				)
 			if root.name:
 				result[-1].names.append(root.name)
 			if root.sink:
