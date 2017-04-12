@@ -59,6 +59,7 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 		self.size = None
 		self.strides = None
 		self.pooltype = None
+		self.border = None
 
 	###########################################################################
 	def _parse(self, engine):
@@ -81,11 +82,21 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 						'be one of: {}'.format(
 							self.pooltype, ', '.join(Pooling.POOL_TYPES)
 						))
+
+			if 'border' in self.args:
+				self.border = engine.evaluate(self.args['border']).lower()
+				if not isinstance(self.border, str) or \
+					not self.border in ('valid', 'same'):
+					raise ParsingError('"border" must be one of: "valid", '
+						'"same".')
 		else:
 			self.size = engine.evaluate(self.args, recursive=True)
 
 		if self.pooltype is None:
 			self.pooltype = Pooling.POOL_TYPES[0]
+
+		if self.border is None:
+			self.border = 'valid'
 
 		if not isinstance(self.size, (list, tuple)):
 			self.size = [self.size]
@@ -133,7 +144,7 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 				kwargs = {
 					'pool_size' : self.size,
 					'strides' : self.strides,
-					'border_mode' : 'valid',
+					'border_mode' : self.border,
 					'name' : self.name
 				}
 				if len(self.size) == 1:
@@ -145,7 +156,7 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 				kwargs = {
 					'pool_size' : self.size,
 					'strides' : self.strides,
-					'padding' : 'valid',
+					'padding' : self.border,
 					'name' : self.name
 				}
 				if len(self.size) == 1:
@@ -198,6 +209,19 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 				raise ValueError('Unhandled pool type "{}". This is a bug.',
 					self.pooltype)
 
+			if self.border == 'valid':
+				padding = 0
+			else:
+				# "same" padding requires you to pad with P = S - 1 zeros
+				# total. However, PyTorch always pads both sides of the input
+				# tensor, implying that PyTorch only accepts padding P' such
+				# that P = 2P'. This unfortunately means that if S is even,
+				# then the desired padding P is odd, and so no P' exists.
+				if any(s % 2 == 0 for s in self.size):
+					raise ValueError('PyTorch pool layers cannot use "same" '
+						'border mode when the receptive field "size" is even.')
+				padding = tuple((s-1)//2 for s in self.size)
+
 			def connect(inputs):
 				""" Connects the layers.
 				"""
@@ -210,7 +234,7 @@ class Pooling(Layer):				# pylint: disable=too-few-public-methods
 					func(
 						self.size,
 						self.strides,
-						padding=0,
+						padding=padding,
 						dilation=1,
 						ceil_mode=False
 					)
