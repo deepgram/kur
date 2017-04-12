@@ -105,7 +105,7 @@ class Executor:
 				self.model.register_provider(with_provider)
 			self.model.build()
 
-		logger.debug('Recompiling the model.')
+		logger.trace('Recompiling the model.')
 		self.model.backend.compile(
 			model=self.model,
 			loss=self.loss if target != 'evaluate' else None,
@@ -377,7 +377,7 @@ class Executor:
 			if best_valid is not None:
 				if best_valid_loss is None or \
 						cur_validation_loss < best_valid_loss:
-					logger.info(
+					logger.debug(
 						'Saving best historical validation weights: %s',
 						best_valid
 					)
@@ -397,7 +397,7 @@ class Executor:
 			nonlocal saved_recent
 
 			if saved_recent is None:
-				logger.debug('Saving weights to: %s', target)
+				logger.trace('Saving weights to: %s', target)
 				with CriticalSection():
 					self.model.save(target)
 				saved_recent = target
@@ -408,10 +408,10 @@ class Executor:
 				save_or_copy_weights(target)
 			elif os.path.exists(target) and \
 					os.path.samefile(target, saved_recent):
-				logger.debug('Recent weight file seems the same as the '
+				logger.trace('Recent weight file seems the same as the '
 					'soon-to-be-saved file. Skipping: %s', target)
 			else:
-				logger.debug('Copying weights from: %s', saved_recent)
+				logger.trace('Copying weights from: %s', saved_recent)
 				with CriticalSection():
 					shutil.rmtree(target, ignore_errors=True)
 					shutil.copytree(saved_recent, target)
@@ -437,7 +437,7 @@ class Executor:
 				if best_train_loss is None or \
 					cur_train_loss < best_train_loss:
 
-					logger.info('Saving best historical training weights: '
+					logger.debug('Saving best historical training weights: '
 						'%s', best_train)
 					best_train_loss = cur_train_loss
 					save_or_copy_weights(best_train)
@@ -511,7 +511,7 @@ class Executor:
 					# Save the file if necessary.
 					if checkpoint['path']:
 						tqdm.tqdm.write('Checkpoint...')
-						logger.info('Making checkpoint backup: %s',
+						logger.debug('Making checkpoint backup: %s',
 							checkpoint['path'])
 						save_or_copy_weights(checkpoint['path'])
 
@@ -763,7 +763,7 @@ class Executor:
 				for num_batches, batch in parallelize(enumerate(provider)):
 
 					# The loss averaged over this batch.
-					logger.debug('Training on batch...')
+					logger.trace('Training on batch...')
 					if step:
 						self.do_step(
 							'Train, Epoch {}'.format(session['epochs']+1),
@@ -785,7 +785,7 @@ class Executor:
 					# last weight file.
 					saved_recent = None
 
-					logger.debug('Finished training on batch.')
+					logger.trace('Finished training on batch.')
 
 					# How many entries we just processed.
 					batch_size = len(get_any_value(batch))

@@ -338,7 +338,7 @@ class TorchModel:
 				of model assemble.
 			"""
 
-			logger.debug('Connecting layers: %s feed into %s',
+			logger.trace('Connecting layers: %s feed into %s',
 				[
 					x.name if hasattr(x, 'name') else 'unknown'
 					for x in lower_layers
@@ -373,7 +373,7 @@ class TorchModel:
 				raise ValueError('Duplicate name found: {}'.format(name))
 		else:
 			self.layer_map[name] = new_name
-			logger.debug('Adding new layer: %s (internal: "%s")',
+			logger.trace('Adding new layer: %s (internal: "%s")',
 				name, new_name)
 			setattr(self.model, new_name, value)
 

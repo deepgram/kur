@@ -207,7 +207,7 @@ class ShuffleProvider(Provider): \
 
 					self.is_sorted = True
 				else:
-					logger.info('Suppressing shuffle...')
+					logger.debug('Suppressing shuffle...')
 			else:
 				logger.debug('Shuffling...')
 				indices = numpy.random.permutation(self._shuffle_len)

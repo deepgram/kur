@@ -26,6 +26,7 @@ BOLD_SEQ = "\033[1m"
 
 # Color codes for each log-level.
 COLORS = {
+	'TRACE': MAGENTA,
 	'DEBUG': BLUE,
 	'INFO': WHITE,
 	'WARNING': YELLOW,

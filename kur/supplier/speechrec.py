@@ -131,7 +131,7 @@ class Utterance(DerivedSource):
 			# 10ms audio frames mean there are 100 frames per second.
 			# So convert seconds to frames.
 			bucket = round(bucket * 100)
-			logger.debug('This bucket is equivalent to: %d frames', bucket)
+			logger.trace('This bucket is equivalent to: %d frames', bucket)
 		self.bucket = bucket
 
 	def derive(self, inputs):
@@ -226,7 +226,7 @@ class RawUtterance(ChunkSource):
 
 		path = params['path']
 		if path is None:
-			logger.info('No normalization data available. We will use '
+			logger.warning('No normalization data available. We will use '
 				'on-the-fly (non-persistent) normalization. In the future, '
 				'you probably want to give a filename to the "normalization" '
 				'key in the speech recognition supplier.')
@@ -312,7 +312,7 @@ class RawUtterance(ChunkSource):
 
 			norm: Normalize instance. The normalization transform to train.
 		"""
-		logger.info('Training normalization transform.')
+		logger.debug('Training normalization transform.')
 		num_entries = min(depth, len(self.audio_paths))
 		paths = random.sample(self.audio_paths, num_entries)
 		data = self.load_audio(paths)
@@ -427,13 +427,13 @@ class RawTranscript(ChunkSource):
 		""" Loads or infers a vocabulary.
 		"""
 		if vocab is None:
-			logger.info('Inferring vocabulary from data set.')
+			logger.warning('Inferring vocabulary from data set.')
 			data = set(x for transcript in self.transcripts \
 				for x in self.make_lower(transcript))
 			data = sorted(data)
 
 		elif isinstance(vocab, str):
-			logger.info('Load vocabulary from a JSON file: %s', vocab)
+			logger.debug('Load vocabulary from a JSON file: %s', vocab)
 			with open(vocab) as fh:
 				json_data = json.loads(fh.read())
 			try:
@@ -444,7 +444,7 @@ class RawTranscript(ChunkSource):
 				raise
 
 		elif isinstance(vocab, (tuple, list)):
-			logger.info('Using a hard-coded vocabulary.')
+			logger.debug('Using a hard-coded vocabulary.')
 			try:
 				data = [self.make_lower(x) for x in vocab]
 			except:
@@ -563,7 +563,7 @@ class SpeechRecognitionSupplier(Supplier):
 			min_duration=min_duration, max_duration=max_duration, text_key=key)
 		self.downselect(samples)
 
-		logger.debug('Creating sources.')
+		logger.trace('Creating sources.')
 		data_cpus = max(1, multiprocessing.cpu_count() - 1 if not data_cpus else data_cpus)
 		utterance_raw = RawUtterance(
 			self.data['audio'],
@@ -629,7 +629,7 @@ class SpeechRecognitionSupplier(Supplier):
 			  and "10-20" means "10..19").
 		"""
 		if samples is None:
-			logger.debug('Using all available data.')
+			logger.trace('Using all available data.')
 			return
 		elif isinstance(samples, int):
 			if samples < 1:
@@ -707,6 +707,7 @@ class SpeechRecognitionSupplier(Supplier):
 		min_duration=None, max_duration=None, text_key=None):
 		""" Loads the data for this supplier.
 		"""
+		logger.info('Loading input dataset: %s', path if path else url)
 		local_path, is_packed = package.install(
 			url=url,
 			path=path,
@@ -715,16 +716,16 @@ class SpeechRecognitionSupplier(Supplier):
 
 		manifest = None
 		if is_packed and unpack:
-			logger.debug('Unpacking input data: %s', local_path)
+			logger.trace('Unpacking input data: %s', local_path)
 			manifest = package.unpack(local_path, recursive=True)
 			is_packed = False
 		elif is_packed and not unpack:
-			logger.debug('Using packed input data.')
+			logger.trace('Using packed input data.')
 			raise NotImplementedError
 		elif not is_packed and unpack:
-			logger.debug('Using already unpacked input data.')
+			logger.trace('Using already unpacked input data.')
 		elif not is_packed and not unpack:
-			logger.debug('Ignore "unpack" for input data, since it is already '
+			logger.trace('Ignore "unpack" for input data, since it is already '
 				'unpacked.')
 		else:
 			logger.error('Unhandled data package requirements. This is a bug.')
@@ -743,7 +744,7 @@ class SpeechRecognitionSupplier(Supplier):
 		""" Scans the package for a metadata file, makes sure everything is in
 			order, and returns some information about the data set.
 		"""
-		logger.debug('Looking for metadata file.')
+		logger.trace('Looking for metadata file.')
 		metadata_file = None
 
 		text_key = text_key or 'text'

@@ -77,7 +77,7 @@ class BinaryLogger(PersistentLogger):
 					self.load_summary()
 					has_summary = True
 				else:
-					logger.debug('Loading old-style binary logger.')
+					logger.trace('Loading old-style binary logger.')
 					has_summary = False
 
 				_, training_time, training_loss = self.load_statistic(
@@ -223,7 +223,7 @@ class BinaryLogger(PersistentLogger):
 						'original file as a backup: %s', old_filename)
 					shutil.copy(old_filename, filename)
 
-			logger.debug('Adding data to binary column: %s', column)
+			logger.trace('Adding data to binary column: %s', column)
 			idx.save(filename, v, append=True)
 
 		self.update_summary()
@@ -232,7 +232,7 @@ class BinaryLogger(PersistentLogger):
 	def update_summary(self):
 		""" Updates the summary log file.
 		"""
-		logger.debug('Writing logger summary.')
+		logger.trace('Writing logger summary.')
 		path = os.path.expanduser(os.path.expandvars(self.path))
 		summary_path = os.path.join(path, self.SUMMARY)
 		with open(summary_path, 'w') as fh:
@@ -248,7 +248,7 @@ class BinaryLogger(PersistentLogger):
 
 	###########################################################################
 	def load_summary(self):
-		logger.debug('Reading logger summary.')
+		logger.trace('Reading logger summary.')
 		path = os.path.expanduser(os.path.expandvars(self.path))
 		summary_path = os.path.join(path, self.SUMMARY)
 		with open(summary_path) as fh:
@@ -275,15 +275,15 @@ class BinaryLogger(PersistentLogger):
 			`path`, then a numpy array containing the stored data is returned.
 			Otherwise, None is returned.
 		"""
-		logger.debug('Loading binary column: %s', column)
+		logger.trace('Loading binary column: %s', column)
 		path = os.path.expanduser(os.path.expandvars(path))
 		if not os.path.isdir(path):
-			logger.debug('No such log path exists: %s', path)
+			logger.trace('No such log path exists: %s', path)
 			return None
 
 		filename = os.path.join(path, column)
 		if not os.path.isfile(filename):
-			logger.debug('No such log column exists: %s', filename)
+			logger.trace('No such log column exists: %s', filename)
 			return None
 
 		return idx.load(filename)

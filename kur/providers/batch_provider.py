@@ -54,7 +54,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		super().__init__(*args, **kwargs)
 
 		self.batch_size = batch_size or BatchProvider.DEFAULT_BATCH_SIZE
-		logger.debug('Batch size set to: %d', self.batch_size)
+		logger.trace('Batch size set to: %d', self.batch_size)
 
 		self.num_batches = num_batches
 
@@ -98,7 +98,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		"""
 		self._num_batches = value # pylint: disable=attribute-defined-outside-init
 		if self.num_batches is not None:
-			logger.debug('Maximum number of batches set to: %d',
+			logger.trace('Maximum number of batches set to: %d',
 				self.num_batches)
 			if self.entries > 0:
 				self.entries = min( # pylint: disable=attribute-defined-outside-init
@@ -136,7 +136,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 				if source.requested_chunk_size is ChunkSource.USE_BATCH_SIZE:
 					source.set_chunk_size(self.batch_size)
 
-		logger.debug('Preparing next batch of data...')
+		logger.trace('Preparing next batch of data...')
 
 		iterators = [iter(source) for source in self.sources]
 		ordering = self.order_sources()
@@ -153,7 +153,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 		while iterators and proceed:
 
 			if batches_produced:
-				logger.debug('Preparing next batch of data...')
+				logger.trace('Preparing next batch of data...')
 
 			result = [None for it in iterators]
 
@@ -198,10 +198,10 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 					queues[i] = queues[i][self.batch_size:]
 
 					if not result[i].shape[0]:
-						logger.debug('An original source has no data.')
+						logger.trace('An original source has no data.')
 						return
 
-			logger.debug('Next batch of data has been prepared.')
+			logger.trace('Next batch of data has been prepared.')
 
 			lens = {len(q) for q in result}
 			if len(lens) == 1:
@@ -244,7 +244,7 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 			super().pre_iter()
 			return
 
-		logger.info('Calculating the nearest-neighbor shuffle indices using '
+		logger.debug('Calculating the nearest-neighbor shuffle indices using '
 			'data source "%s".', self.neighborhood_key)
 
 		# Create a local, complete copy of the sort-by data.

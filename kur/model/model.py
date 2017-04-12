@@ -236,7 +236,7 @@ class Model:
 		"""
 		if not self._parsed:
 			if engine is None:
-				logger.info('Creating a dummy engine for parsing the model.')
+				logger.trace('Creating a dummy engine for parsing the model.')
 				engine = PassthroughEngine()
 			self.root.parse(engine)
 			self._parsed = True
@@ -258,32 +258,32 @@ class Model:
 				'sure Model.parse() is called before Model.build().')
 			self.parse(None)
 
-		logger.info('Enumerating the model containers.')
+		logger.debug('Enumerating the model containers.')
 
 		# Construct the high-level network nodes.
 		nodes = self.enumerate_nodes(self.root)
 
-		logger.info('Assembling the model dependency graph.')
+		logger.debug('Assembling the model dependency graph.')
 		input_nodes, output_nodes, network = self.assemble_graph(nodes)
 
-		if logger.isEnabledFor(logging.DEBUG):
+		if logger.isEnabledFor(logging.TRACE):
 			queue = deque(input_nodes.values())
 			while queue:
 				node = queue.popleft()
-				logger.debug('Assembled Node: %s', node.container.name)
-				logger.debug('  Uses: %s', ', '
+				logger.trace('Assembled Node: %s', node.container.name)
+				logger.trace('  Uses: %s', ', '
 					.join([x.container.name for x in node.inputs]))
-				logger.debug('  Used by: %s', ', '
+				logger.trace('  Used by: %s', ', '
 					.join([x.container.name for x in node.outputs]))
-				logger.debug('  Aliases: %s', ', '.join(node.names))
+				logger.trace('  Aliases: %s', ', '.join(node.names))
 				queue.extend(node.outputs)
 
-		logger.info('Connecting the model graph.')
+		logger.debug('Connecting the model graph.')
 		inputs, input_aliases, outputs, output_aliases = \
 			self.build_graph(input_nodes, output_nodes, network)
 
-		logger.info('Model inputs:  %s', ', '.join(node for node in inputs))
-		logger.info('Model outputs: %s', ', '.join(node for node in outputs))
+		logger.debug('Model inputs:  %s', ', '.join(node for node in inputs))
+		logger.debug('Model outputs: %s', ', '.join(node for node in outputs))
 
 		self.inputs = inputs
 		self.outputs = outputs
@@ -309,11 +309,11 @@ class Model:
 		output_aliases = {}
 
 		for node in network.values():
-			logger.debug('Building node: %s', node.container.name)
-			logger.debug('  Aliases: %s', ', '.join(node.names))
-			logger.debug('  Inputs:')
+			logger.trace('Building node: %s', node.container.name)
+			logger.trace('  Aliases: %s', ', '.join(node.names))
+			logger.trace('  Inputs:')
 			for x in node.inputs:
-				logger.debug('  - %s: %s', x.container.name, x.value)
+				logger.trace('  - %s: %s', x.container.name, x.value)
 
 			if node.inputs:
 
@@ -391,7 +391,7 @@ class Model:
 
 				node.value = value
 
-			logger.debug('  Value: %s', node.value)
+			logger.trace('  Value: %s', node.value)
 
 			# Register outputs
 			if node.container.name in output_nodes:
@@ -520,6 +520,9 @@ class Model:
 					ordered[k] = v
 					changed.add(k)
 			if not changed:
+				if logger.isEnabledFor(logging.TRACE):
+					for k in network:
+						logger.trace('Stagnant node: %s', k)
 				raise ValueError('No change during dependency graph '
 					'resolution. There is something wrong with the graph.')
 			for k in changed:
@@ -533,6 +536,7 @@ class Model:
 	def enumerate_nodes(self, root):
 		""" Enumerates all of the layers in the model.
 		"""
+		logger.trace('Enumerating nodes. Root: %s', str(root))
 		if root.terminal():
 			return [CollapsedContainer(
 				inputs=root.inputs or [],
@@ -542,6 +546,7 @@ class Model:
 
 		result = []
 		for child in root.get_children(recursive=False):
+			logger.trace('Recursing with child: %s', str(child))
 			result.extend(self.enumerate_nodes(child))
 		if result:
 			if root.inputs:

@@ -405,10 +405,10 @@ class Container:
 		if 'when' in self.data:
 			when_evaluated = engine.evaluate(self.data['when'], recursive=True)
 			self.when = bool(when_evaluated)
-			logger.debug('Container "%s" when: "%s" -> "%s" = %s', self.name,
+			logger.trace('Container "%s" when: "%s" -> "%s" = %s', self.name,
 				self.data['when'], when_evaluated, self.when)
 			if not self.when:
-				logger.info('Container will be suppressed: %s', self.name)
+				logger.debug('Container will be suppressed: %s', self.name)
 		else:
 			self.when = True
 

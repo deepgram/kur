@@ -763,7 +763,7 @@ class Kurfile:
 				'Expected each "include" to be a string or a dictionary. '
 				'Received: {}'.format(context or 'top-level', source))
 
-		logger.info('Parsing source: %s, included by %s.', filename,
+		logger.debug('Parsing source: %s, included by %s.', filename,
 			context or 'top-level')
 
 		if context:
@@ -915,7 +915,7 @@ class Kurfile:
 		if isinstance(section, str):
 			section = (section, )
 
-		logger.debug('Parsing Kurfile section: %s', section[0])
+		logger.trace('Parsing Kurfile section: %s', section[0])
 
 		key = None		# Not required, but shuts pylint up.
 		for key in section:

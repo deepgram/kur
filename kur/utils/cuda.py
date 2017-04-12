@@ -158,14 +158,14 @@ class CudaContext:
 	@locked(_LOCK)
 	def _init(cls):
 		if cls._dll is None:
-			logger.debug('Loading NVIDIA ML library.')
+			logger.trace('Loading NVIDIA ML library.')
 			try:
 				cls._dll = ctypes.CDLL(cls.NVIDIA_ML)
 			except OSError:
 				raise CudaError('Failed to find NVIDIA ML library.')
 
 		if not cls._ref:
-			logger.debug('Initializing NVIDIA ML.')
+			logger.trace('Initializing NVIDIA ML.')
 			init = cls._get_ptr('nvmlInit_v2')
 			if init():
 				raise CudaError('Failed to initialize NVIDIA ML.')
@@ -192,7 +192,7 @@ class CudaContext:
 	def _del(cls):
 		cls._ref -= 1
 		if not cls._ref:
-			logger.debug('Shutting down NVIDIA ML.')
+			logger.trace('Shutting down NVIDIA ML.')
 			shutdown = cls._get_ptr('nvmlShutdown')
 			if shutdown():
 				raise CudaError('Failed to shutdown NVIDIA ML.')
@@ -287,7 +287,7 @@ class CudaContext:
 	def name(self, device):
 		""" Returns the name of the device as a string.
 		"""
-		logger.debug('Calculating device name.')
+		logger.trace('Calculating device name.')
 		buffer_size = 64
 		name = ctypes.create_string_buffer(buffer_size)
 		func = self._get_ptr('nvmlDeviceGetName')
@@ -301,7 +301,7 @@ class CudaContext:
 	def uuid(self, device):
 		""" Returns the device UUID as a string.
 		"""
-		logger.debug('Calculating device UUID.')
+		logger.trace('Calculating device UUID.')
 		buffer_size = 80
 		uuid = ctypes.create_string_buffer(buffer_size)
 		func = self._get_ptr('nvmlDeviceGetUUID')
@@ -315,7 +315,7 @@ class CudaContext:
 	def index(self, device):
 		""" Returns the zero-based index of the device.
 		"""
-		logger.debug('Calculating device index.')
+		logger.trace('Calculating device index.')
 		index = ctypes.c_uint()
 		func = self._get_ptr('nvmlDeviceGetIndex')
 		if func(device.handle, ctypes.byref(index)):
@@ -341,7 +341,7 @@ class CudaContext:
 	###########################################################################
 	@ready
 	def _utilization(self, device):
-		logger.debug('Calculating device utilization.')
+		logger.trace('Calculating device utilization.')
 		result = DeviceUtilization()
 		func = self._get_ptr('nvmlDeviceGetUtilizationRates')
 		if func(device.handle, ctypes.byref(result)):
@@ -372,7 +372,7 @@ class CudaContext:
 	###########################################################################
 	@ready
 	def _memory(self, device):
-		logger.debug('Calculating device memory footprint.')
+		logger.trace('Calculating device memory footprint.')
 		result = DeviceMemory()
 		func = self._get_ptr('nvmlDeviceGetMemoryInfo')
 		if func(device.handle, ctypes.byref(result)):
@@ -389,7 +389,7 @@ class CudaContext:
 			An integer between 0 (idle) and 100 (fully loaded) indicating how
 			busy the device is.
 		"""
-		logger.debug('Calculating device business...')
+		logger.trace('Calculating device business...')
 		memory = self._memory(device)
 		utilization = self._utilization(device)
 		x = (
@@ -421,7 +421,7 @@ class CudaContext:
 			devices would come first). If two devices tie for usage, then the
 			device with the lower index is ordered first.
 		"""
-		logger.debug('Calculating device availability...')
+		logger.trace('Calculating device availability...')
 		if num is not None and (num <= 0 or num > len(self)):
 			raise IndexError('Invalid number of instances to return. Use None '
 				'to return all available.')

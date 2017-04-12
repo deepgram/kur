@@ -96,9 +96,8 @@ def build(args):
 			args.compile, has_data = sorted(result, key=lambda x: not x[1])[0]
 			logger.info('Trying to build a "%s" model.', args.compile)
 			if not has_data:
-				logger.info('There is not data defined for this model, '
-					'though, so we will be running as if --bare was '
-					'specified.')
+				logger.warning('There is not data defined for this model, '
+					'so we will be running as if --bare was specified.')
 	elif args.compile == 'none':
 		logger.info('Trying to build a bare model.')
 	else:
@@ -221,10 +220,10 @@ def do_monitor(args):
 
 		# If we are the child, leave this function and work.
 		if pid == 0:
-			logger.info('We are a newly spawned child process.')
+			logger.debug('We are a newly spawned child process.')
 			return
 
-		logger.info('Child process spawned: %d', pid)
+		logger.debug('Child process spawned: %d', pid)
 
 		# Wait for the child to die. If we die first, kill the child.
 		atexit.register(kill_process, pid)
@@ -265,7 +264,7 @@ def kill_process(pid):
 	max_timeout = 60
 
 	# Terminate child process
-	logger.info('Sending Ctrl+C to the child process %d', pid)
+	logger.debug('Sending Ctrl+C to the child process %d', pid)
 	os.kill(pid, signal.SIGINT)
 
 	start = time.time()
@@ -297,8 +296,8 @@ def parse_args():
 	parser.add_argument('--no-color', action='store_true',
 		help='Disable colorful logging.')
 	parser.add_argument('-v', '--verbose', default=0, action='count',
-		help='Increase verbosity. Can be specified twice for debug-level '
-			'output.')
+		help='Increase verbosity. Can be specified up to three times for '
+			'trace-level output.')
 	parser.add_argument('--monitor', action='store_true',
 		help='Run Kur in monitor mode, which tries to recover from critical '
 			'errors, like segmentation faults.')
@@ -372,11 +371,12 @@ def main():
 	loglevel = {
 		0 : logging.WARNING,
 		1 : logging.INFO,
-		2 : logging.DEBUG
+		2 : logging.DEBUG,
+		3 : logging.TRACE
 	}
 	config = logging.basicConfig if args.no_color else logcolor.basicConfig
 	config(
-		level=loglevel.get(args.verbose, logging.DEBUG),
+		level=loglevel.get(args.verbose, logging.TRACE),
 		format='{color}[%(levelname)s %(asctime)s %(name)s:%(lineno)s]{reset} '
 			'%(message)s'.format(
 				color='' if args.no_color else '$COLOR',

@@ -121,16 +121,16 @@ class KerasBackend(Backend):
 						backend, dep)
 
 		else:
-			logger.info('No particular backend for Keras has been requested.')
+			logger.debug('No particular backend for Keras has been requested.')
 			if can_import('theano') and can_import('tensorflow'):
-				logger.debug('Using the system-default Keras backend.')
+				logger.trace('Using the system-default Keras backend.')
 			elif can_import('theano'):
 				backend = 'theano'
-				logger.debug('Only the Theano backend for Keras is installed, '
+				logger.trace('Only the Theano backend for Keras is installed, '
 					'so we will try to use it.')
 			elif can_import('tensorflow'):
 				backend = 'tensorflow'
-				logger.debug('Only the TensorFlow backend for Keras is '
+				logger.trace('Only the TensorFlow backend for Keras is '
 					'installed, so we will try to use it.')
 			else:
 				logger.warning('No supported Keras backend seems to be '
@@ -160,12 +160,12 @@ class KerasBackend(Backend):
 				env['THEANO_FLAGS'] = ','.join(parts)
 
 			if optimizer is False:
-				logger.debug('Disabling the Theano optimizer.')
+				logger.trace('Disabling the Theano optimizer.')
 				replace_theano_flag('optimizer', 'None')
 
 			if theano_flags is not None:
 				for k, v in theano_flags.items():
-					logger.debug('Setting Theano flag %s = %s', k, v)
+					logger.trace('Setting Theano flag %s = %s', k, v)
 					replace_theano_flag(k, v)
 
 			replace_theano_flag('force_device', 'true')
@@ -183,7 +183,7 @@ class KerasBackend(Backend):
 			# interested in.
 			env['TF_CPP_MIN_LOG_LEVEL'] = '1'
 
-			logger.debug('Overriding environmental variables: %s', env)
+			logger.trace('Overriding environmental variables: %s', env)
 			EnvironmentalVariable(**env).push()
 
 			import keras	# pylint: disable=import-error,unused-variable
@@ -268,6 +268,14 @@ class KerasBackend(Backend):
 						mode=mode
 					)
 
+		logger.trace('Connecting: %s(%s)',
+			target,
+			', '.join(
+				str(x) for x in (
+					inputs if isinstance(inputs, (list, tuple)) else [inputs]
+				)
+			)
+		)
 		with warnings.catch_warnings():
 			warnings.filterwarnings(
 				'ignore',
@@ -571,7 +579,7 @@ class KerasBackend(Backend):
 			# 'update'.
 			loss_inputs.update(ins)
 			loss_outputs[target] = K.mean(out)
-			logger.debug('Adding additional inputs: %s',
+			logger.trace('Adding additional inputs: %s',
 				', '.join(x[0] for x in ins))
 
 		total_loss = functools.reduce(
@@ -589,7 +597,7 @@ class KerasBackend(Backend):
 			model.compiled = {}
 
 		if 'raw' not in model.compiled:
-			logger.debug('Instantiating a Keras model.')
+			logger.trace('Instantiating a Keras model.')
 			compiled = self.make_model(
 				inputs=[node.value for node in model.inputs.values()],
 				outputs=[node.value for node in model.outputs.values()]
@@ -609,12 +617,14 @@ class KerasBackend(Backend):
 			model.compiled['raw'] = compiled
 
 		else:
-			logger.debug('Reusing an existing model.')
+			logger.trace('Reusing an existing model.')
 			compiled = model.compiled['raw']
+
+		logger.debug('Constructing the underlying model.')
 
 		import keras.backend as K				# pylint: disable=import-error
 		if loss is None and optimizer is None:
-			logger.debug('Assembling an evaluation function from the model.')
+			logger.trace('Assembling an evaluation function from the model.')
 
 			loss_inputs = loss_outputs = {}
 			if not assemble_only:
@@ -626,7 +636,7 @@ class KerasBackend(Backend):
 			key = 'evaluate'
 
 		elif optimizer is None:
-			logger.debug('Assembling a testing function from the model.')
+			logger.trace('Assembling a testing function from the model.')
 
 			loss_inputs, loss_outputs, _ = \
 				self.process_loss(model, loss)
@@ -642,7 +652,7 @@ class KerasBackend(Backend):
 			key = 'test'
 
 		else:
-			logger.debug('Assembling a training function from the model.')
+			logger.trace('Assembling a training function from the model.')
 
 			# Loss inputs: additional inputs needed by the loss function.
 			# Loss outputs: output of the loss function
@@ -664,7 +674,7 @@ class KerasBackend(Backend):
 				)
 			key = 'train'
 
-		logger.debug('Additional inputs for log functions: %s',
+		logger.trace('Additional inputs for log functions: %s',
 			', '.join(loss_inputs.keys()))
 
 		input_names = compiled.input_names + \
@@ -700,8 +710,8 @@ class KerasBackend(Backend):
 			'kur_optimizer' : optimizer
 		}
 
-		if logger.isEnabledFor(logging.DEBUG):
-			logger.debug('Compiled model: %s', result)
+		if logger.isEnabledFor(logging.TRACE):
+			logger.trace('Compiled model: %s', result)
 
 		if not assemble_only:
 			model.compiled[key] = result
