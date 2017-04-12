@@ -55,6 +55,7 @@ class Backend:
 			variant = set()
 
 		self.variant = set(variant)
+		self.variant.discard(None)
 
 		if parallel is not None:
 			if not isinstance(parallel, int):

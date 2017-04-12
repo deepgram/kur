@@ -144,6 +144,7 @@ class Ctc(Loss):
 			raise ValueError('Unexpected or unsupport CTC variant type: {}'
 				.format(variant))
 
+		variant.discard(None)
 		for x in variant:
 			if x not in Ctc.KNOWN_VARIANTS:
 				logger.warning('Ignoring an unknown variant to the CTC loss '
