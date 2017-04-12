@@ -342,8 +342,8 @@ class Ctc(Loss):
 				def loss_scale(inputs, output):
 					""" Computes CTC loss.
 					"""
-					return basic_ctc_loss(inputs, output) * \
-						(inputs[1].float().mean() / 100)
+					factor = inputs[1].float().mean().data[0] / 100.
+					return basic_ctc_loss(inputs, output) * factor
 
 				get_ctc_loss = loss_scale
 			else:
