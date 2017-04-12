@@ -33,14 +33,13 @@ class PlotHook(TrainingHook):
 	"""
 	###########################################################################
 	@classmethod
-	def validation_style(self):
+	def validation_style(cls):
 		""" Returns an iterator over the formatting styles used by validation
 			plots.
 			n is the number of colors to choose from for styling.
 		"""
 		
-		def taste_the_rainbow():
-			n_hues = 7
+		def taste_the_rainbow(n_hues):
 			h = [x * 1.0 / n_hues for x in range(n_hues)]  # All possible hues
 			sv = [0.7, 1.0]  # all possible saturation and values
 			hsv = [(x, y, y) for x, y in itertools.product(h, sv)]
@@ -48,7 +47,7 @@ class PlotHook(TrainingHook):
 	
 		# Too many colors means neighboring colors that are 
 		# hard to distinguish between, so we cap n.
-		colors = taste_the_rainbow()
+		colors = taste_the_rainbow(n_hues=7)
 
 		lines = ('-', '--', ':', '-.')
 		def formatter(it):
