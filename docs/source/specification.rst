@@ -1609,7 +1609,10 @@ Valid suppliers are:
 	  dataset (**note**: this is *only* recommended for testing). If a string,
 	  it is a JSON file containing a single JSON list; each element in the list
 	  is treated as a case-insensitive vocabulary word. If a list, each element
-	  of the list is treated as a case-insensitive word.
+	  of the list is treated as a case-insensitive word. If ``key`` is a list,
+	  then ``vocab`` can additionally be a dictionary (mapping each value of
+	  ``key`` to the respective vocabulary) or a list of vocabulary
+	  specifications (corresponding to the respective entry in ``keys``).
 	- ``samples``: None, int, or str (default: None). Allows downselection of
 	  available samples. If this is None, no downselection is used. If this is
 	  an integer, then only the first ``samples`` samples will be kept. This
@@ -1620,7 +1623,7 @@ Valid suppliers are:
 	  ``10%``, ``20-30%``, ``90-%``.
 	- ``key``: str or None (default: None). The name of the key in the JSONL
 	  metadata file which contains the ground-truth transcripts. If None,
-	  defaults to "text".
+	  defaults to "text". This can also be a list to load multiple keys.
 	- ``bucket``: float or None (default: None). If not None, then the number
 	  of frames of audio in each batch are rounded up to the nearest multiple
 	  of ``bucket`` seconds. Otherwise, no additional rounding/padding is
@@ -1639,6 +1642,11 @@ Valid suppliers are:
 	- ``transcript``. An integer-encoded transcript.
 	- ``transcript_length``. The length of the corresponding transcript.
 	- ``duration``. The length of the audio utterance, in seconds.
+
+  If ``keys`` is a list of length two or greater, then instead of
+  ``transcript`` and ``transcript_length``, the transcript sources will be
+  named ``X_transcript`` and ``X_transcript_length``, where ``X`` corresponds
+  to each value in ``keys``.
 
   The input file can be a file (which is extracted) or a directory. Kur will
   search for a JSON-Lines (JSONL) file, each line of which should be a JSON

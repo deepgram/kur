@@ -576,12 +576,6 @@ class SpeechRecognitionSupplier(Supplier):
 			data_cpus=data_cpus
 		)
 		self.sources = {
-			'transcript_raw' : RawTranscript(
-				self.data['transcript'],
-				vocab=vocab
-			),
-			'transcript_length' : TranscriptLength('transcript_raw'),
-			'transcript' : Transcript('transcript_raw'),
 			'utterance_raw' : utterance_raw,
 			'utterance_length' : UtteranceLength('utterance_raw'),
 			'utterance' : Utterance(
@@ -593,6 +587,37 @@ class SpeechRecognitionSupplier(Supplier):
 			'duration' : VanillaSource(numpy.array(self.data['duration'])),
 			'audio_source' : VanillaSource(numpy.array(self.data['audio']))
 		}
+		for i, (k, v) in enumerate(self.data['transcript'].items()):
+			if len(self.data['transcript']) == 1:
+				prefix = ''
+			else:
+				prefix = '{}_'.format(k)
+
+			if isinstance(vocab, dict):
+				if k in vocab:
+					this_vocab = vocab[k]
+				else:
+					raise ValueError('If the vocabulary is a dictionary, then '
+						'it must have keys corresponding to the text keys.')
+			elif isinstance(vocab, (list, tuple)):
+				if all(isinstance(v, (list, tuple)) for v in vocab):
+					this_vocab = vocab[i]
+				else:
+					this_vocab = vocab
+			else:
+				this_vocab = vocab
+
+			raw_name = '{}transcript_raw'.format(prefix)
+			self.sources.update({
+				raw_name : RawTranscript(
+					v,
+					vocab=this_vocab
+				),
+				'{}transcript_length'.format(prefix) : TranscriptLength(
+					raw_name
+				),
+				'{}transcript'.format(prefix) : Transcript(raw_name)
+			})
 
 	###########################################################################
 	def downselect(self, samples):
@@ -750,7 +775,7 @@ class SpeechRecognitionSupplier(Supplier):
 		logger.trace('Looking for metadata file.')
 		metadata_file = None
 
-		text_key = text_key or 'text'
+		text_key = tuple(text_key or ['text'])
 
 		def look_in_list(filenames):
 			""" Searches a list of files for a JSONL file.
@@ -794,12 +819,12 @@ class SpeechRecognitionSupplier(Supplier):
 		logger.debug('Loading metadata.')
 		data = {
 			'audio' : [None]*lines,
-			'transcript' : [None]*lines,
+			'transcript' : {k : [None]*lines for k in text_key},
 			'duration' : [None]*lines
 		}
 
 		entries = 0
-		required_keys = (text_key, 'duration_s', 'uuid')
+		required_keys = text_key + ('duration_s', 'uuid')
 		with open(metadata_file, 'r') as fh:
 			for line_number, line in enumerate(fh, 1):
 				try:
@@ -820,14 +845,19 @@ class SpeechRecognitionSupplier(Supplier):
 					continue
 
 				data['duration'][entries] = entry['duration_s']
-				data['transcript'][entries] = entry[text_key]
+				for k in text_key:
+					data['transcript'][k][entries] = entry[k]
 				data['audio'][entries] = os.path.join(source, entry['uuid'])
 
 				entries += 1
 
 		logger.debug('Entries kept: %d', entries)
 		for k in data:
-			data[k] = data[k][:entries]
+			if isinstance(data[k], dict):
+				for inner in data[k]:
+					data[k][inner] = data[k][inner][:entries]
+			else:
+				data[k] = data[k][:entries]
 
 		metadata = {
 			'entries' : entries,
