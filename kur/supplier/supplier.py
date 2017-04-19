@@ -137,11 +137,11 @@ class Supplier:
 					pass
 				elif isinstance(result[k], StackSource):
 					# Add this to the stack.
-					logger.info('Stacking data source: %s', k)
+					logger.trace('Stacking data source: %s', k)
 					result[k].stack(v)
 				else:
 					# Create a stack.
-					logger.info('Stacking data source: %s', k)
+					logger.trace('Stacking data source: %s', k)
 					result[k] = StackSource(result[k], v)
 		return result
 

@@ -166,7 +166,7 @@ class Normalize:
 	def save(self, filename):
 		""" Saves normalization statistics.
 		"""
-		logger.info('Saving normalization state to: %s', filename)
+		logger.debug('Saving normalization state to: %s', filename)
 		if self.state is None:
 			to_save = {}
 		else:
@@ -182,7 +182,7 @@ class Normalize:
 	def restore(self, filename):
 		""" Loads previously saved normalization statistics.
 		"""
-		logger.info('Restoring normalization state from: %s', filename)
+		logger.debug('Restoring normalization state from: %s', filename)
 		with open(filename, 'r') as fh:
 			to_load = yaml.load(fh.read())
 

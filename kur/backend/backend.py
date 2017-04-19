@@ -153,7 +153,7 @@ class Backend:
 				'or "gpuX" where "X" is an integer.'.format(device))
 
 		logger.info('Creating backend: %s', self.get_name())
-		logger.info('Backend variants: %s',
+		logger.debug('Backend variants: %s',
 			'none' if not self.variant else ', '.join(
 				str(x) for x in sorted(self.variant)
 			)

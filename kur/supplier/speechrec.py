@@ -19,11 +19,9 @@ import re
 import os
 import logging
 import random
-
-import numpy
 import multiprocessing
 
-from multiprocessing import Pool
+import numpy
 
 from ..sources import DerivedSource, VanillaSource, ChunkSource
 from . import Supplier
@@ -51,7 +49,12 @@ def _load_single(args):
 	(feature_type, high_freq, on_error), paths = args
 	result = [None] * len(paths)
 	for i, path in enumerate(paths):
-		result[i] = get_audio_features(path, feature_type=feature_type, high_freq=high_freq, on_error=on_error)
+		result[i] = get_audio_features(
+			path,
+			feature_type=feature_type,
+			high_freq=high_freq,
+			on_error=on_error
+		)
 		if result[i] is None:
 			logger.error('Failed to load audio file at path: %s', path)
 	return result
@@ -191,7 +194,7 @@ class RawUtterance(ChunkSource):
 
 		assert isinstance(data_cpus, int)
 		self.data_cpus = max(1, data_cpus)
-		self.pool = Pool(data_cpus, _init_data_worker)
+		self.pool = multiprocessing.Pool(data_cpus, _init_data_worker)
 
 		self._init_normalizer(normalization)
 
@@ -237,7 +240,7 @@ class RawUtterance(ChunkSource):
 				if not os.path.isfile(path):
 					raise ValueError('Normalization data must be a regular '
 						'file. This is not: {}'.format(path))
-				logger.info('Restoring normalization statistics: %s', path)
+				logger.debug('Restoring normalization statistics: %s', path)
 				norm.restore(path)
 				self.features = norm.get_dimensionality()
 			else:
@@ -462,7 +465,7 @@ class RawTranscript(ChunkSource):
 				'"x" and "X" in your vocabulary. For reference, this is the '
 				'vocabulary we ended up with: {}'.format(data))
 
-		logger.info('Loaded a %d-word vocabulary.', len(data))
+		logger.debug('Loaded a %d-word vocabulary.', len(data))
 		return {x : i for i, x in enumerate(data)}
 
 	###########################################################################
