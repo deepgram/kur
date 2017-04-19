@@ -726,7 +726,15 @@ class SpeechRecognitionSupplier(Supplier):
 
 		# Downselect
 		for k in self.data:
-			self.data[k] = [x for i, x in enumerate(self.data[k]) if mask[i]]
+			if isinstance(self.data[k], dict):
+				for inner in self.data[k]:
+					self.data[k][inner] = [
+						x for i, x in enumerate(self.data[k][inner]) if mask[i]
+					]
+			else:
+				self.data[k] = [
+					x for i, x in enumerate(self.data[k]) if mask[i]
+				]
 
 		self.metadata['entries'] = int(end - start)
 
