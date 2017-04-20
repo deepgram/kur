@@ -68,37 +68,52 @@ class TranscriptHook(EvaluationHook):
 		return separator.join([rev_vocab[i-offset] for i in tokens])
 
 	###########################################################################
-	def __init__(self, word=False, warp=False, **kwargs):
+	def __init__(self, word=False, warp=False, output=None, input=None,
+		passthrough=False, **kwargs):
 		""" Creates a new transcript hook.
 		"""
 
 		super().__init__(**kwargs)
 		self.warp = warp
 		self.word = word
+		self.output = output or 'asr'
+		self.input = input or None
+		self.passthrough = passthrough
 
 	###########################################################################
 	def apply(self, current, original, model=None):
 		""" Applies the hook to the data.
 		"""
 
-		data, truth = current
-		if data is None or 'asr' not in data or len(data['asr']) == 0:
+		logger.trace('Apply transcript hook. Input = "%s", output = "%s".',
+			self.input or '', self.output)
+
+		if self.passthrough:
+			data, truth = original
+		else:
+			data, truth = current
+
+		if data is None or self.output not in data or \
+				len(data[self.output]) == 0:
 			logger.warning('Transcript hook called without any data.')
 			return data
 
-		has_truth = truth is not None and \
-			'transcript_raw' in truth and \
-			len(truth['transcript_raw']) > 1
+		truth_key = '{}transcript_raw'.format(
+			(self.input + '_') if self.input else '')
+		logger.trace('Looking for truth key: %s', truth_key)
+		has_truth = truth is not None and truth_key in truth and \
+			len(truth[truth_key]) > 1
 
-		k = model.provider.keys.index('transcript_raw')
+		k = model.provider.keys.index(truth_key)
 		vocab = model.provider.sources[k].vocab
+		logger.trace('Vocabulary is length: %d', len(vocab))
 		rev = {v : k for k, v in vocab.items()}
 
 		blank = len(vocab) if not self.warp else 0
 
 		separator = ' ' if self.word else ''
 
-		prediction = data['asr'][0]
+		prediction = data[self.output][0]
 		result = {
 			'prediction' : Transcript(self.argmax_decode(
 				prediction,
@@ -107,7 +122,7 @@ class TranscriptHook(EvaluationHook):
 				separator
 			)),
 			'truth' : Transcript(separator.join(
-				rev.get(i, '') for i in truth['transcript_raw'][0]
+				rev.get(i, '') for i in truth[truth_key][0]
 			)) if has_truth else None
 		}
 		print('Prediction: "{}"'.format(result['prediction']))
