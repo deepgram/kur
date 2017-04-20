@@ -330,6 +330,24 @@ class PyTorchBackend(Backend):
 		"""
 		if model.compiled is None:
 			model.compiled = {}
+		else:
+			logger.trace('Searching for pre-compiled model.')
+			if loss is None and optimizer is None:
+				permissable = ('evaluate', 'test', 'train')
+			elif optimizer is None:
+				permissable = ('test', 'train')
+			else:
+				permissable = ('train', )
+			new_key = permissable[0]
+			for k in permissable:
+				if k in model.compiled:
+					logger.trace('Found pre-compiled model: %s. We can use '
+						'this in place of "%s" without a problem.', k,
+						new_key)
+					result = model.compiled[k]
+					if not assemble_only:
+						model.compiled[new_key] = result
+					return result
 
 		model.data.set_outputs(
 			[(k, v.value['layer']) for k, v in model.outputs.items()]
