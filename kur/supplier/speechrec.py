@@ -588,6 +588,7 @@ class SpeechRecognitionSupplier(Supplier):
 			'audio_source' : VanillaSource(numpy.array(self.data['audio']))
 		}
 		for i, (k, v) in enumerate(self.data['transcript'].items()):
+			logger.trace('Parsing the vocabulary for key: %s', k)
 			if len(self.data['transcript']) == 1:
 				prefix = ''
 			else:
@@ -783,7 +784,15 @@ class SpeechRecognitionSupplier(Supplier):
 		logger.trace('Looking for metadata file.')
 		metadata_file = None
 
-		text_key = tuple(text_key or ['text'])
+		if not text_key:
+			text_key = ('text', )
+		elif isinstance(text_key, str):
+			text_key = (text_key, )
+		elif isinstance(text_key, list):
+			text_key = tuple(text_key)
+		elif not isinstance(text_key, tuple):
+			raise ValueError('"key" must be a string, None, or a list. '
+				'Instead, we received: {}'.format(text_key))
 
 		def look_in_list(filenames):
 			""" Searches a list of files for a JSONL file.
@@ -841,9 +850,16 @@ class SpeechRecognitionSupplier(Supplier):
 					logger.warning('Failed to parse valid JSON on line %d of '
 						'file %s', line_number, metadata_file)
 					continue
-				if any(k not in entry for k in required_keys):
-					logger.warning('Line %d is missing one of its required '
-						'keys in metadata file %s', line_number, metadata_file)
+				bad = False
+				for k in required_keys:
+					if k not in entry:
+						logger.warning('Line %d is missing one of its '
+							'required keys in metadata file %s: %s. Available '
+							'keys are: %s', line_number, metadata_file, k,
+							', '.join(entry.keys()))
+						bad = True
+						break
+				if bad:
 					continue
 
 				duration = entry['duration_s']
