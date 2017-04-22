@@ -1,7 +1,7 @@
 .. |LICENSE| image:: https://img.shields.io/badge/license-Apache%202-blue.svg
    :target: https://github.com/deepgram/kur/blob/master/LICENSE
 .. |PYTHON| image:: https://img.shields.io/badge/python-3.4%2C3.5%2C3.6-lightgrey.svg
-   :target: https://kur.deepgram.com/installing.html
+   :target: http://kur.deepgram.com/installing.html
 .. |BUILD| image:: https://travis-ci.org/deepgram/kur.svg?branch=master
    :target: https://travis-ci.org/deepgram/kur
 .. |GITTER| image:: https://badges.gitter.im/deepgram-kur/Lobby.svg
@@ -18,7 +18,7 @@
 
 .. package_readme_starts_here
 
-.. _Tutorial: https://kur.deepgram.com/tutorial.html
+.. _Tutorial: http://kur.deepgram.com/tutorial.html
 
 ******************************
 Kur: Descriptive Deep Learning
@@ -45,7 +45,7 @@ Welcome to Kur! You've found the future of deep learning!
 
 Go ahead and give it a whirl: `Get the Code`_ and then jump into
 the `Examples`_! Then build your own model in our Tutorial_. Remember to check
-out our `homepage <https://kur.deepgram.com>`_ for complete documentation and
+out our `homepage <http://kur.deepgram.com>`_ for complete documentation and
 the newest news.
 
 .. package_readme_ignore
@@ -79,7 +79,7 @@ Kur is really easy to install! You can pick either one of these two options for
 installing Kur.
 
 **NOTE**: Kur requires **Python 3.4** or greater. Take a look at our
-`installation guide <https://kur.deepgram.com/installing.html>`_ for
+`installation guide <http://kur.deepgram.com/installing.html>`_ for
 step-by-step instructions for installing Kur and setting up a `virtual
 environment <https://virtualenv.pypa.io/>`_.
 
@@ -104,7 +104,7 @@ Just check it out and run the setup script:
 	pip install .
 
 **Quick Start**: Or, if you already have `Python 3 installed
-<https://kur.deepgram.com/installing.html>`_, then here's a few quick-start
+<http://kur.deepgram.com/installing.html>`_, then here's a few quick-start
 lines to get you training your first model:
 
 **Quick Start For Using pip:**
@@ -151,10 +151,10 @@ Troubleshooting
 ---------------
 
 If you run into any problems installing or using Kur, please check out our
-`troubleshooting <https://kur.deepgram.com/troubleshooting.html>`_ page for
+`troubleshooting <http://kur.deepgram.com/troubleshooting.html>`_ page for
 lots of useful help. And if you want more detailed installation instructions,
 with help on setting up your environment, before sure to see our `installation
-<https://kur.deepgram.com/installing.html>`_ page.
+<http://kur.deepgram.com/installing.html>`_ page.
 
 .. package_readme_ends_here
 
