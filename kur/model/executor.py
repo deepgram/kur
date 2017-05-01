@@ -889,10 +889,11 @@ class Executor:
 			provider: Provider instance. The data provider which serves the
 				data to be evaluated.
 			callback: function or None. If not None, the callback is called
-				after each evaluation batch and is passed two parameters:
-				`predicted` and `truth`, where `predicted` is the model output
-				and `truth` is the ground truth data (if provided by
-				`provider`; otherwise, `truth` is set to `None`).
+				after each evaluation batch and is passed three parameters:
+				`batch`, `predicted` and `truth`, where `batch` are the inputs,
+				`predicted` are the model outputs, and `truth` is the ground
+				truth data (if provided by `provider`; otherwise, `truth` is
+				set to `None`).
 
 			# Return value
 
@@ -902,7 +903,8 @@ class Executor:
 			arrays of predictions (one row per input sample). If the provider
 			provides ground truth information, then `truth` has a similar
 			structure to `predicted`; if ground truth information is not
-			available, then `truth` is None.
+			available, then `truth` is None. If the callback returns False,
+			then evaluation immediately halts.
 
 			Otherwise, if `callback` is not None, this returns None.
 		"""
@@ -990,7 +992,9 @@ class Executor:
 					# There is no callback. We need to hang on to everything.
 					store_batch(batch, evaluated, batch_size)
 				else:
-					callback(evaluated, truth)
+					if callback(batch, evaluated, truth) is False:
+						logger.trace('Early abort triggered by callback.')
+						break
 
 				n_entries += batch_size
 				pbar.update(batch_size)
