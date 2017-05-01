@@ -17,6 +17,9 @@ limitations under the License.
 import logging
 import types
 from collections import namedtuple, OrderedDict, deque
+
+import numpy
+
 from ..containers import Container
 from ..containers.operators import ContainerGroup
 from ..containers.layers import Placeholder
@@ -560,6 +563,37 @@ class Model:
 			if root.sink:
 				result[-1].sink = True
 		return result
+
+	###########################################################################
+	def get_scaled_lengths(self, input_lengths, from_layer, to_layer):
+		""" Returns the lengths of the scaled model outputs for each input
+			length.
+
+			Arguments
+			---------
+
+			input_lengths: list. A list of integer lengths for each respective
+				model input.
+
+			Return value
+			------------
+
+			A numpy array of model output lengths for each respective element
+			of `input_lengths`.
+		"""
+		normal_shape = self.get_shape_at_layer(name=from_layer)
+		return numpy.array(
+			[
+				self.get_shape_at_layer(
+					name=to_layer,
+					assumptions={
+						from_layer : (x, ) + tuple(normal_shape[1:])
+					}
+				)[0]
+				for x in input_lengths
+			],
+			dtype='int32'
+		)
 
 	###########################################################################
 	def get_shape_at_layer(self, name, assumptions=None):
