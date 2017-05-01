@@ -26,6 +26,7 @@ import logging
 from . import __version__, __homepage__
 from .utils import logcolor
 from . import Kurfile
+from .plugins import Plugin
 from .engine import JinjaEngine
 
 logger = logging.getLogger(__name__)
@@ -288,7 +289,53 @@ def kill_process(pid):
 		time.sleep(0.5)
 
 ###############################################################################
-def parse_args():
+def load_plugins(plugin_dir):
+	""" Loads the Kur plugins.
+	"""
+	if plugin_dir:
+		if plugin_dir.lower() == 'none':
+			return
+		Plugin.PLUGIN_DIR = plugin_dir
+
+	for plugin in Plugin.get_enabled_plugins():
+		try:
+			plugin.load()
+		except:
+			logger.error('Failed to load plugin "%s". It may not be installed '
+				'correctly, or it may contains errors.', plugin)
+			raise
+
+###############################################################################
+def install_plugin(args):
+	""" Installs and enables a plugin.
+	"""
+	if not Plugin.install(args.plugin):
+		return 1
+
+	plugin = Plugin(args.plugin)
+	plugin.enabled = True
+
+###############################################################################
+def enable_plugin(args):
+	""" Enables a plugin.
+	"""
+	Plugin(args.plugin).enabled = True
+
+###############################################################################
+def disable_plugin(args):
+	""" Disables a plugin.
+	"""
+	Plugin(args.plugin).enabled = False
+
+###############################################################################
+def list_plugin(args):						# pylint: disable=unused-argument
+	""" Lists all enabled plugins.
+	"""
+	for plugin in Plugin.get_enabled_plugins():
+		print(plugin)
+
+###############################################################################
+def build_parser():
 	""" Constructs an argument parser and returns the parsed arguments.
 	"""
 	parser = argparse.ArgumentParser(
@@ -303,6 +350,8 @@ def parse_args():
 			'errors, like segmentation faults.')
 	parser.add_argument('--version', action='store_true',
 		help='Display version and exit.')
+	parser.add_argument('--plugin', help='Plugin directory, or "none" to '
+		'disable plugins.')
 
 	subparsers = parser.add_subparsers(dest='cmd', help='Sub-command help.')
 
@@ -357,16 +406,57 @@ def parse_args():
 		'begin assembling the model to pull in compile-time, auxiliary data '
 		'sources.')
 	subparser.add_argument('-n', '--number', type=int,
-		help='Number of samples to print (default: the entire batch).')	
+		help='Number of samples to print (default: the entire batch).')
 	subparser.set_defaults(func=prepare_data)
 
+	###########################################################################
+	# Plugins
+
+	subparser = subparsers.add_parser('plugin', help='Configures Kur plugins.')
+	subsubparsers = subparser.add_subparsers(dest='plugin_cmd',
+		help='Plugin command')
+
+	subsubparser = subsubparsers.add_parser('install', help='Install a plugin.')
+	subsubparser.add_argument('plugin', help='The plugin to install.')
+	subsubparser.set_defaults(func=install_plugin)
+
+	subsubparser = subsubparsers.add_parser('enable', help='Enable a plugin.')
+	subsubparser.add_argument('plugin', help='The plugin to enable.')
+	subsubparser.set_defaults(func=enable_plugin)
+
+	subsubparser = subsubparsers.add_parser('disable',
+		help='Disable a plugin.')
+	subsubparser.add_argument('plugin', help='The plugin to disable.')
+	subsubparser.set_defaults(func=disable_plugin)
+
+	subsubparser = subsubparsers.add_parser('list',
+		help='List enabled plugin.')
+	subsubparser.set_defaults(func=list_plugin)
+
+	return parser, subparsers
+
+###############################################################################
+def parse_args(parser):
+	""" Parses command-line arguments.
+	"""
 	return parser.parse_args()
 
 ###############################################################################
 def main():
 	""" Entry point for the Kur command-line script.
 	"""
-	args = parse_args()
+	gotcha = False
+	plugin_dir = None
+	for arg in sys.argv[1:]:
+		if gotcha:
+			plugin_dir = arg
+			break
+		elif arg == '--plugin':
+			gotcha = True
+	load_plugins(plugin_dir)
+
+	parser, _ = build_parser()
+	args = parse_args(parser)
 
 	loglevel = {
 		0 : logging.WARNING,

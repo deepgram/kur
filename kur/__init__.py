@@ -40,6 +40,7 @@ from . import providers
 from . import model
 from . import supplier
 from . import loggers
+from . import plugins
 from .kurfile import Kurfile
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
