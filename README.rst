@@ -79,7 +79,7 @@ Kur is really easy to install! You can pick either one of these two options for
 installing Kur.
 
 **NOTE**: Kur requires **Python 3.4** or greater. Take a look at our
-`installation guide <https://kur.deepgram.com/installing.html>`_ for
+`installation guide <https://kur.deepgram.com/install.html>`_ for
 step-by-step instructions for installing Kur and setting up a `virtual
 environment <https://virtualenv.pypa.io/>`_.
 
