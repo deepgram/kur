@@ -44,6 +44,14 @@ class Kurfile:
 
 	DEFAULT_OPTIMIZER = Adam
 	DEFAULT_PROVIDER = BatchProvider
+	extra_sections = set()
+
+	###########################################################################
+	@classmethod
+	def register_section(cls, section):
+		""" Registers an additional section.
+		"""
+		cls.extra_sections.add(section)
 
 	###########################################################################
 	def __init__(self, source, engine=None):
@@ -138,8 +146,13 @@ class Kurfile:
 		self._parse_section(
 			self.engine, builtin['loss'], stack, include_key=True)
 
+		for section in self.extra_sections:
+			self._parse_section(self.engine, section, stack, include_key=True)
+
 		# Check for unused keys.
 		for key in self.data.keys():
+			if key in self.extra_sections:
+				continue
 			for section in builtin.values():
 				if key in section:
 					break
