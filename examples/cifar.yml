@@ -49,7 +49,13 @@ train:
     initial: cifar.best.valid.w
     best: cifar.best.train.w
     last: cifar.last.w
-
+  hooks:
+    - plot_weights:
+        plot_every_n_epochs: 1
+        plot_directory: plot_weights1
+        weight_file: cifar.best.valid.w
+        weight_keywords1: ["convolution.0", "kernel"]
+        weight_keywords2: ["convolution.1", "kernel"]
   optimizer:
     name: adam
     learning_rate: 0.001
