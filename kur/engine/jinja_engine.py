@@ -16,9 +16,16 @@ limitations under the License.
 
 import os
 import ast
+import json
+import logging
+
+import yaml
 import jinja2
+
 from .engine import Engine
 from ..utils import CudaContext, CudaError
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 def combine(value, new=None):
@@ -63,6 +70,38 @@ gpu_count._value = None
 # pylint: enable=protected-access
 
 ###############################################################################
+# pylint: disable=protected-access
+def load_json(filename, use_cache=True):
+	""" Loads a JSON file from disk.
+	"""
+	logger.debug('Loading JSON file: %s', filename)
+	path = os.path.abspath(os.path.expanduser(os.path.expandvars(filename)))
+	if use_cache and path in load_json.cache:
+		logger.trace('Using cached data.')
+	else:
+		with open(filename) as fh:
+			load_json.cache[path] = json.loads(fh.read())
+	return load_json.cache[path]
+load_json.cache = {}
+# pylint: enable=protected-access
+
+###############################################################################
+# pylint: disable=protected-access
+def load_yaml(filename, use_cache=True):
+	""" Loads a YAML file from disk.
+	"""
+	logger.debug('Loading YAML file: %s', filename)
+	path = os.path.abspath(os.path.expanduser(os.path.expandvars(filename)))
+	if use_cache and path in load_yaml.cache:
+		logger.trace('Using cached data.')
+	else:
+		with open(filename) as fh:
+			load_yaml.cache[path] = yaml.load(fh.read())
+	return load_yaml.cache[path]
+load_yaml.cache = {}
+# pylint: enable=protected-access
+
+###############################################################################
 class JinjaEngine(Engine):
 	""" An evaluation engine which uses Jinja2 for templating.
 	"""
@@ -86,6 +125,8 @@ class JinjaEngine(Engine):
 		env.filters['ternary'] = ternary
 
 		env.globals['gpu_count'] = gpu_count
+		env.globals['load_json'] = load_json
+		env.globals['load_yaml'] = load_yaml
 
 	###########################################################################
 	def __init__(self, *args, **kwargs):
