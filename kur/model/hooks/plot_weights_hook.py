@@ -31,14 +31,6 @@ import numpy as np
 import math
 logger = logging.getLogger(__name__)
 from ...utils import DisableLogging, idx
-# with DisableLogging(): how to disable logging for a function
-# if logger.isEnabledFor(logging.WARNING): work for pprint(object.__dict__)
-# prepare examine tools
-from pdb import set_trace
-from pprint import pprint
-from inspect import getdoc, getmembers, getsourcelines, getmodule, getfullargspec, getargvalues
-# to write multiple lines inside pdb
-# !import code; code.interact(local=vars())
 
 ###############################################################################
 class PlotWeightsHook(TrainingHook):
@@ -54,7 +46,7 @@ class PlotWeightsHook(TrainingHook):
 
 	###########################################################################
 	def __init__(self, plot_directory, weight_file, weight_keywords1, weight_keywords2, plot_every_n_epochs, *args, **kwargs):
-		""" Creates a new plotting hook, get plot filenames and matplotlib ready.
+		""" Creates a new plot_weights hook, get weights filenames, path for saving plots, keywords for selecting layer-weights, num_epochs before plotting, and matplotlib ready.
 		"""
 
 		super().__init__(*args, **kwargs)
@@ -99,8 +91,9 @@ class PlotWeightsHook(TrainingHook):
 			return
 
 
-
+		# borrowed from https://hyp.is/MKzd7C4eEeeWlPvso_EWdg/nbviewer.jupyter.org/github/Hvass-Labs/TensorFlow-Tutorials/blob/master/01_Simple_Linear_Model.ipynb
 		def plot_weights(kernel_filename):
+			# designed to plot weights of a single dense layer model on recognising images of single color 
 
 			# load weights from weight files in idx format
 			w = idx.load(kernel_filename)
@@ -111,21 +104,32 @@ class PlotWeightsHook(TrainingHook):
 			w_min = np.min(w)
 			w_max = np.max(w)
 
+			num_classes = w.shape[-1]
+			flattend_pixels = w.shape[0]
+
+			# Number of grids to plot.
+			# Rounded-up, square-root of the number of filters.
+			num_grids = math.ceil(math.sqrt(num_classes))
+			width_pixels = math.ceil(math.sqrt(flattend_pixels))
+
+			# Create figure with a grid of sub-plots.
+			fig, axes = plt.subplots(num_grids, num_grids)
 			# Create figure with 3x4 sub-plots,
 			# where the last 2 sub-plots are unused.
-			fig, axes = plt.subplots(3, 4)
+			# fig, axes = plt.subplots(3, 4)
 			fig.subplots_adjust(hspace=0.3, wspace=0.3)
 
 
 			for i, ax in enumerate(axes.flat):
 				# Only use the weights for the first 10 sub-plots.
-				if i<10:
+				if i<num_classes:
 				# if i<64:
 					# Get the weights for the i'th digit and reshape it.
 					# Note that w.shape == (img_size_flat, 10)
 					# mnist (28, 28)
 					# cifar (32,32,3)
-					image = w[:, i].reshape((28, 28))
+					# image = w[:, i].reshape((28, 28))
+					image = w[:, i].reshape((width_pixels, width_pixels))
 
 
 					# Set the label for the sub-plot.
@@ -150,12 +154,9 @@ class PlotWeightsHook(TrainingHook):
 			# save figure with a nicer name
 			plt.savefig('{}/{}_epoch_{}.png'.format(self.directory, filename_cut_dir, info['epoch']))
 
+		# borrowed from  https://hyp.is/4mtFzjBSEeeNikfkfV9o4w/nbviewer.jupyter.org/github/Hvass-Labs/TensorFlow-Tutorials/blob/master/02_Convolutional_Neural_Network.ipynb
 		def plot_conv_weights(kernel_filename, input_channel=0):
-			# Assume weights are TensorFlow ops for 4-dim variables
-			# e.g. weights_conv1 or weights_conv2.
 
-			# Retrieve the values of the weight-variables from TensorFlow.
-			# A feed-dict is not necessary because nothing is calculated.
 			# load weights from weight files in idx format
 			w = idx.load(kernel_filename)
 
@@ -215,7 +216,7 @@ class PlotWeightsHook(TrainingHook):
 				for this_file in filenames:
 					valid_weights_filenames.append(dirpath+"/"+this_file)
 
-
+			# find two layers-weights with selected keywords, and plot their weights, either single dense layer model or covolutional layer weights
 			for this_file in valid_weights_filenames:
 				if this_file.find(self.weight_keywords1[0]) > -1 and this_file.find(self.weight_keywords1[1]) > -1:
 
@@ -233,3 +234,4 @@ class PlotWeightsHook(TrainingHook):
 					else:
 						plot_weights(this_file)
 			# save validation_loss on the plotting
+
