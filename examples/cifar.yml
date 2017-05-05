@@ -44,17 +44,17 @@ train:
   provider:
     batch_size: 32
     num_batches: 1
-  log: cifar-log
+  log: ../../kur_examples/cifar/cifar-log
   epochs: 1
   weights:
-    initial: cifar.best.valid.w
-    best: cifar.best.train.w
-    last: cifar.last.w
+    initial: ../../kur_examples/cifar/cifar.best.valid.w
+    best: ../../kur_examples/cifar/cifar.best.train.w
+    last: ../../kur_examples/cifar/cifar.last.w
   hooks:
     - plot_weights:
         plot_every_n_epochs: 1
-        plot_directory: "plot_weights2"
-        weight_file: cifar.best.valid.w
+        plot_directory: ../../kur_examples/cifar/plot_weights2
+        weight_file: ../../kur_examples/cifar/cifar.best.valid.w
         with_weights:
           - ["convolution", "kernel"]
           - ["convolution", "weight"]
@@ -69,20 +69,20 @@ validate:
        parts: 5
   provider:
     num_batches: 2
-  weights: cifar.best.valid.w
+  weights: ../../kur_examples/cifar/cifar.best.valid.w
 
 test: &test
   data:
     - cifar:
        <<: *cifar
        parts: test
-  weights: cifar.best.valid.w
+  weights: ../../kur_examples/cifar/cifar.best.valid.w
   provider:
     num_batches: 10
 
 evaluate:
   <<: *test
-  destination: cifar.results.pkl
+  destination: ../../kur_examples/cifar/cifar.results.pkl
 
 loss:
   - target: labels
