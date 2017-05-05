@@ -16,6 +16,7 @@ limitations under the License.
 
 import logging
 import warnings
+import random
 
 import yaml
 import numpy
@@ -84,10 +85,7 @@ class Normalize:
 		if len(data) > Normalize.APPROXIMATION_CUTOFF:
 			logger.warning('Data set is large. Normalization will be '
 				'approximate.')
-			indices = numpy.random.permutation(
-				len(data)
-			)[:Normalize.APPROXIMATION_CUTOFF]
-			data = data[indices]
+			data = random.sample(data, Normalize.APPROXIMATION_CUTOFF)
 
 		data = numpy.vstack(data)
 		mean = data.mean(axis=0)
