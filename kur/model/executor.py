@@ -26,6 +26,8 @@ from ..providers import Provider
 from ..utils import get_any_value, CriticalSection, parallelize, Timer
 from ..loggers import PersistentLogger
 from .hooks import TrainingHook
+import tempfile
+
 
 logger = logging.getLogger(__name__)
 
@@ -459,7 +461,9 @@ class Executor:
 			info = {
 				'epoch' : epoch+1,
 				'total_epochs' : epochs,
-				'Training loss' : cur_train_loss
+				'Training loss' : cur_train_loss,
+				# current epoch weights folder
+				'weight_path' : weight_path
 			}
 			if validation is not None:
 				info['Validation loss'] = validation_loss
@@ -870,6 +874,14 @@ class Executor:
 
 			# Validate
 			validation_loss = run_validation()
+
+			# create a tempfolder for the current model weights
+			weight_path = None
+			tempdir = tempfile.mkdtemp()
+			weight_path = os.path.join(tempdir, 'current_epoch_model')
+			# save this model weights to this tempfolder
+			self.model.save(weight_path)
+			# then bring this weight_path into run_training_hooks(), and which is stored as info['weight_path']
 
 			# Execute training hooks.
 			run_training_hooks(
