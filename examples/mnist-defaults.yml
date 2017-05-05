@@ -24,11 +24,26 @@ train:
   # nice and quick on slow/CPU-only machines. If you have a GPU, feel free to
   # remove the "provider:" section entirely.
   provider:
-    num_batches: 15
-
+    num_batches: 1
+  log: mnist-log # remember if don't set log, your model won't build on previous runs
   # How many epochs to train for.
-  epochs: 10
-
+  epochs:
+    number: 5
+    mode: additional
+  weights: # the folders below are prepared automatically?
+    initial: mnist.best.valid.w
+    best: mnist.best.train.w
+    last: mnist.last.w
+  hooks:
+    - plot_weights:
+        plot_every_n_epochs: 1
+        plot_directory: mnist_plot_weights
+        weight_file: # mnist.best.valid.w
+        with_weights:
+          - ["kernel", "dense"]
+          - ["kernel", "convol"]
+          - ["weight", "dense"]   # pytorch use weight, keras use kernel
+          - ["weight", "convol"] # pytorch use weight, keras use
 # Here, we use the MNIST test set as a validation set (more generally, you'll
 # want train, validation, and test sets; but we ignore this for the MNIST
 # example). The funky "&validation" is just a YAML anchor, so we can reference
@@ -50,7 +65,7 @@ validate: &validate
     num_batches: 100
 
   # Where to save the model weights that have the lowest validation loss.
-  weights: mnist.w
+  weights: mnist.best.valid.w
 
 # Let's define the test set, used if you execute something like:
 # $ kur test mnist.yml
@@ -60,10 +75,10 @@ test: *validate
 
 # This is the evaluation section, used during `kur evaluate mnist.yml`.
 # The funky "<<: *validate" is just YAML, and basically means "copy all of the
-# keys from 'validate', and then add/replace the 
+# keys from 'validate', and then add/replace the
 evaluate:
   <<: *validate
-  
+
   # Use the entire testing set for evaluation.
   provider:
     num_batches: null
