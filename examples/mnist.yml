@@ -1,4 +1,11 @@
 ---
+settings:
+
+  backend:
+    name: keras
+    # backend: tensorflow
+    # name: pytorch
+
 train:
   data:
     - mnist:
@@ -17,6 +24,6 @@ model:
   - dense: 10
   - activation: softmax
     name: labels
-        
+
 include: mnist-defaults.yml
 ...
