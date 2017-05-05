@@ -10,8 +10,8 @@ settings:
 
   # Backend to use
   backend:
-    name: keras
-
+    # name: keras
+    name: pytorch
   # Hyperparameters
   cnn:
     kernels: [64, 32]
@@ -29,12 +29,13 @@ model:
             kernels: "{{ cnn.kernels[index] }}"
             size: "{{ cnn.size }}"
             strides: "{{ cnn.strides }}"
+            border: valid
         - activation: relu
   - flatten:
   - dense: 10
   - activation: softmax
     name: labels
-        
+
 train:
   data:
     - cifar:
@@ -42,9 +43,9 @@ train:
         parts: [1, 2, 3, 4]
   provider:
     batch_size: 32
-    num_batches: 2
+    num_batches: 1
   log: cifar-log
-  epochs: 2
+  epochs: 1
   weights:
     initial: cifar.best.valid.w
     best: cifar.best.train.w
@@ -52,10 +53,11 @@ train:
   hooks:
     - plot_weights:
         plot_every_n_epochs: 1
-        plot_directory: plot_weights1
+        plot_directory: "plot_weights2"
         weight_file: cifar.best.valid.w
-        weight_keywords1: ["convolution.0", "kernel"]
-        weight_keywords2: ["convolution.1", "kernel"]
+        with_weights:
+          - ["convolution", "kernel"]
+          - ["convolution", "weight"]
   optimizer:
     name: adam
     learning_rate: 0.001
