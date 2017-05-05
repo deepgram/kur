@@ -31,14 +31,6 @@ import numpy as np
 import math
 logger = logging.getLogger(__name__)
 from ...utils import DisableLogging, idx
-# with DisableLogging(): how to disable logging for a function
-# if logger.isEnabledFor(logging.WARNING): work for pprint(object.__dict__)
-# prepare examine tools
-from pdb import set_trace
-from pprint import pprint
-from inspect import getdoc, getmembers, getsourcelines, getmodule, getfullargspec, getargvalues
-# to write multiple lines inside pdb
-# !import code; code.interact(local=vars())
 
 ###############################################################################
 class PlotWeightsHook(TrainingHook):
@@ -103,7 +95,7 @@ class PlotWeightsHook(TrainingHook):
 			# TrainingHook.VALIDATION_END,
 			TrainingHook.EPOCH_END, # , is a must here
 		):
-			logger.critical('\n\nPlotWeightsHook is tried here, but it does not handle the specified status.\n\n')
+			# logger.critical('\n\nPlotWeightsHook is tried here, but it does not handle the specified status.\n\n')
 			return
 
 
@@ -210,7 +202,7 @@ class PlotWeightsHook(TrainingHook):
 					ax.imshow(img, vmin=w_min, vmax=w_max, interpolation='nearest', cmap='seismic')
 
 				if i == 0:
-					# plot loss on the first image 
+					# plot loss on the first image
 					ax.set_title("validation_loss: {}".format(round(info['Validation loss'][None]['labels'], 3)))
 				# Remove ticks from the plot.
 				ax.set_xticks([])
@@ -229,7 +221,7 @@ class PlotWeightsHook(TrainingHook):
 
 		if info['epoch'] == 1 or info['epoch'] % self.plot_every_n_epochs == 0:
 			# save weights plots
-			logger.critical("\n\nLet's print weights at epoch idx 1 or every %s epochs\n\n", self.plot_every_n_epochs)
+			# logger.critical("\n\nLet's print weights at epoch idx 1 or every %s epochs\n\n", self.plot_every_n_epochs)
 
 
 			# get all the validation weights names
