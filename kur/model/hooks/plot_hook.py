@@ -38,14 +38,14 @@ class PlotHook(TrainingHook):
 			plots.
 			n is the number of colors to choose from for styling.
 		"""
-		
+
 		def taste_the_rainbow(n_hues):
 			h = [x * 1.0 / n_hues for x in range(n_hues)]  # All possible hues
 			sv = [0.7, 1.0]  # all possible saturation and values
 			hsv = [(x, y, y) for x, y in itertools.product(h, sv)]
 			return numpy.array(list(map(lambda x: colorsys.hsv_to_rgb(*x) + (1, ), hsv)))
-	
-		# Too many colors means neighboring colors that are 
+
+		# Too many colors means neighboring colors that are
 		# hard to distinguish between, so we cap n.
 		colors = taste_the_rainbow(n_hues=7)
 
@@ -95,7 +95,8 @@ class PlotHook(TrainingHook):
 		matplotlib.use('Agg')
 
 	###########################################################################
-	def notify(self, status, log=None, info=None):
+	# add model=None, but not using it for now
+	def notify(self, status, log=None, info=None, model=None):
 		""" Creates the plot.
 		"""
 		from matplotlib import pyplot as plt	# pylint: disable=import-error

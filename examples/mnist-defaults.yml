@@ -28,7 +28,7 @@ train:
   log: ../../kur_examples/mnist/mnist-log # remember if don't set log, your model won't build on previous runs
   # How many epochs to train for.
   epochs:
-    number: 1000
+    number: 1
     mode: additional
   weights: # the folders below are prepared automatically?
     initial: ../../kur_examples/mnist/mnist.best.valid.w
@@ -36,7 +36,7 @@ train:
     last: ../../kur_examples/mnist/mnist.last.w
   hooks:
     - plot_weights:
-        plot_every_n_epochs: 100
+        plot_every_n_epochs: 1
         plot_directory: ../../kur_examples/mnist/mnist_plot_weights
         weight_file: ../../kur_examples/mnist/mnist.best.valid.w
         with_weights:

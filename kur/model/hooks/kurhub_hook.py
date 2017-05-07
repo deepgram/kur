@@ -49,7 +49,7 @@ class KurhubHook(TrainingHook):
 
         with NamedTemporaryFile() as tmp_file:
             tmp_file.close()
-            self.plot_name = tmp_file.name 
+            self.plot_name = tmp_file.name
 
         self.plot_hook = PlotHook(self.plot_name)
 
@@ -70,7 +70,7 @@ class KurhubHook(TrainingHook):
         data, header = prepare_json(data)
         self._submit(url, data, header)
 
-    ###########################################################################     
+    ###########################################################################
     def send_plot_message(self, text, plot_string, info=None):
         """ Sends a plot message to kurhub.
         """
@@ -109,10 +109,11 @@ class KurhubHook(TrainingHook):
                 'created, it might take a little time for kurhub to catch up.')
 
     ###########################################################################
-    def notify(self, status, log=None, info=None):
+	# add model=None, but not using it for now
+    def notify(self, status, log=None, info=None, model=None):
         """ Sends the kurhub message.
         """
-        
+
         self.plot_hook.notify(status, log, info)
         # check if plot
         plot_name = '{}.png'.format(self.plot_name)
