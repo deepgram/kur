@@ -253,8 +253,14 @@ class PlotHook(TrainingHook):
 				plt.xlabel('Time')
 				plt.ylabel('Throughput (Batches/Second)')
 
-				throughput = numpy.diff(batch) / numpy.diff(time)
-				t_line, = plt.plot(time[1:], throughput, 'co-',
+				d_batch = numpy.diff(batch)
+				d_t = numpy.diff(time)
+				valid_indices = d_t.nonzero()
+				d_batch = d_batch[valid_indices]
+				d_t = d_t[valid_indices]
+
+				throughput = d_batch / d_t
+				t_line, = plt.plot(time[1+valid_indices[0]], throughput, 'co-',
 					label='Training Throughput')
 
 				plt.legend(handles=(t_line, ))
