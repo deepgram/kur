@@ -171,6 +171,31 @@ class RawUtterance(ChunkSource):
 	"""
 
 	DEFAULT_NORMALIZATION_DEPTH = 100
+	_pool = None
+	_data_cpus = None
+
+	###########################################################################
+	@property
+	def pool(self):
+		return RawUtterance._pool
+
+	###########################################################################
+	@property
+	def data_cpus(self):
+		return RawUtterance._data_cpus
+
+	###########################################################################
+	@classmethod
+	def _init_pool(cls, data_cpus):
+		assert isinstance(data_cpus, int)
+		data_cpus = max(1, data_cpus)
+		if cls._pool is None:
+			cls._data_cpus = data_cpus
+			cls._pool = multiprocessing.Pool(data_cpus, _init_data_worker)
+		else:
+			if data_cpus != cls._data_cpus:
+				logger.warning('"data_cpus" has already been set to %d.',
+					cls._data_cpus)
 
 	###########################################################################
 	@classmethod
@@ -192,9 +217,7 @@ class RawUtterance(ChunkSource):
 		self.features = None
 		self.max_frequency = max_frequency
 
-		assert isinstance(data_cpus, int)
-		self.data_cpus = max(1, data_cpus)
-		self.pool = multiprocessing.Pool(data_cpus, _init_data_worker)
+		self._init_pool(data_cpus)
 
 		self._init_normalizer(normalization)
 

@@ -44,6 +44,11 @@ train:
           - ["kernel", "convol"]
           - ["weight", "dense"]   # pytorch use weight, keras use kernel
           - ["weight", "convol"]
+
+    - plot: # the folder must be prepared first
+        loss_per_batch: plot1.png
+        loss_per_time: plot2.png
+        throughput_per_time: plot3.png
 # Here, we use the MNIST test set as a validation set (more generally, you'll
 # want train, validation, and test sets; but we ignore this for the MNIST
 # example). The funky "&validation" is just a YAML anchor, so we can reference
