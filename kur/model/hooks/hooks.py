@@ -264,7 +264,7 @@ class TrainingHook:					# pylint: disable=too-few-public-methods
 		if args or kwargs:
 			raise ValueError('One or more unexpected or unsupported arguments '
 				'to the training hook: {}'.format(
-					', '.join(args + list(kwargs.keys()))
+					', '.join(args + tuple(kwargs.keys()))
 			))
 
 	###########################################################################
