@@ -60,6 +60,14 @@ class Supplier:
 		name = candidates.pop()
 		params = spec[name]
 
+		if 'when' in spec:
+			when = bool(spec.pop('when'))
+			logger.trace('"%s" supplier "when" flag evaluated to: %s', name,
+				when)
+			if not when:
+				logger.debug('Skipping "%s" supplier.', name)
+				return None
+
 		supplier_name = spec.get('name')
 
 		# All other keys must be parsed out by this point.

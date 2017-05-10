@@ -265,10 +265,13 @@ class Kurfile:
 			if not isinstance(v, (list, tuple)):
 				raise ValueError('Data suppliers must form a list of '
 					'suppliers.')
-			suppliers[k] = [
+			result = [
 				Supplier.from_specification(entry, kurfile=self)
 				for entry in v
 			]
+			result = [x for x in result if x is not None]
+			if result:
+				suppliers[k] = result
 
 		provider_spec = dict(section.get('provider') or {})
 		if 'name' in provider_spec:

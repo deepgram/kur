@@ -1407,12 +1407,21 @@ names of the Kur suppliers.
 	      param_1: value_1
 	      param_2: value_2
 	      # ....
+	    # top_level_param_1: top_level_value_1
+	    # ...
 
 	  - SUPPLIER_2:
 	      param_1: value_1
 	      # ...
+	    # top_level_param_1: top_level_value_1
+	    # ...
 
 	  # ...
+
+Top-level parameters are:
+
+- ``when``: if set, the supplier will only be used if the value of this
+  parameter evaluates to a Boolean true.
 
 Valid suppliers are:
 
