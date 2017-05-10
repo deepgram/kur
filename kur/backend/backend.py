@@ -16,6 +16,9 @@ limitations under the License.
 
 import re
 import logging
+from collections import OrderedDict
+
+from ..loss import Loss
 from ..utils import get_subclasses, CudaContext, CudaError
 
 logger = logging.getLogger(__name__)
@@ -402,6 +405,69 @@ class Backend:
 			operation.
 		"""
 		raise NotImplementedError
+
+	###########################################################################
+	def preprocess_loss(self, model, loss):
+		""" Validate / pre-process the loss functions before instantiating
+			them.
+
+			# Arguments
+
+			model: The Kur model. It must be compiled.
+			loss: Loss instance, list/tuple of Loss instances, or a dictionary
+				of model layer names mapped to Loss instances.
+		"""
+		if not loss:
+			num_outputs = len(model.outputs)
+			logger.error('You are trying to construct a training/validation'
+				'/testing model, but you haven\'t specified any loss '
+				'functions. Your model has %d outputs: %s. You need to '
+				'specify %d loss functions, one for each output.',
+				num_outputs, ', '.join(model.outputs), num_outputs)
+			raise ValueError('No loss functions were specified, but are '
+				'required for training, testing, and validation.')
+
+		if isinstance(loss, Loss):
+			loss = [loss]
+
+		output_only = set(model.outputs) - set(loss)
+		if output_only:
+			logger.debug('These layers will be output-only layers, without '
+				'loss functions attached: %s', ', '.join(output_only))
+
+		if isinstance(loss, (list, tuple)):
+			if all(isinstance(x, Loss) for x in loss):
+				if len(loss) != len(model.outputs):
+					raise ValueError('Model has {} outputs, but only {} loss '
+						'functions were specified.'
+						.format(len(model.outputs), len(loss)))
+				loss_with_names = list(zip(model.outputs, loss))
+			elif all(isinstance(x, (dict, OrderedDict)) for x in loss):
+				loss_with_names = []
+				for x in loss:
+					if not isinstance(x, (dict, OrderedDict)):
+						raise ValueError('Expected each individual loss entry '
+							'to be a dictionary. Received: {}'.format(x))
+					if not 'target' in x:
+						raise ValueError('Missing required key in loss '
+							'function: "target".')
+					loss_with_names.append((x['target'], x))
+			else:
+				raise ValueError('Expected a single loss function, a list of '
+					'loss functions, a dictionary of loss functions, or a '
+					'list of dictionaries. Instead we received: {}'
+					.format(loss))
+
+		elif isinstance(loss, (dict, OrderedDict)):
+			loss_with_names = list(loss.items())
+
+		else:
+			raise ValueError('Loss functions given to "compile" should be '
+				'a list/tuple, a dictionary, or a single Loss instance. '
+				'Instead we received this: {} (type={})'
+				.format(loss, type(loss)))
+
+		return loss_with_names
 
 	###########################################################################
 	def compile(self, model, loss=None, optimizer=None, blocking=True,
