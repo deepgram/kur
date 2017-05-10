@@ -557,9 +557,20 @@ class KerasBackend(Backend):
 				'loss functions attached: %s', ', '.join(output_only))
 
 		if isinstance(loss, (list, tuple)):
-			loss = {x.get('target') : x for x in loss}
+			loss_with_names = []
+			for x in loss:
+				if not isinstance(x, (dict, OrderedDict)):
+					raise ValueError('Expected each individual loss entry to '
+						'be a dictionary. Received: {}'.format(x))
+				if not 'target' in x:
+					raise ValueError('Missing required key in loss function: '
+						'"target".')
+				loss_with_names.append((x['target'], x))
 
-		if not isinstance(loss, (dict, OrderedDict)):
+		elif isinstance(loss, (dict, OrderedDict)):
+			loss_with_names = list(loss.items())
+
+		else:
 			raise ValueError('Loss functions given to "compile" should be '
 				'a list/tuple, a dictionary, or a single Loss instance. '
 				'Instead we received this: {} (type={})'
@@ -567,7 +578,7 @@ class KerasBackend(Backend):
 
 		loss_inputs = OrderedDict()
 		loss_outputs = OrderedDict()
-		for target, this_loss in loss.items():
+		for target, this_loss in loss_with_names:
 			ins, out = this_loss.get_loss(
 				model,
 				target,
