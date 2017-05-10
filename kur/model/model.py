@@ -564,7 +564,7 @@ class Model:
 				else:
 					result[-1].names.appendleft(root.name)
 			if root.sink:
-				result[-1].sink = True
+				result[-1].container.sink = True
 		return result
 
 	###########################################################################
