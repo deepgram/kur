@@ -398,7 +398,7 @@ class Model:
 
 			# Register outputs
 			if node.container.name in output_nodes:
-				outputs[node.container.name] = node
+				outputs[node.names[0]] = node
 				for name in node.names:
 					output_aliases[name] = node.container.name
 
@@ -544,7 +544,7 @@ class Model:
 			return [CollapsedContainer(
 				inputs=root.inputs or [],
 				container=root,
-				names=[root.name] if root.name else []
+				names=deque([root.name] if root.name else [])
 			)]
 
 		result = []
@@ -559,7 +559,10 @@ class Model:
 					names=result[0].names
 				)
 			if root.name:
-				result[-1].names.append(root.name)
+				if root.name.startswith(Container.PREFIX):
+					result[-1].names.append(root.name)
+				else:
+					result[-1].names.appendleft(root.name)
 			if root.sink:
 				result[-1].sink = True
 		return result
