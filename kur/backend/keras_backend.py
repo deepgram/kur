@@ -538,7 +538,7 @@ class KerasBackend(Backend):
 		"""
 		import keras.backend as K				# pylint: disable=import-error
 
-		if loss is None:
+		if not loss:
 			num_outputs = len(model.outputs)
 			logger.error('You are trying to construct a training/validation'
 				'/testing model, but you haven\'t specified any loss '
@@ -551,13 +551,13 @@ class KerasBackend(Backend):
 		if isinstance(loss, Loss):
 			loss = [loss]
 
-		if len(loss) != len(model.outputs):
-			raise ValueError('Model has {} outputs, but only {} loss '
-				'functions were specified.'
-				.format(len(model.outputs), len(loss)))
+		output_only = set(model.outputs) - set(loss)
+		if output_only:
+			logger.debug('These layers will be output-only layers, without '
+				'loss functions attached: %s', ', '.join(output_only))
 
 		if isinstance(loss, (list, tuple)):
-			loss = dict(zip(model.outputs, loss))
+			loss = {x.get('target') : x for x in loss}
 
 		if not isinstance(loss, (dict, OrderedDict)):
 			raise ValueError('Loss functions given to "compile" should be '
@@ -797,7 +797,11 @@ class KerasBackend(Backend):
 				outputs[num_outputs:]
 			)
 		}
-		predictions = {name : data for name, data in zip(model.outputs, outputs[:num_outputs])}
+		predictions = {
+			name : data for name, data in zip(
+				model.outputs, outputs[:num_outputs]
+			)
+		}
 		return predictions, metrics
 
 	###########################################################################

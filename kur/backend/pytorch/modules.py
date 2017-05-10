@@ -236,7 +236,7 @@ class TorchModel:
 
 		losses = [
 			get_loss(loss[output], P)
-			for output, P in zip(self.outputs, predictions)
+			for output, P in zip(self.outputs, predictions) if output in loss
 		]
 
 		return predictions, losses

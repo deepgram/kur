@@ -250,7 +250,7 @@ class PyTorchBackend(Backend):
 			loss: Loss instance, list/tuple of Loss instances, or a dictionary
 				of model layer names mapped to Loss instances.
 		"""
-		if loss is None:
+		if not loss:
 			num_outputs = len(model.outputs)
 			logger.error('You are trying to construct a training/validation'
 				'/testing model, but you haven\'t specified any loss '
@@ -263,13 +263,13 @@ class PyTorchBackend(Backend):
 		if isinstance(loss, Loss):
 			loss = [loss]
 
-		if len(loss) != len(model.outputs):
-			raise ValueError('Model has {} outputs, but only {} loss '
-				'functions were specified.'
-				.format(len(model.outputs), len(loss)))
+		output_only = set(model.outputs) - set(loss)
+		if output_only:
+			logger.debug('These layers will be output-only layers, without '
+				'loss functions attached: %s', ', '.join(output_only))
 
 		if isinstance(loss, (list, tuple)):
-			loss = dict(zip(model.outputs, loss))
+			loss = {x.get('target') : x for x in loss}
 
 		if not isinstance(loss, (dict, OrderedDict)):
 			raise ValueError('Loss functions given to "compile" should be '
@@ -481,14 +481,14 @@ class PyTorchBackend(Backend):
 		"""
 
 		torch_model = model.compiled['train']['model']
-		losses = model.compiled['train']['loss']
+		loss = model.compiled['train']['loss']
 		optimizer = model.compiled['train']['optimizer']
 		kur_optimizer = model.compiled['train']['kur_optimizer']
 
 		if optimizer:
 			optimizer.zero_grad()
 
-		predictions, losses = torch_model.test(data, losses)
+		predictions, losses = torch_model.test(data, loss)
 
 		if optimizer:
 			torch_model.backprop(losses)
@@ -517,8 +517,8 @@ class PyTorchBackend(Backend):
 				optimizer.step()
 
 		metrics = {
-			k : loss.data.cpu().numpy().squeeze(-1)
-			for k, loss in zip(model.outputs, losses)
+			k : L.data.cpu().numpy().squeeze(-1)
+			for k, L in zip(loss, losses)
 		}
 
 		predictions = {
@@ -545,13 +545,13 @@ class PyTorchBackend(Backend):
 			single, global loss value can be returned instead.
 		"""
 		torch_model = model.compiled['test']['model']
-		losses = model.compiled['test']['loss']
+		loss = model.compiled['test']['loss']
 
-		predictions, losses = torch_model.test(data, losses)
+		predictions, losses = torch_model.test(data, loss)
 
 		metrics = {
-			k : loss.data.cpu().numpy().squeeze(-1)
-			for k, loss in zip(model.outputs, losses)
+			k : L.data.cpu().numpy().squeeze(-1)
+			for k, L in zip(loss, losses)
 		}
 
 		predictions = {
