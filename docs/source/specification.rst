@@ -1854,6 +1854,7 @@ Hooks can take parameters as well. An example of using hooks is:
 	      format: pickle
 	  - custom_function:
 	      param: value
+	    when: yes
 
 Many of these hooks will be application specific, but these hooks are available
 as part of Kur:
