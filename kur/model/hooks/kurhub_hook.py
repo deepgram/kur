@@ -109,8 +109,8 @@ class KurhubHook(TrainingHook):
                 'created, it might take a little time for kurhub to catch up.')
 
     ###########################################################################
-	# add model=None, but not using it for now
-    def notify(self, status, log=None, info=None, model=None):
+
+    def notify(self, status, log=None, info=None):
         """ Sends the kurhub message.
         """
 
