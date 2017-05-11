@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
+
 from kur.utils import get_subclasses
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 class EvaluationHook:					# pylint: disable=too-few-public-methods
@@ -73,6 +77,13 @@ class EvaluationHook:					# pylint: disable=too-few-public-methods
 		# - meta: dictionary of "other" keys in the spec that sit alongside the
 		#   evaluation hook specification.
 		# - params: parameters to be passed to the evaluation hook.
+
+		if 'when' in meta:
+			when = bool(meta.pop('when'))
+			logger.trace('"%s" hook "when" flag evaluated to: %s', name, when)
+			if not when:
+				logger.debug('Skipping "%s" hook.', name)
+				return None
 
 		return target(**params)
 
@@ -204,6 +215,13 @@ class TrainingHook:					# pylint: disable=too-few-public-methods
 			raise ValueError('Expected the training hooks to be a string or '
 				'dictionary. We got this instead: {}'.format(spec))
 
+		if 'when' in meta:
+			when = bool(meta.pop('when'))
+			logger.trace('"%s" hook "when" flag evaluated to: %s', name, when)
+			if not when:
+				logger.debug('Skipping "%s" hook.', name)
+				return None
+
 		if isinstance(params, dict):
 			return target(**params)
 		else:
@@ -246,7 +264,7 @@ class TrainingHook:					# pylint: disable=too-few-public-methods
 		if args or kwargs:
 			raise ValueError('One or more unexpected or unsupported arguments '
 				'to the training hook: {}'.format(
-					', '.join(args + list(kwargs.keys()))
+					', '.join(args + tuple(kwargs.keys()))
 			))
 
 	###########################################################################

@@ -265,10 +265,13 @@ class Kurfile:
 			if not isinstance(v, (list, tuple)):
 				raise ValueError('Data suppliers must form a list of '
 					'suppliers.')
-			suppliers[k] = [
+			result = [
 				Supplier.from_specification(entry, kurfile=self)
 				for entry in v
 			]
+			result = [x for x in result if x is not None]
+			if result:
+				suppliers[k] = result
 
 		provider_spec = dict(section.get('provider') or {})
 		if 'name' in provider_spec:
@@ -320,6 +323,7 @@ class Kurfile:
 				'be a list of hook specifications.')
 		training_hooks = [TrainingHook.from_specification(spec) \
 			for spec in training_hooks]
+		training_hooks = [hook for hook in training_hooks if hook]
 
 		if 'validate' in self.data:
 			validation = self.get_provider('validate', accept_many=True)
@@ -340,6 +344,7 @@ class Kurfile:
 					'be a list of hook specifications.')
 			validation_hooks = [EvaluationHook.from_specification(spec) \
 				for spec in validation_hooks]
+			validation_hooks = [hook for hook in validation_hooks if hook]
 		else:
 			validation = None
 			best_valid = None
@@ -473,6 +478,7 @@ class Kurfile:
 			raise ValueError('"hooks" (in the "test" section) should be a '
 			   'list of hook specifications.')
 		hooks = [EvaluationHook.from_specification(spec) for spec in hooks]
+		hooks = [hook for hook in hooks if hook]
 
 		expand = lambda x: os.path.expanduser(os.path.expandvars(x))
 		if initial_weights is not None:
@@ -629,6 +635,7 @@ class Kurfile:
 			raise ValueError('"hooks" should be a list of hook '
 				'specifications.')
 		hooks = [EvaluationHook.from_specification(spec) for spec in hooks]
+		hooks = [hook for hook in hooks if hook]
 
 		expand = lambda x: os.path.expanduser(os.path.expandvars(x))
 		if initial_weights is not None:
