@@ -1,11 +1,4 @@
 ---
-settings:
-
-  backend:
-    # name: keras
-    # backend: tensorflow
-    name: pytorch
-
 train:
   data:
     - mnist:
@@ -19,7 +12,6 @@ model:
   - convolution:
       kernels: 64
       size: [2, 2]
-      border: valid 
   - activation: relu
   - flatten:
   - dense: 10

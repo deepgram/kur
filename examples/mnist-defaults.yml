@@ -24,31 +24,11 @@ train:
   # nice and quick on slow/CPU-only machines. If you have a GPU, feel free to
   # remove the "provider:" section entirely.
   provider:
-    num_batches: 1
-  log: ../../kur_examples/mnist/mnist-log # remember if don't set log, your model won't build on previous runs
-  # How many epochs to train for.
-  epochs:
-    number: 1
-    mode: additional
-  weights: # the folders below are prepared automatically?
-    initial: ../../kur_examples/mnist/mnist.best.valid.w
-    best: ../../kur_examples/mnist/mnist.best.train.w
-    last: ../../kur_examples/mnist/mnist.last.w
-  hooks:
-    - plot_weights:
-        plot_every_n_epochs: 1
-        plot_directory: ../../kur_examples/mnist/mnist_plot_weights
-        weight_file: ../../kur_examples/mnist/mnist.best.valid.w
-        with_weights:
-          - ["kernel", "dense"]
-          - ["kernel", "convol"]
-          - ["weight", "dense"]   # pytorch use weight, keras use kernel
-          - ["weight", "convol"]
+    num_batches: 15
 
-    - plot: # the folder must be prepared first
-        loss_per_batch: plot1.png
-        loss_per_time: plot2.png
-        throughput_per_time: plot3.png
+  # How many epochs to train for.
+  epochs: 10
+
 # Here, we use the MNIST test set as a validation set (more generally, you'll
 # want train, validation, and test sets; but we ignore this for the MNIST
 # example). The funky "&validation" is just a YAML anchor, so we can reference
@@ -70,7 +50,7 @@ validate: &validate
     num_batches: 100
 
   # Where to save the model weights that have the lowest validation loss.
-  weights: ../../kur_examples/mnist/mnist.best.valid.w
+  weights: mnist.w
 
 # Let's define the test set, used if you execute something like:
 # $ kur test mnist.yml
@@ -90,7 +70,7 @@ evaluate:
 
   # Where do we want to store the output file?
   # Here, we are just storing it as a Python pickle.
-  destination: ../../kur_examples/mnist/mnist.results.pkl
+  destination: mnist.results.pkl
 
   # This is a list of post-processing hooks. Here, we want to produce the
   # digit-by-digit accuracy table (just called "mnist").

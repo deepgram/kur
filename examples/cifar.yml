@@ -10,8 +10,8 @@ settings:
 
   # Backend to use
   backend:
-    # name: keras
-    name: pytorch
+    name: keras
+
   # Hyperparameters
   cnn:
     kernels: [64, 32]
@@ -29,7 +29,6 @@ model:
             kernels: "{{ cnn.kernels[index] }}"
             size: "{{ cnn.size }}"
             strides: "{{ cnn.strides }}"
-            border: valid
         - activation: relu
   - flatten:
   - dense: 10
@@ -43,21 +42,14 @@ train:
         parts: [1, 2, 3, 4]
   provider:
     batch_size: 32
-    num_batches: 1
-  log: ../../kur_examples/cifar/cifar-log
-  epochs: 1
+    num_batches: 2
+  log: cifar-log
+  epochs: 2
   weights:
-    initial: ../../kur_examples/cifar/cifar.best.valid.w
-    best: ../../kur_examples/cifar/cifar.best.train.w
-    last: ../../kur_examples/cifar/cifar.last.w
-  hooks:
-    - plot_weights:
-        plot_every_n_epochs: 1
-        plot_directory: ../../kur_examples/cifar/plot_weights2
-        weight_file: ../../kur_examples/cifar/cifar.best.valid.w
-        with_weights:
-          - ["convolution", "kernel"]
-          - ["convolution", "weight"]
+    initial: cifar.best.valid.w
+    best: cifar.best.train.w
+    last: cifar.last.w
+
   optimizer:
     name: adam
     learning_rate: 0.001
@@ -69,20 +61,20 @@ validate:
        parts: 5
   provider:
     num_batches: 2
-  weights: ../../kur_examples/cifar/cifar.best.valid.w
+  weights: cifar.best.valid.w
 
 test: &test
   data:
     - cifar:
        <<: *cifar
        parts: test
-  weights: ../../kur_examples/cifar/cifar.best.valid.w
+  weights: cifar.best.valid.w
   provider:
     num_batches: 10
 
 evaluate:
   <<: *test
-  destination: ../../kur_examples/cifar/cifar.results.pkl
+  destination: cifar.results.pkl
 
 loss:
   - target: labels
