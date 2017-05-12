@@ -175,8 +175,23 @@ class PlotWeightsHook(TrainingHook):
 			plt.savefig('{}/{}_epoch_{}.png'.format(self.directory, filename_cut_dir, info['epoch']))
 
 
+		def plot_rnn_weights(kernel_filename):
+
+			w = idx.load(kernel_filename)
+
+			w_min = np.min(w)
+			w_max = np.max(w)
+			plt.imshow(w, vmin=w_min, vmax=w_max, cmap='seismic')
+			plt.title("validation_loss: {}".format(round(info['Validation loss'][None]['out_char'], 3)))
+
+			filename_cut_dir = kernel_filename[kernel_filename.find("recurrent") :]
+
+			plt.savefig('{}/{}_epoch_{}.png'.format(self.directory, filename_cut_dir, info['epoch']))
+
+
 
 		if info['epoch'] == 1 or info['epoch'] % self.plot_every_n_epochs == 0:
+
 			valid_weights_filenames = []
 
 			if self.weight_file is None:
@@ -191,9 +206,11 @@ class PlotWeightsHook(TrainingHook):
 
 					if this_file.find(weight_keywords[0]) > -1 and this_file.find(weight_keywords[1]) > -1:
 
-						if weight_keywords[0].find("convol") > -1 or weight_keywords[1].find("convol") > -1:
+						if weight_keywords[0].find("recurrent") > -1 or weight_keywords[1].find("recurrent") > -1:
+							plot_rnn_weights(this_file)
 
+						if weight_keywords[0].find("convol") > -1 or weight_keywords[1].find("convol") > -1:
 							plot_conv_weights(this_file)
 
-						else:
+						if weight_keywords[0].find("dense") > -1 or weight_keywords[1].find("dense") > -1:
 							plot_weights(this_file)
