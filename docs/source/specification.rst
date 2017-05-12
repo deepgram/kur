@@ -1954,23 +1954,24 @@ as part of Kur:
   .. code-block:: yaml
 
     plot_weights:
-	  plot_every_n_epochs: 100
-	  plot_directory: Directory path for storing plots
-	  weight_file: Empty or directory path for weights you want to plot
-	  with_weights:
-	  	# use list of keywords to specify the weights to plot
-		# to plot all convolutional weights
-	    - ["convolution", "kernel"]
-	    - ["convolution", "weight"]
-		# to plot all dense weights
-	    - ["dense", "kernel"]
-	    - ["dense", "weight"]
+      plot_every_n_epochs: 100
+      plot_directory: PATH TO STORE PLOTS
+      weight_file: EMPTY OR PATH OF WEIGHTS FILES TO USE
+      with_weights:
+        # use list of keywords to specify the weights to plot
+        # to plot all convolutional weights
+        - ["convolution", "kernel"]
+        - ["convolution", "weight"]
+        # to plot all dense weights
+        - ["dense", "kernel"]
+        - ["dense", "weight"]
 
 Here we use ``kernel`` and ``weight`` refer to the weights arrays, because ``keras`` and ``pytorch`` have different naming convention. This is why we keep both ``kernel`` and ``weight``.
 
   .. note::
 
-	A dense layer's weights should be 2-dim, and to be able to plot it, its first dim has to be equal to ``(an integer)^2``
+	A dense layer's weights should be 2-dim, and to be able to plot it, its first dim has to be equal to ``(an integer)^2``.
+	When ``weight_file`` sets to empty, weights trained in latest epoch will be plotted.
 	We can't plot weights of ``relu`` layer because it does not have weights, but we could plot the output of ``relu`` layer with an upcoming feature.
 
 	.. code-block:: yaml
