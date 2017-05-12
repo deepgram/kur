@@ -36,7 +36,18 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 	def _parse(self, engine):
 		""" Parse the layer.
 		"""
-		self.type = self.args
+
+		if not isinstance(self.args, dict):
+			self.type = self.args
+
+		else:
+			self.type = self.args['type']
+
+		if self.type == 'leakyrelu':
+			if 'alpha' in self.args and self.args['alpha'] is not None:
+				self.alpha = self.args['alpha']
+			else:
+				self.alpha = 0.3
 
 	###########################################################################
 	def _build(self, model):
@@ -46,12 +57,15 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 		if backend.get_name() == 'keras':
 
 			import keras.layers as L			# pylint: disable=import-error
-			yield L.Activation(
-				'linear' if self.type == 'none' or self.type is None \
-					else self.type,
-				name=self.name,
-				trainable=not self.frozen
-			)
+			if self.type != "leakyrelu":
+				yield L.Activation(
+					'linear' if self.type == 'none' or self.type is None \
+						else self.type,
+					name=self.name,
+					trainable=not self.frozen
+				)
+			else:
+				yield L.LeakyReLU(alpha=self.alpha)
 
 		elif backend.get_name() == 'pytorch':
 
@@ -60,7 +74,8 @@ class Activation(Layer):				# pylint: disable=too-few-public-methods
 				'relu' : F.relu,
 				'tanh' : F.tanh,
 				'sigmoid' : F.sigmoid,
-				'softmax' : F.log_softmax
+				'softmax' : F.log_softmax,
+				'leakyrelu' : (lambda x: F.leaky_relu(x, negative_slope=self.alpha))
 			}.get(self.type.lower())
 			if func is None:
 				raise ValueError('Unsupported activation function "{}" for '
