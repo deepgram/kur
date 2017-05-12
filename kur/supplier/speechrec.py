@@ -864,15 +864,21 @@ class SpeechRecognitionSupplier(Supplier):
 		}
 
 		entries = 0
+		valid_entries = 0
 		required_keys = text_key + ('duration_s', 'uuid')
 		with open(metadata_file, 'r') as fh:
 			for line_number, line in enumerate(fh, 1):
+				if line_number >= 10 and valid_entries < line_number/2:
+					raise ValueError('Data file has too many bad entries: {}'
+						.format(metadata_file))
+
 				try:
 					entry = json.loads(line)
 				except json.decoder.JSONDecodeError:
 					logger.warning('Failed to parse valid JSON on line %d of '
 						'file %s', line_number, metadata_file)
 					continue
+
 				bad = False
 				for k in required_keys:
 					if k not in entry:
@@ -884,6 +890,8 @@ class SpeechRecognitionSupplier(Supplier):
 						break
 				if bad:
 					continue
+
+				valid_entries += 1
 
 				duration = entry['duration_s']
 				if min_duration and duration < min_duration:
