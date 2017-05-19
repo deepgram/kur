@@ -787,6 +787,8 @@ class KerasBackend(Backend):
 			if kur_optimizer.scale_rate in data:
 				import keras.backend as K		# pylint: disable=import-error
 				factor = numpy.mean(data[kur_optimizer.scale_rate])
+				if kur_optimizer.scale_mode == 'sqrt':
+					factor = factor ** 0.5
 				keras_optimizer = kur_optimizer.optimizer
 				K.set_value(
 					keras_optimizer.lr,

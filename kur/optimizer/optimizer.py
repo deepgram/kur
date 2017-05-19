@@ -52,6 +52,8 @@ class Optimizer:
 	""" Base class for all optimizers
 	"""
 
+	DEFAULT_SCALE_MODE = 'linear'
+
 	###########################################################################
 	@classmethod
 	def get_name(cls):
@@ -83,7 +85,7 @@ class Optimizer:
 		raise ValueError('No such optimizer with name "{}"'.format(name))
 
 	###########################################################################
-	def __init__(self, *, clip=None, scale_rate=None):
+	def __init__(self, *, clip=None, scale_rate=None, scale_mode=None):
 		""" Creates a new optimizer.
 		"""
 		if clip is None:
@@ -111,6 +113,12 @@ class Optimizer:
 			raise ValueError('"scale_rate" must be a string or None. Got: {}'
 				.format(scale_rate))
 		self.scale_rate = scale_rate
+
+		scale_mode = scale_mode or Optimizer.DEFAULT_SCALE_MODE
+		if scale_mode not in ('linear', 'sqrt'):
+			raise ValueError('"scale_mode" must be one of: linear, sqrt. Got: '
+				'{}'.format(scale_mode))
+		self.scale_mode = scale_mode
 
 	###########################################################################
 	def get_optimizer(self, backend):

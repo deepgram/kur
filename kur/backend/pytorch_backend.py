@@ -479,6 +479,8 @@ class PyTorchBackend(Backend):
 			if kur_optimizer.scale_rate:
 				if kur_optimizer.scale_rate in data:
 					factor = numpy.mean(data[kur_optimizer.scale_rate])
+					if kur_optimizer.scale_mode == 'sqrt':
+						factor = factor ** 0.5
 					for param_group in optimizer.param_groups:
 						param_group['lr'] *= factor
 					optimizer.step()
