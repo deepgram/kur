@@ -453,6 +453,7 @@ def main():
 			break
 		elif arg == '--plugin':
 			gotcha = True
+	plugin_dir = plugin_dir or os.environ.get('KUR_PLUGIN')
 	load_plugins(plugin_dir)
 
 	parser, _ = build_parser()
