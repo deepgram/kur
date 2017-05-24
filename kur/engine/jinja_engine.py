@@ -70,36 +70,63 @@ gpu_count._value = None
 # pylint: enable=protected-access
 
 ###############################################################################
-# pylint: disable=protected-access
-def load_json(filename, use_cache=True):
-	""" Loads a JSON file from disk.
+def resolve_path(engine, filename):
+	""" Resolves a path relative to the Kurfile.
 	"""
-	logger.debug('Loading JSON file: %s', filename)
-	path = os.path.abspath(os.path.expanduser(os.path.expandvars(filename)))
-	if use_cache and path in load_json.cache:
-		logger.trace('Using cached data.')
-	else:
-		with open(filename) as fh:
-			load_json.cache[path] = json.loads(fh.read())
-	return load_json.cache[path]
-load_json.cache = {}
-# pylint: enable=protected-access
+	filename = os.path.expanduser(os.path.expandvars(filename))
+
+	kurfile = engine._scope.get('filename')
+	if kurfile:
+		filename = os.path.join(
+			os.path.dirname(kurfile),
+			filename
+		)
+
+	return os.path.abspath(filename)
 
 ###############################################################################
-# pylint: disable=protected-access
-def load_yaml(filename, use_cache=True):
-	""" Loads a YAML file from disk.
+def create_load_json(engine):
+	""" Creates the JSON loader.
 	"""
-	logger.debug('Loading YAML file: %s', filename)
-	path = os.path.abspath(os.path.expanduser(os.path.expandvars(filename)))
-	if use_cache and path in load_yaml.cache:
-		logger.trace('Using cached data.')
-	else:
-		with open(filename) as fh:
-			load_yaml.cache[path] = yaml.load(fh.read())
-	return load_yaml.cache[path]
-load_yaml.cache = {}
-# pylint: enable=protected-access
+
+	# pylint: disable=protected-access
+	def load_json(filename, use_cache=True):
+		""" Loads a JSON file from disk.
+		"""
+		path = resolve_path(engine, filename)
+		logger.debug('Loading JSON file: %s (%s)', filename, path)
+		if use_cache and path in load_json.cache:
+			logger.trace('Using cached data.')
+		else:
+			with open(path) as fh:
+				load_json.cache[path] = json.loads(fh.read())
+		return load_json.cache[path]
+	load_json.cache = {}
+	# pylint: enable=protected-access
+
+	return load_json
+
+###############################################################################
+def create_load_yaml(engine):
+	""" Creates the YAML loader.
+	"""
+
+	# pylint: disable=protected-access
+	def load_yaml(filename, use_cache=True):
+		""" Loads a YAML file from disk.
+		"""
+		path = resolve_path(engine, filename)
+		logger.debug('Loading YAML file: %s (%s)', filename, path)
+		if use_cache and path in load_yaml.cache:
+			logger.trace('Using cached data.')
+		else:
+			with open(path) as fh:
+				load_yaml.cache[path] = yaml.load(fh.read())
+		return load_yaml.cache[path]
+	load_yaml.cache = {}
+	# pylint: enable=protected-access
+
+	return load_yaml
 
 ###############################################################################
 class JinjaEngine(Engine):
@@ -107,8 +134,7 @@ class JinjaEngine(Engine):
 	"""
 
 	###########################################################################
-	@staticmethod
-	def register_custom_filters(env):
+	def register_custom_filters(self, env):
 		""" Adds our custom filters to the Jinja2 engine.
 
 			Arguments
@@ -125,8 +151,8 @@ class JinjaEngine(Engine):
 		env.filters['ternary'] = ternary
 
 		env.globals['gpu_count'] = gpu_count
-		env.globals['load_json'] = load_json
-		env.globals['load_yaml'] = load_yaml
+		env.globals['load_json'] = create_load_json(self)
+		env.globals['load_yaml'] = create_load_yaml(self)
 
 	###########################################################################
 	def __init__(self, *args, **kwargs):
