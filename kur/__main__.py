@@ -348,7 +348,7 @@ def build_parser():
 	parser.add_argument('--monitor', action='store_true',
 		help='Run Kur in monitor mode, which tries to recover from critical '
 			'errors, like segmentation faults.')
-	parser.add_argument('--version', action='store_true',
+	parser.add_argument('-V', '--version', action='store_true',
 		help='Display version and exit.')
 	parser.add_argument('--plugin', help='Plugin directory, or "none" to '
 		'disable plugins.')
