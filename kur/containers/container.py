@@ -61,9 +61,13 @@ class Container:
 		""" Generates a unique name for this instance.
 		"""
 		if cls in Container.counter:
+			msg = 'another'
 			val = Container.counter[cls]
 		else:
+			msg = 'a new'
 			val = 0
+		logger.trace('Generating %s "%s" ID: %d', msg,
+			cls.get_container_name(), val)
 		Container.counter[cls] = val + 1
 		return '{}{}.{}'.format(cls.PREFIX, cls.get_container_name(), val)
 
