@@ -15,7 +15,12 @@ limitations under the License.
 """
 
 import logging
-TRACE_LEVEL = 5
+import os
+
+if os.environ.get('COLLAPSE_TRACE', '').lower() in {'true', 'yes', 'on'}:
+	TRACE_LEVEL = logging.DEBUG
+else:
+	TRACE_LEVEL = 5
 def _trace(self, message, *args, **kwargs):
 	""" Writes a trace-level message to the log.
 	"""
