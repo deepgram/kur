@@ -88,7 +88,7 @@ class Kurfile:
 		self.templates = None
 
 	###########################################################################
-	def parse(self):
+	def parse(self, parse_containers=True):
 		""" Parses the Kurfile.
 		"""
 
@@ -140,7 +140,9 @@ class Kurfile:
 
 		# Parse the model.
 		self.containers = self._parse_model(
-			self.engine, builtin['model'], stack, required=True)
+			self.engine, builtin['model'], stack, required=True,
+			parse_containers=parse_containers
+		)
 
 		# Parse the loss function.
 		self._parse_section(
@@ -693,7 +695,8 @@ class Kurfile:
 		)
 
 	###########################################################################
-	def _parse_model(self, engine, section, stack, *, required=True):
+	def _parse_model(self, engine, section, stack, *, required=True,
+		parse_containers=True):
 		""" Parses the top-level "model" entry.
 
 			# Arguments
@@ -741,8 +744,9 @@ class Kurfile:
 				containers.append(
 					Container.create_container_from_data(entry)
 				)
-			for container in containers:
-				container.parse(engine)
+			if parse_containers:
+				for container in containers:
+					container.parse(engine)
 
 		return containers
 
