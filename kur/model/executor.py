@@ -147,13 +147,18 @@ class Executor:
 		loss = {}
 		counts = {}
 		for k, provider in providers.items():
-			n_entries, test_loss = self.test_with_provider(
+			result = self.test_with_provider(
 				provider,
 				name=k if len(providers) > 1 else None,
 				validating=validating,
 				hooks=hooks,
 				step=step
 			)
+			if result is None:
+				logger.warning('Excluding a provider from the test run, since '
+					'it did not produce any data: %s', k)
+				continue
+			n_entries, test_loss = result
 			#if 'total' not in test_loss:
 			#	test_loss['total'] = sum(test_loss.values())
 			loss[k] = test_loss
