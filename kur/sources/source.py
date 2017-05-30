@@ -95,7 +95,7 @@ class Source:						# pylint: disable=too-few-public-methods
 
 			By default, sources are not shuffleable.
 		"""
-		raise False
+		return False
 
 	###########################################################################
 	def shuffle(self, indices):
