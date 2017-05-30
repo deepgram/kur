@@ -142,8 +142,12 @@ class Provider:						# pylint: disable=too-few-public-methods
 				else:
 					name = self.keys[i]
 
+				try:
+					shape = source.shape()
+				except NotImplementedError:
+					shape = 'N/A'
 				logger.debug('Data source "%s": entries=%s, shape=%s',
-					name, len(source), source.shape())
+					name, len(source), shape)
 
 	###########################################################################
 	def _calculate_sizes(self):
