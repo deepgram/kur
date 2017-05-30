@@ -191,7 +191,12 @@ class BatchProvider(ShuffleProvider): # pylint: disable=too-few-public-methods
 						if not queues[i]:
 							queues[i] = x
 						else:
-							queues[i].extend(x)
+							try:
+								queues[i].extend(x)
+							except AttributeError:
+								logger.error('Failed to extend queue. This '
+									'was in it already: %s', queues[i])
+								raise
 
 					# Get the data ready.
 					result[i] = numpy.array(queues[i][:self.batch_size])
