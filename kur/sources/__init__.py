@@ -21,5 +21,6 @@ from .jsonl import JSONLSource
 from .repeat import RepeatSource
 from .stack_source import StackSource
 from .text import TextSource, TextLength, RawText
+from .unzip_source import UnzipSource
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
