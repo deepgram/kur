@@ -450,4 +450,26 @@ def parallel(layer):
 	func.pure = True
 	return func
 
+###############################################################################
+def multiply(x, y):
+	""" Multiplies two layers.
+	"""
+	return x * y
+
+###############################################################################
+def add(x, y):
+	""" Adds two layers.
+	"""
+	return x + y
+
+###############################################################################
+def constant_minus(c):
+	""" Returns a functor that computes a constant minus a layer.
+	"""
+	def func(x):
+		""" Inner function.
+		"""
+		return c - x
+	return func
+
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
