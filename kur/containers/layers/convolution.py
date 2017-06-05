@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
+
 from . import Layer, ParsingError
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 class Convolution(Layer):				# pylint: disable=too-few-public-methods
@@ -45,6 +49,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		```
 	"""
 
+	SUPPORTED_TYPES = ('standard', 'highway')
+
 	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new convolution layer.
@@ -55,6 +61,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		self.strides = None
 		self.activation = None
 		self.border = None
+		self.type = None
+		self.highway_bias = None
 
 	###########################################################################
 	def _parse(self, engine):
@@ -120,12 +128,41 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 
 		assert self.border in ('same', 'valid')
 
+		if 'type' in self.args:
+			self.type = engine.evaluate(self.args['type'])
+			if not isinstance(self.type, str) or \
+				not self.type in self.SUPPORTED_TYPES:
+				raise ParsingError('"type" must be one of: {}'.format(
+					', '.join(self.SUPPORTED_TYPES)))
+		else:
+			self.type = self.SUPPORTED_TYPES[0]
+
+		assert self.type in self.SUPPORTED_TYPES
+
+		if 'bias' in self.args:
+			self.highway_bias = engine.evaluate(self.args['bias'])
+			try:
+				self.highway_bias = float(self.highway_bias)
+			except ValueError:
+				raise ParsingError('"bias" term must be a floating-point '
+					'number. Received: {}'.format(self.highway_bias))
+
+			if self.type != 'highway':
+				logger.warning('"bias" term was specified, but is only used '
+					'with "highway"-type convolutions. Ignoring this...')
+		else:
+			self.highway_bias = -1.
+
 	###########################################################################
 	def _build(self, model):
 		""" Instantiates the layer with the given backend.
 		"""
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
+
+			if self.type != 'standard':
+				raise ValueError('Backend does not support the requested CNN '
+					'type: {}'.format(self.type))
 
 			if backend.keras_version() == 1:
 				import keras.layers as L			# pylint: disable=import-error
@@ -198,9 +235,11 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 
 			# pylint: disable=import-error
 			import torch.nn as nn
+			import torch.nn.functional as F
 			# pylint: enable=import-error
 
-			from kur.backend.pytorch.modules import swap_channels
+			from kur.backend.pytorch.modules import swap_channels, multiply, \
+				add, constant_minus
 
 			func = {
 				1 : nn.Conv1d,
@@ -224,33 +263,89 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 						'border mode when the receptive field "size" is even.')
 				padding = tuple((s-1)//2 for s in self.size)
 
-			layer = lambda in_channels: func(
-				in_channels,
-				self.kernels,
-				tuple(self.size),
-				stride=tuple(self.strides),
-				padding=padding
-			)
+			def layer(in_channels, bias=None):
+				result = func(
+					in_channels,
+					self.kernels,
+					tuple(self.size),
+					stride=tuple(self.strides),
+					padding=padding
+				)
+				if bias is not None:
+					result.bias.requires_grad = False
+					result.bias.data.fill_(bias)
+				return result
 
-			def connect(inputs):
-				""" Connects the layer.
-				"""
-				assert len(inputs) == 1
-				output = model.data.add_operation(
-					swap_channels.begin
-				)(inputs[0]['layer'])
-				output = model.data.add_layer(
-					self.name,
-					layer(inputs[0]['shape'][-1]),
-					frozen=self.frozen
-				)(output)
-				output = model.data.add_operation(
-					swap_channels.end
-				)(output)
-				return {
-					'shape' : self.shape([inputs[0]['shape']]),
-					'layer' : output
-				}
+			if self.type == 'standard':
+
+				def connect(inputs):
+					""" Connects the layer.
+					"""
+					assert len(inputs) == 1
+					output = model.data.add_operation(
+						swap_channels.begin
+					)(inputs[0]['layer'])
+					output = model.data.add_layer(
+						self.name,
+						layer(inputs[0]['shape'][-1]),
+						frozen=self.frozen
+					)(output)
+					output = model.data.add_operation(
+						swap_channels.end
+					)(output)
+					return {
+						'shape' : self.shape([inputs[0]['shape']]),
+						'layer' : output
+					}
+
+			elif self.type == 'highway':
+
+				def connect(inputs):
+					""" Connects the layer.
+					"""
+					assert len(inputs) == 1
+
+					x = model.data.add_operation(
+						swap_channels.begin
+					)(inputs[0]['layer'])
+
+					H = model.data.add_layer(
+						self.name + '_H',
+						layer(inputs[0]['shape'][-1]),
+						frozen=self.frozen
+					)(x)
+					H = model.data.add_operation(
+						F.relu
+					)(H)
+
+					T = model.data.add_layer(
+						self.name + '_T',
+						layer(
+							inputs[0]['shape'][-1],
+							bias=self.highway_bias
+						),
+						frozen=True if self.frozen else None
+					)(x)
+					T = model.data.add_operation(
+						F.sigmoid
+					)(T)
+
+					HT = model.data.add_operation(multiply)(H, T)
+					C = model.data.add_operation(constant_minus(1))(T)
+					xC = model.data.add_operation(multiply)(x, C)
+					output = model.data.add_operation(add)(HT, xC)
+
+					output = model.data.add_operation(
+						swap_channels.end
+					)(output)
+					return {
+						'shape' : self.shape([inputs[0]['shape']]),
+						'layer' : output
+					}
+
+			else:
+				raise ValueError('Unhandled CNN type: {}. This is a bug.'
+					.format(self.type))
 
 			yield connect
 
