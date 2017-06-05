@@ -430,7 +430,7 @@ class RawTranscript(ChunkSource):
 	"""
 
 	###########################################################################
-	def __init__(self, transcripts, vocab=None, *args,
+	def __init__(self, transcripts, vocab=None, unknown=None, *args,
 		**kwargs):
 		""" Creates a new raw transcript source.
 		"""
@@ -438,6 +438,15 @@ class RawTranscript(ChunkSource):
 		self.transcripts = transcripts
 		self.indices = numpy.arange(len(self))
 		self.vocab = self.make_vocab(vocab)
+
+		if unknown is None:
+			self.unknown = self.unknown_index = None
+		else:
+			self.unknown_index = self.vocab.get(unknown)
+			if self.unknown_index is None:
+				raise ValueError('The "unknown" vocabulary word must be '
+					'part of the vocabulary itself.')
+			self.unknown = unknown
 
 	###########################################################################
 	@staticmethod
@@ -497,7 +506,10 @@ class RawTranscript(ChunkSource):
 		"""
 		result = [None]*len(data)
 		for i, row in enumerate(data):
-			result[i] = [self.vocab.get(word.lower()) for word in row]
+			result[i] = [
+				self.vocab.get(word.lower(), self.unknown_index)
+				for word in row
+			]
 			result[i] = [x for x in result[i] if x is not None]
 		return result
 
@@ -576,7 +588,7 @@ class SpeechRecognitionSupplier(Supplier):
 	def __init__(self, url=None, path=None, checksum=None, unpack=None, 
 		type=None, normalization=None, min_duration=None, max_duration=None,
 		max_frequency=None, vocab=None, samples=None, fill=None, key=None,
-		bucket=None, data_cpus=None, *args, **kwargs):
+		bucket=None, data_cpus=None, unknown=None, *args, **kwargs):
 		""" Creates a new speech recognition supplier.
 
 			# Arguments
@@ -631,11 +643,23 @@ class SpeechRecognitionSupplier(Supplier):
 			else:
 				this_vocab = vocab
 
+			if isinstance(unknown, dict):
+				if k in unknown:
+					this_unknown = unknown[k]
+				else:
+					raise ValueError('If "unknown" is a dictionary, then it '
+						'must have keys corresponding to the text keys.')
+			elif isinstance(unknown, (list, tuple)):
+				this_unknown = unknown[i]
+			else:
+				this_unknown = unknown
+
 			raw_name = '{}transcript_raw'.format(prefix)
 			self.sources.update({
 				raw_name : RawTranscript(
 					v,
-					vocab=this_vocab
+					vocab=this_vocab,
+					unknown=this_unknown
 				),
 				'{}transcript_length'.format(prefix) : TranscriptLength(
 					raw_name
