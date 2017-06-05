@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
+
 from . import Layer, ParsingError
+
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 class Dense(Layer):						# pylint: disable=too-few-public-methods
@@ -22,6 +26,7 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 	"""
 
 	DEFAULT_AUTO_FLATTEN = False
+	SUPPORTED_TYPES = ('standard', 'highway')
 
 	###########################################################################
 	def __init__(self, *args, **kwargs):
@@ -30,6 +35,8 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 		super().__init__(*args, **kwargs)
 		self.size = None
 		self.auto_flatten = None
+		self.type = None
+		self.highway_bias = None
 
 	###########################################################################
 	def _parse(self, engine):
@@ -41,12 +48,18 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 				self.args.get('flatten', Dense.DEFAULT_AUTO_FLATTEN),
 				recursive=True
 			)
+			self.type = engine.evaluate(
+				self.args.get('type', self.SUPPORTED_TYPES[0])
+			)
+			self.highway_bias = engine.evaluate(self.args.get('bias'))
 		elif isinstance(self.args, list):
 			self.size = engine.evaluate(self.args, recursive=True)
 			self.auto_flatten = Dense.DEFAULT_AUTO_FLATTEN
+			self.type = self.SUPPORTED_TYPES[0]
 		else:
 			self.size = self.args
 			self.auto_flatten = Dense.DEFAULT_AUTO_FLATTEN
+			self.type = self.SUPPORTED_TYPES[0]
 
 		if not isinstance(self.size, (tuple, list)):
 			self.size = [self.size]
@@ -62,12 +75,34 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 			raise ParsingError('"auto_flatten" key in Dense layer must be '
 				'boolean. Received: {}'.format(self.auto_flatten))
 
+		if not isinstance(self.type, str) or \
+			not self.type in self.SUPPORTED_TYPES:
+			raise ParsingError('"type" must be one of: {}'.format(
+				', '.join(self.SUPPORTED_TYPES)))
+
+		assert self.type in self.SUPPORTED_TYPES
+
+		if self.highway_bias is not None:
+			try:
+				self.highway_bias = float(self.highway_bias)
+			except ValueError:
+				raise ParsingError('"bias" term must be a floating-point '
+					'number. Received: {}'.format(self.highway_bias))
+
+			if self.type != 'highway':
+				logger.warning('"bias" term was specified, but is only used '
+					'with "highway"-type convolutions. Ignoring this...')
+
 	###########################################################################
 	def _build(self, model):
 		""" Create the backend-specific placeholder.
 		"""
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
+
+			if self.type != 'standard':
+				raise ValueError('Backend does not support the requested CNN '
+					'type: {}'.format(self.type))
 
 			import keras.layers as L			# pylint: disable=import-error
 
@@ -90,20 +125,79 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 
 		elif backend.get_name() == 'pytorch':
 
-			import torch.nn as nn				# pylint: disable=import-error
+			# pylint: disable=import-error
+			import torch.nn as nn
+			import torch.nn.functional as F
+			# pylint: enable=import-error
 
-			def connect(inputs):
-				""" Connects the layer.
-				"""
-				assert len(inputs) == 1
-				return {
-					'shape' : self.shape([inputs[0]['shape']]),
-					'layer' : model.data.add_layer(
-						self.name,
-						nn.Linear(inputs[0]['shape'][-1], self.size[-1]),
+			from kur.backend.pytorch.modules import swap_channels, multiply, \
+				add, constant_minus
+
+			def layer(in_features, bias=None):
+				result = nn.Linear(in_features, self.size[-1])
+				if bias is not None:
+					result.bias.requires_grad = False
+					result.bias.data.fill_(bias)
+				return result
+
+			if self.type == 'standard':
+
+				def connect(inputs):
+					""" Connects the layer.
+					"""
+					assert len(inputs) == 1
+					return {
+						'shape' : self.shape([inputs[0]['shape']]),
+						'layer' : model.data.add_layer(
+							self.name,
+							layer(inputs[0]['shape'][-1]),
+							frozen=self.frozen
+						)(inputs[0]['layer'])
+					}
+
+			elif self.type == 'highway':
+
+				def connect(inputs):
+					""" Connects the layer.
+					"""
+					assert len(inputs) == 1
+
+					x = inputs[0]['layer']
+
+					H = model.data.add_layer(
+						self.name + '_H',
+						layer(inputs[0]['shape'][-1]),
 						frozen=self.frozen
-					)(inputs[0]['layer'])
-				}
+					)(x)
+					H = model.data.add_operation(
+						F.relu
+					)(H)
+
+					T = model.data.add_layer(
+						self.name + '_T',
+						layer(
+							inputs[0]['shape'][-1],
+							bias=self.highway_bias
+						),
+						frozen=True if self.frozen else None
+					)(x)
+					T = model.data.add_operation(
+						F.sigmoid
+					)(T)
+
+					HT = model.data.add_operation(multiply)(H, T)
+					C = model.data.add_operation(constant_minus(1))(T)
+					xC = model.data.add_operation(multiply)(x, C)
+					output = model.data.add_operation(add)(HT, xC)
+
+					return {
+						'shape' : self.shape([inputs[0]['shape']]),
+						'layer' : output
+					}
+
+			else:
+				raise ValueError('Unhandled CNN type: {}. This is a bug.'
+					.format(self.type))
 
 			yield connect
 
