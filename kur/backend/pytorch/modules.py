@@ -390,8 +390,9 @@ class TorchModel:
 			  parameters.
 			- All learnable layers must be added using this function.
 		"""
-		for param in layer.parameters():
-			param.requires_grad = not frozen
+		if frozen is not None:
+			for param in layer.parameters():
+				param.requires_grad = not frozen
 		layer = self.add_variable(name, layer, func)
 		return self.add_operation(layer, name=name)
 
