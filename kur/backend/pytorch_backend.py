@@ -21,6 +21,8 @@ import re
 import logging
 from collections import OrderedDict
 
+import numpy
+
 from . import Backend
 from ..utils import can_import, idx, DisableLogging
 from ..providers import BatchProvider
@@ -476,7 +478,7 @@ class PyTorchBackend(Backend):
 			step_done = False
 			if kur_optimizer.scale_rate:
 				if kur_optimizer.scale_rate in data:
-					factor = data[kur_optimizer.scale_rate].mean()
+					factor = numpy.mean(data[kur_optimizer.scale_rate])
 					for param_group in optimizer.param_groups:
 						param_group['lr'] *= factor
 					optimizer.step()
