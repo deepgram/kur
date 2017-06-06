@@ -173,16 +173,22 @@ class Normalize:
 				for key, value in self.state.items()
 			}
 
-		with open(filename, 'w') as fh:
-			fh.write(yaml.dump(to_save))
+		if hasattr(filename, 'write'):
+			filename.write(yaml.dump(to_save))
+		else:
+			with open(filename, 'w') as fh:
+				fh.write(yaml.dump(to_save))
 
 	###########################################################################
 	def restore(self, filename):
 		""" Loads previously saved normalization statistics.
 		"""
 		logger.debug('Restoring normalization state from: %s', filename)
-		with open(filename, 'r') as fh:
-			to_load = yaml.load(fh.read())
+		if hasattr(filename, 'read'):
+			to_load = yaml.load(filename.read())
+		else:
+			with open(filename, 'r') as fh:
+				to_load = yaml.load(fh.read())
 
 		if not to_load:
 			self.state = None
