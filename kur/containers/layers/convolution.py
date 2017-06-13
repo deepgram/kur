@@ -61,6 +61,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		self.border = None
 		self.highway = False
 		self.highway_bias = None
+		self.separable = False
 
 	###########################################################################
 	def _parse(self, engine):
@@ -126,6 +127,11 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 
 		assert self.border in ('same', 'valid')
 
+		if 'separable' in self.args:
+			self.separable = engine.evaluate(self.args['separable'])
+			if not isinstance(self.separable, bool):
+				raise ParsingError('"separable" must be boolean.')
+
 		if 'highway' in self.args:
 			self.highway = engine.evaluate(self.args['highway'])
 			if not isinstance(self.highway, bool):
@@ -154,6 +160,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 
 			if self.highway:
 				raise ValueError('Backend does not support highway CNNs.')
+			if self.separable:
+				raise ValueError('Backend does not support separable CNNs.')
 
 			if backend.keras_version() == 1:
 				import keras.layers as L			# pylint: disable=import-error
@@ -260,7 +268,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 					self.kernels,
 					tuple(self.size),
 					stride=tuple(self.strides),
-					padding=padding
+					padding=padding,
+					groups=in_channels if self.separable else 1
 				)
 				if bias is not None:
 					result.bias.requires_grad = False
@@ -276,6 +285,13 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 					output = model.data.add_operation(
 						swap_channels.begin
 					)(inputs[0]['layer'])
+					if self.separable:
+						if self.kernels % inputs[0]['shape'][-1]:
+							raise ValueError('For separable convolutions, the '
+								'number of kernels ({}) must be a multiple of '
+								'the number of input channels ({}).'.format(
+								self.kernels, inputs[0]['shape'][-1]
+							))
 					output = model.data.add_layer(
 						self.name,
 						layer(inputs[0]['shape'][-1]),
