@@ -26,7 +26,6 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 	"""
 
 	DEFAULT_AUTO_FLATTEN = False
-	SUPPORTED_TYPES = ('standard', 'highway')
 
 	###########################################################################
 	def __init__(self, *args, **kwargs):
@@ -35,7 +34,7 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 		super().__init__(*args, **kwargs)
 		self.size = None
 		self.auto_flatten = None
-		self.type = None
+		self.highway = False
 		self.highway_bias = None
 
 	###########################################################################
@@ -48,18 +47,16 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 				self.args.get('flatten', Dense.DEFAULT_AUTO_FLATTEN),
 				recursive=True
 			)
-			self.type = engine.evaluate(
-				self.args.get('type', self.SUPPORTED_TYPES[0])
+			self.highway = engine.evaluate(
+				self.args.get('highway', False)
 			)
 			self.highway_bias = engine.evaluate(self.args.get('bias'))
 		elif isinstance(self.args, list):
 			self.size = engine.evaluate(self.args, recursive=True)
 			self.auto_flatten = Dense.DEFAULT_AUTO_FLATTEN
-			self.type = self.SUPPORTED_TYPES[0]
 		else:
 			self.size = self.args
 			self.auto_flatten = Dense.DEFAULT_AUTO_FLATTEN
-			self.type = self.SUPPORTED_TYPES[0]
 
 		if not isinstance(self.size, (tuple, list)):
 			self.size = [self.size]
@@ -75,12 +72,8 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 			raise ParsingError('"auto_flatten" key in Dense layer must be '
 				'boolean. Received: {}'.format(self.auto_flatten))
 
-		if not isinstance(self.type, str) or \
-			not self.type in self.SUPPORTED_TYPES:
-			raise ParsingError('"type" must be one of: {}'.format(
-				', '.join(self.SUPPORTED_TYPES)))
-
-		assert self.type in self.SUPPORTED_TYPES
+		if not isinstance(self.highway, bool):
+			raise ParsingError('"highway" must be boolean.')
 
 		if self.highway_bias is not None:
 			try:
@@ -89,7 +82,7 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 				raise ParsingError('"bias" term must be a floating-point '
 					'number. Received: {}'.format(self.highway_bias))
 
-			if self.type != 'highway':
+			if not self.highway:
 				logger.warning('"bias" term was specified, but is only used '
 					'with "highway"-type convolutions. Ignoring this...')
 
@@ -100,9 +93,9 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
-			if self.type != 'standard':
-				raise ValueError('Backend does not support the requested CNN '
-					'type: {}'.format(self.type))
+			if self.highway:
+				raise ValueError('Backend does not support highway dense '
+					'layers.')
 
 			import keras.layers as L			# pylint: disable=import-error
 
@@ -139,7 +132,7 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 					result.bias.data.fill_(bias)
 				return result
 
-			if self.type == 'standard':
+			if not self.highway:
 
 				def connect(inputs):
 					""" Connects the layer.
@@ -154,7 +147,7 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 						)(inputs[0]['layer'])
 					}
 
-			elif self.type == 'highway':
+			else:
 
 				def connect(inputs):
 					""" Connects the layer.
@@ -202,10 +195,6 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 							inputs[0]['layer']
 						)
 					}
-
-			else:
-				raise ValueError('Unhandled CNN type: {}. This is a bug.'
-					.format(self.type))
 
 			yield connect
 

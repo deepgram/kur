@@ -49,8 +49,6 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		```
 	"""
 
-	SUPPORTED_TYPES = ('standard', 'highway')
-
 	###########################################################################
 	def __init__(self, *args, **kwargs):
 		""" Creates a new convolution layer.
@@ -61,7 +59,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		self.strides = None
 		self.activation = None
 		self.border = None
-		self.type = None
+		self.highway = False
 		self.highway_bias = None
 
 	###########################################################################
@@ -128,16 +126,10 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 
 		assert self.border in ('same', 'valid')
 
-		if 'type' in self.args:
-			self.type = engine.evaluate(self.args['type'])
-			if not isinstance(self.type, str) or \
-				not self.type in self.SUPPORTED_TYPES:
-				raise ParsingError('"type" must be one of: {}'.format(
-					', '.join(self.SUPPORTED_TYPES)))
-		else:
-			self.type = self.SUPPORTED_TYPES[0]
-
-		assert self.type in self.SUPPORTED_TYPES
+		if 'highway' in self.args:
+			self.highway = engine.evaluate(self.args['highway'])
+			if not isinstance(self.highway, bool):
+				raise ParsingError('"highway" must be boolean.')
 
 		if 'bias' in self.args:
 			self.highway_bias = engine.evaluate(self.args['bias'])
@@ -147,7 +139,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 				raise ParsingError('"bias" term must be a floating-point '
 					'number. Received: {}'.format(self.highway_bias))
 
-			if self.type != 'highway':
+			if not self.highway:
 				logger.warning('"bias" term was specified, but is only used '
 					'with "highway"-type convolutions. Ignoring this...')
 		else:
@@ -160,9 +152,8 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 		backend = model.get_backend()
 		if backend.get_name() == 'keras':
 
-			if self.type != 'standard':
-				raise ValueError('Backend does not support the requested CNN '
-					'type: {}'.format(self.type))
+			if self.highway:
+				raise ValueError('Backend does not support highway CNNs.')
 
 			if backend.keras_version() == 1:
 				import keras.layers as L			# pylint: disable=import-error
@@ -276,7 +267,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 					result.bias.data.fill_(bias)
 				return result
 
-			if self.type == 'standard':
+			if not self.highway:
 
 				def connect(inputs):
 					""" Connects the layer.
@@ -298,7 +289,7 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 						'layer' : output
 					}
 
-			elif self.type == 'highway':
+			else:
 
 				def connect(inputs):
 					""" Connects the layer.
@@ -339,10 +330,6 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 						'shape' : self.shape([inputs[0]['shape']]),
 						'layer' : output
 					}
-
-			else:
-				raise ValueError('Unhandled CNN type: {}. This is a bug.'
-					.format(self.type))
 
 			yield connect
 
