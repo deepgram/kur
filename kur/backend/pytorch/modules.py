@@ -73,9 +73,15 @@ class Layer:
 		""" Grab the instantiated layer and evaluate it.
 		"""
 		operation = getattr(module, self.name)
-		if self.func:
-			return self.func(operation, *x)
-		return operation(*x)
+		try:
+			if self.func:
+				return self.func(operation, *x)
+			return operation(*x)
+		except:
+			logger.error('Failed to apply layer: %s', self.name)
+			for i, X in enumerate(x):
+				logger.error('  Input shape #%d: %s', i+1, list(X.size()))
+			raise
 
 	###########################################################################
 	@staticmethod
