@@ -305,18 +305,11 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 					"""
 					assert len(inputs) == 1
 
-					x = model.data.add_operation(
-						swap_channels.begin
-					)(inputs[0]['layer'])
-
 					H = model.data.add_layer(
 						self.name + '_H',
 						layer(inputs[0]['shape'][-1]),
 						frozen=self.frozen
-					)(x)
-					H = model.data.add_operation(
-						F.relu
-					)(H)
+					).op
 
 					T = model.data.add_layer(
 						self.name + '_T',
@@ -325,16 +318,20 @@ class Convolution(Layer):				# pylint: disable=too-few-public-methods
 							bias=self.highway_bias
 						),
 						frozen=True if self.frozen else None
-					)(x)
-					T = model.data.add_operation(
-						F.sigmoid
-					)(T)
+					).op
 
-					HT = model.data.add_operation(multiply)(H, T)
-					C = model.data.add_operation(constant_minus(1))(T)
-					xC = model.data.add_operation(multiply)(x, C)
-					output = model.data.add_operation(add)(HT, xC)
+					def func(module, x):
+						h = H(module, x)
+						h = F.relu(h)
+						t = T(module, x)
+						t = F.sigmoid(t)
+						return h*t + x*(1-t)
+					func.pure = True
 
+					output = model.data.add_operation(
+						swap_channels.begin
+					)(inputs[0]['layer'])
+					output = model.data.add_operation(func)(output)
 					output = model.data.add_operation(
 						swap_channels.end
 					)(output)

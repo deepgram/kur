@@ -130,8 +130,7 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 			import torch.nn.functional as F
 			# pylint: enable=import-error
 
-			from kur.backend.pytorch.modules import swap_channels, multiply, \
-				add, constant_minus
+			from kur.backend.pytorch.modules import swap_channels
 
 			def layer(in_features, bias=None):
 				result = nn.Linear(in_features, self.size[-1])
@@ -162,16 +161,14 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 					"""
 					assert len(inputs) == 1
 
-					x = inputs[0]['layer']
-
+					# We need to define the layer now so that it is tracked by
+					# the PyTorch module, but we want to apply it directly, so
+					# we need the `op` attribute.
 					H = model.data.add_layer(
 						self.name + '_H',
 						layer(inputs[0]['shape'][-1]),
 						frozen=self.frozen
-					)(x)
-					H = model.data.add_operation(
-						F.relu
-					)(H)
+					).op
 
 					T = model.data.add_layer(
 						self.name + '_T',
@@ -180,19 +177,30 @@ class Dense(Layer):						# pylint: disable=too-few-public-methods
 							bias=self.highway_bias
 						),
 						frozen=True if self.frozen else None
-					)(x)
-					T = model.data.add_operation(
-						F.sigmoid
-					)(T)
+					).op
 
-					HT = model.data.add_operation(multiply)(H, T)
-					C = model.data.add_operation(constant_minus(1))(T)
-					xC = model.data.add_operation(multiply)(x, C)
-					output = model.data.add_operation(add)(HT, xC)
+					def func(module, x):
+						# This:
+						#   H(module, x)
+						# can also be written as:
+						#   Layer.resolve(H)(module, x)
+						# but since H is, itself, a Layer (because the `op`
+						# attribute on an added layer is the Layer instance),
+						# `resolve` does nothing more than return its argument.
+						h = H(module, x)
+						h = F.relu(h)
+						t = T(module, x)
+						t = F.sigmoid(t)
+						return h*t + x*(1-t)
+					# Make sure that `func` is "pure" so that it receives the
+					# `module` argument.
+					func.pure = True
 
 					return {
 						'shape' : self.shape([inputs[0]['shape']]),
-						'layer' : output
+						'layer' : model.data.add_operation(func)(
+							inputs[0]['layer']
+						)
 					}
 
 			else:
