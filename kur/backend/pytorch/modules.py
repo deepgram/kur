@@ -360,6 +360,7 @@ class TorchModel:
 			return calculate
 
 		stack.name = name
+		stack.op = operation
 
 		return stack
 
