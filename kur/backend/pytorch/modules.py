@@ -409,7 +409,7 @@ class TorchModel:
 def flatten(x):
 	""" Flattens an input tensor.
 	"""
-	return x.view(x.size()[0], -1)
+	return x.contiguous().view(x.size()[0], -1)
 
 ###############################################################################
 def bundle(*x):
