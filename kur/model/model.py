@@ -577,18 +577,32 @@ class Model:
 
 			input_lengths: list. A list of integer lengths for each respective
 				model input.
+			from_layer: str. The name of the layer to start calculating shapes
+				at.
+			to_layer: str or list. The name of the layer(s) to finish
+				calculating shapes at.
 
 			Return value
 			------------
 
-			A numpy array of model output lengths for each respective element
-			of `input_lengths`.
+			If `to_layer` was a string, then this returns a numpy array of
+			model output lengths for each respective element of
+			`input_lengths`. If `to_layer` was a list, then this returns a
+			list of such numpy arrays, with each element corresponding to the
+			respective layers in `to_layer`.
 		"""
 		normal_shape = self.get_shape_at_layer(name=from_layer)
-		return numpy.array(
+
+		if isinstance(to_layer, (list, tuple)):
+			return_one = False
+		else:
+			return_one = True
+			to_layer = [to_layer]
+
+		result = [numpy.array(
 			[
 				self.get_shape_at_layer(
-					name=to_layer,
+					name=layer_name,
 					assumptions={
 						from_layer : (x, ) + tuple(normal_shape[1:])
 					}
@@ -596,7 +610,11 @@ class Model:
 				for x in input_lengths
 			],
 			dtype='int32'
-		)
+		) for layer_name in to_layer]
+
+		if return_one:
+			return result[0]
+		return result
 
 	###########################################################################
 	def get_shape_at_layer(self, name, assumptions=None):
