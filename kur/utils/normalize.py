@@ -185,7 +185,10 @@ class Normalize:
 		"""
 		logger.debug('Restoring normalization state from: %s', filename)
 		if hasattr(filename, 'read'):
-			to_load = yaml.load(filename.read())
+			data = filename.read()
+			if isinstance(data, bytes):
+				data = data.decode('utf-8')
+			to_load = yaml.load(data)
 		else:
 			with open(filename, 'r') as fh:
 				to_load = yaml.load(fh.read())
