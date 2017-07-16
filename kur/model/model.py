@@ -568,7 +568,8 @@ class Model:
 		return result
 
 	###########################################################################
-	def get_scaled_lengths(self, input_lengths, from_layer, to_layer):
+	def get_scaled_lengths(self, input_lengths, from_layer, to_layer, *,
+		keep_all=False):
 		""" Returns the lengths of the scaled model outputs for each input
 			length.
 
@@ -581,6 +582,8 @@ class Model:
 				at.
 			to_layer: str or list. The name of the layer(s) to finish
 				calculating shapes at.
+			keep_all: bool. If True, keeps the entire output shape tuple,
+				rather than just the leading length.
 
 			Return value
 			------------
@@ -599,14 +602,19 @@ class Model:
 			return_one = True
 			to_layer = [to_layer]
 
+		if keep_all:
+			shape_filter = lambda x: x
+		else:
+			shape_filter = lambda x: x[0]
+
 		result = [numpy.array(
 			[
-				self.get_shape_at_layer(
+				shape_filter(self.get_shape_at_layer(
 					name=layer_name,
 					assumptions={
 						from_layer : (x, ) + tuple(normal_shape[1:])
 					}
-				)[0]
+				))
 				for x in input_lengths
 			],
 			dtype='int32'
