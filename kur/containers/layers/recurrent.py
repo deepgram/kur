@@ -32,7 +32,7 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 		size: int.
 		bidirectional: bool.
 		merge: one of (multiply, add, concat, average)
-		type: one of (lstm, gru)
+		type: one of (lstm, gru, sru)
 
 		# Example
 
@@ -47,7 +47,7 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 	"""
 
 	MERGE_TYPES = ('multiply', 'add', 'concat', 'average')
-	RNN_TYPES = ('lstm', 'gru')
+	RNN_TYPES = ('lstm', 'gru', 'sru')
 
 	###########################################################################
 	def __init__(self, *args, **kwargs):
@@ -137,6 +137,8 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 			else:
 				import keras.layers.recurrent as L # pylint: disable=import-error
 
+			if self.type == 'sru':
+				raise ValueError('SRU is only supported on PyTorch.')
 			func = {
 				'lstm' : L.LSTM,
 				'gru' : L.GRU
@@ -216,11 +218,18 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 
 			# pylint: disable=import-error
 			import torch.nn as nn
+			from kur.backend.pytorch.modules import swap_batch_dimension
+			if self.type == 'sru':
+				from sru import SRU
+				_SRU = SRU
+			else:
+				_SRU = None
 			# pylint: enable=import-error
 
 			func = {
 				'lstm' : nn.LSTM,
-				'gru' : nn.GRU
+				'gru' : nn.GRU,
+				'sru' : _SRU
 			}.get(self.type)
 			if func is None:
 				raise ValueError('Unhandled RNN type: {}. This is a bug.'
@@ -252,15 +261,26 @@ class Recurrent(Layer):				# pylint: disable=too-few-public-methods
 					'input_size' : inputs[0]['shape'][-1],
 					'hidden_size' : size,
 					'num_layers' : 1,
-					'batch_first' : True,
-					'bidirectional' : self.bidirectional,
-					'bias' : True
+					'bidirectional' : self.bidirectional
 				}
+				if self.type == 'sru':
+					kwargs.update({
+						'use_tanh' : 0
+					})
+				else:
+					kwargs.update({
+						'batch_first' : True,
+						'bias' : True
+					})
 
 				def layer_func(layer, *inputs):
 					""" Applies the RNN
 					"""
+					if self.type == 'sru':
+						inputs = (swap_batch_dimension(inputs[0]), )
 					result, _ = layer(*(inputs + (None, )))
+					if self.type == 'sru':
+						result = swap_batch_dimension(result)
 					if not self.sequence:
 						return result[:, -1]
 					return result
