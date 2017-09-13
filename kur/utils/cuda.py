@@ -401,10 +401,10 @@ class CudaContext:
 
 	###########################################################################
 	@mark_device
-	def is_busy(self, device):
+	def is_busy(self, device, busyLoad=5.0):
 		""" Convenience function for checking if a device is in use.
 		"""
-		return self.business(device) >= 5
+		return self.business(device) >= busyLoad
 
 	###########################################################################
 	def rank_available(self, num=None):
