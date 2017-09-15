@@ -30,7 +30,7 @@ class Backend:
 	"""
 
 	###########################################################################
-	def __init__(self, variant=None, device=None, parallel=None, gpu_busy_load=5.0):
+	def __init__(self, variant=None, device=None, parallel=None, gpu_busy_load=None):
 		""" Create a new backend.
 
 			Part of this call should be to ensure that all the necessary
@@ -47,7 +47,8 @@ class Backend:
 				can query and modify their behavior in response, without
 				requiring an entirely new backend.
 		"""
-		self.gpuBusyLoad = gpu_busy_load
+		if gpu_busy_load is None:
+			gpu_busy_load = 5.0
 
 		if not self.is_supported():
 			logger.warning('Backend claims to not be supported. We will try '
@@ -125,7 +126,7 @@ class Backend:
 				if allowed is None:
 					allowed = set(range(n_devices))
 				preferred = [
-					(device.is_busy(self.gpuBusyLoad), device.index()) \
+					(device.is_busy(gpu_busy_load), device.index()) \
 						for device in context.rank_available()
 				]
 				preferred = [
