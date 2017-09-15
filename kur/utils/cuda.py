@@ -413,7 +413,7 @@ class CudaContext:
 			# Arguments
 
 			num: int or None. If None, returns all devices. If an integer, then
-				returns up to `num` devices.d$x t
+				returns up to `num` devices.
 
 			# Return value
 
