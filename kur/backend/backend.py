@@ -563,7 +563,7 @@ class Backend:
 		raise NotImplementedError
 
 	###########################################################################
-	def evaluate(self, model, data):
+	def evaluate(self, model, data, post_processor=None):
 		""" Evaluates the model on a batch ofdata.
 		"""
 		raise NotImplementedError

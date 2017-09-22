@@ -813,9 +813,12 @@ class KerasBackend(Backend):
 		return self.run_batch(model, data, 'test', False)
 
 	###########################################################################
-	def evaluate(self, model, data):
+	def evaluate(self, model, data, post_processor=None):
 		""" Evaluates the model on a batch of data.
 		"""
-		return self.run_batch(model, data, 'evaluate', False)
+		predictions, metrics = self.run_batch(model, data, 'evaluate', False)
+		if post_processor is not None:
+			predictions = post_processor(predictions)
+		return predictions, metrics
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
