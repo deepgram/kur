@@ -128,7 +128,7 @@ class Normalize:
 			# So to make things repeatable
 			if self.rotate == 'pca':
 				reflect = numpy.array(
-					[-1 if r[0] < 0 else 1 for r in current_transform]
+					[-1 if r[0] < 0 else 1 for r in current_transform.T]
 				)
 				current_transform = reflect * current_transform
 
