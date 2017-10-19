@@ -42,7 +42,7 @@ class SlackHook(TrainingHook, EvaluationHook):
 
 	###########################################################################
 	def __init__(self, channel, url=None, user=None, icon=None, title=None,
-		token=None, extra_files=None, *args, **kwargs):
+		token=None, extra_files=None, extra_only=None, *args, **kwargs):
 		""" Creates a new Slack hook.
 		"""
 		super().__init__(*args, **kwargs)
@@ -59,6 +59,7 @@ class SlackHook(TrainingHook, EvaluationHook):
 		self.title = title
 		self.token = token
 		self.extra_files = extra_files
+		self.extra_only = extra_only
 
 		if url is None and token is None:
 			raise ValueError('Slack hook requires at least one of "url" or '
@@ -156,22 +157,23 @@ class SlackHook(TrainingHook, EvaluationHook):
 		"""
 
 		logger.debug('Slack hook received training message.')
+		if not self.extra_only:
 
-		info = info or {}
+			info = info or {}
 
-		if status is TrainingHook.EPOCH_END:
-			epoch = info.pop('epoch', None)
-			total_epochs = info.pop('total_epochs', None)
-			text = 'Finished epoch {} of {}.'.format(epoch, total_epochs)
-		elif status is TrainingHook.TRAINING_END:
-			text = 'Training has ended.'
-		elif status is TrainingHook.TRAINING_START:
-			text = 'Started training.'
-		else:
-			text = None
+			if status is TrainingHook.EPOCH_END:
+				epoch = info.pop('epoch', None)
+				total_epochs = info.pop('total_epochs', None)
+				text = 'Finished epoch {} of {}.'.format(epoch, total_epochs)
+			elif status is TrainingHook.TRAINING_END:
+				text = 'Training has ended.'
+			elif status is TrainingHook.TRAINING_START:
+				text = 'Started training.'
+			else:
+				text = None
 
-		if text:
-			self.send_message(text, info)
+			if text:
+				self.send_message(text, info)
 
 		if status in (
 			TrainingHook.EPOCH_END,
@@ -200,29 +202,32 @@ class SlackHook(TrainingHook, EvaluationHook):
 
 		logger.debug('Slack hook received non-training message.')
 
-		data, truth = current
+		if not self.extra_only:
 
-		upload = False
-		if self.token is not None:
-			if isinstance(data, Transcript) \
-					and original[1] is not None \
-					and 'audio_source' in original[1]:
-				path = SpeechRecognitionSupplier.find_audio_path(
-					original[1]['audio_source'][0]
-				)
-				if path is not None:
-					upload = True
+			data, truth = current
 
-		text = 'Truth = "{}", Prediction = "{}"'.format(truth, data),
-		if upload:
-			self.upload_message(path, text)
-		elif self.url is not None:
-			self.send_message(text)
-		else:
-			logger.warning('Failed to post to Slack. The "slack" hook was '
-				'given enough information for uploading only, and not enough '
-				'for message posting. However, the data you are working with '
-				'does not provide enough information for file uploading.')
+			upload = False
+			if self.token is not None:
+				if isinstance(data, Transcript) \
+						and original[1] is not None \
+						and 'audio_source' in original[1]:
+					path = SpeechRecognitionSupplier.find_audio_path(
+						original[1]['audio_source'][0]
+					)
+					if path is not None:
+						upload = True
+
+			text = 'Truth = "{}", Prediction = "{}"'.format(truth, data),
+			if upload:
+				self.upload_message(path, text)
+			elif self.url is not None:
+				self.send_message(text)
+			else:
+				logger.warning('Failed to post to Slack. The "slack" hook was '
+					'given enough information for uploading only, and not '
+					'enough for message posting. However, the data you are '
+					'working with does not provide enough information for '
+					'file uploading.')
 
 		self.upload_extra_files()
 
