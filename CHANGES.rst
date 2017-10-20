@@ -4,6 +4,22 @@ CHANGES
 master (unreleased)
 -------------------
 
+0.7.0 (2017.10.20)
+
+- Lots more PyTorch bug fixes and support (including support for CTC loss).
+- More custom Jinja2 filters/functions (e.g., 'load_json', 'gpu_count',
+  'ternary').
+- Additional Kurfile expressions (e.g., 'when', reverse sort) and better name
+  inference for named layers.
+- More layers (e.g., 'squeeze') and better layers (e.g., 'border' support for
+  pooling layers, highway dense, highway CNN).
+- `speech_recognition` supplier supports multiple keys and does a better job
+  at guessing if bad data has been passed to it.
+- Plugin support.
+- Better GPU usage manipulation.
+- Automatic model reuse to reduce memory footprint.
+- Better shape-query utilities in the Model class.
+
 0.6.0 (2017.03.31)
 
 - Custom Jinja2 filters and better scope parsing during Kurfile loading.
