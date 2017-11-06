@@ -20,6 +20,7 @@ import shutil
 import math
 import time
 import traceback
+import inspect
 import numpy
 import tqdm
 from ..providers import Provider
@@ -125,7 +126,8 @@ class Executor:
 					.format(with_provider))
 
 	###########################################################################
-	def test(self, providers, validating=False, hooks=None, step=False):
+	def test(self, providers, validating=False, hooks=None, step=False,
+		callback=None):
 		""" Tests/validates the model on some data.
 
 			# Arguments
@@ -152,7 +154,8 @@ class Executor:
 				name=k if len(providers) > 1 else None,
 				validating=validating,
 				hooks=hooks,
-				step=step
+				step=step,
+				callback=callback
 			)
 			if result is None:
 				logger.warning('Excluding a provider from the test run, since '
@@ -185,9 +188,16 @@ class Executor:
 
 	###########################################################################
 	def test_with_provider(self, provider, *, name=None,
-		validating=False, hooks=None, step=False):
+		validating=False, hooks=None, step=False, callback=None):
 		""" Tests/validates the model on a single provider.
 		"""
+
+		if callback is not None:
+			sig = inspect.signature(callback)
+			if 'loss' not in sig.parameters:
+				original_callback = callback
+				callback = lambda *args, loss=None, **kwargs: \
+					original_callback(*args, **kwargs)
 
 		if validating:
 			desc = ('Validating', 'Validation')
@@ -231,6 +241,13 @@ class Executor:
 					first_batch = (prediction, batch)
 
 				batch_size = len(get_any_value(batch))
+
+				if callback is not None:
+					if callback(
+						batch, prediction, batch_size, loss=batch_loss
+					) is False:
+						logger.trace('Early abort triggered by callback.')
+						break
 
 				#batch_loss = loss if isinstance(loss, float) \
 				#	else sum(loss.values())
