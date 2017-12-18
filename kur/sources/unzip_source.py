@@ -16,6 +16,8 @@ limitations under the License.
 
 import logging
 
+import numpy
+
 from . import DerivedSource
 
 logger = logging.getLogger(__name__)
@@ -24,12 +26,13 @@ logger = logging.getLogger(__name__)
 class UnzipSource(DerivedSource):
 
 	###########################################################################
-	def __init__(self, source_name, target):
+	def __init__(self, source_name, target, force_numpy=False):
 
 		super().__init__()
 
 		self.source_name = source_name
 		self.target = target
+		self.force_numpy = force_numpy
 
 	############################################################################
 	def requires(self):
@@ -42,7 +45,10 @@ class UnzipSource(DerivedSource):
 		""" Compute the derived source given its inputs.
 		"""
 		try:
-			return [x[self.target] for x in inputs[0]]
+			r = [x[self.target] for x in inputs[0]]
+			if self.force_numpy:
+				r = numpy.array(r)
+			return r
 		except IndexError:
 			logger.error('Failed to unzip input data: %s', inputs)
 			raise
