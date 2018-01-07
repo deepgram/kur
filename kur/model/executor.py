@@ -24,6 +24,7 @@ import inspect
 import numpy
 import tqdm
 import datetime
+import re
 from ..providers import Provider
 from ..utils import get_any_value, CriticalSection, parallelize, Timer
 from ..loggers import PersistentLogger, MemoryLogger
@@ -302,9 +303,9 @@ class Executor:
 			logger.warning('Cannot variablize a filename if no log is '
 				'provided.')
 		else:
+			now = datetime.datetime.now()
 			replacements = {
-				'TIMESTAMP' :
-					datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S'),
+				'TIMESTAMP' : now.strftime('%Y-%m-%d_%H:%M:%S'),
 				'SAMPLE' : log.get_number_of_samples(),
 				'BATCH' : log.get_number_of_batches(),
 				'EPOCH' : log.get_number_of_epochs() + 1,
@@ -318,6 +319,12 @@ class Executor:
 					'${{{}}}'.format(k),
 					'{:.3f}'.format(v) if isinstance(v, float) else str(v)
 				)
+
+			filename = re.sub(
+				r'\${TIME=(?P<fmt>[^}]*?)}',
+				lambda match: now.strftime(match.group('fmt')),
+				filename
+			)
 
 		model.save(filename)
 
