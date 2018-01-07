@@ -23,9 +23,10 @@ import traceback
 import inspect
 import numpy
 import tqdm
+import datetime
 from ..providers import Provider
 from ..utils import get_any_value, CriticalSection, parallelize, Timer
-from ..loggers import PersistentLogger
+from ..loggers import PersistentLogger, MemoryLogger
 from .hooks import TrainingHook
 
 logger = logging.getLogger(__name__)
@@ -295,6 +296,32 @@ class Executor:
 		return n_entries, test_loss
 
 	###########################################################################
+	@staticmethod
+	def variablized_save(model, filename, log):
+		if log is None:
+			logger.warning('Cannot variablize a filename if no log is '
+				'provided.')
+		else:
+			replacements = {
+				'TIMESTAMP' :
+					datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S'),
+				'SAMPLE' : log.get_number_of_samples(),
+				'BATCH' : log.get_number_of_batches(),
+				'EPOCH' : log.get_number_of_epochs() + 1,
+				'TRAIN_LOSS' : log.get_latest_training_loss(),
+				'BATCH_LOSS' : log.get_latest_batch_loss(),
+				'VALIDATION_LOSS' : log.get_latest_validation_loss(),
+				'EPOCH_LOSS' : log.get_latest_epoch_loss()
+			}
+			for k, v in replacements.items():
+				filename = filename.replace(
+					'${{{}}}'.format(k),
+					'{:.3f}'.format(v) if isinstance(v, float) else str(v)
+				)
+
+		model.save(filename)
+
+	###########################################################################
 	def train(self, *args, last_weights=None, log=None, training_hooks=None,
 		**kwargs):
 		""" Trains the model on some data.
@@ -302,6 +329,9 @@ class Executor:
 			This is the public entry point for training. It wraps the business
 			logic so that it can handle error conditions.
 		"""
+
+		if log is None:
+			log = MemoryLogger()
 
 		reason = 'unknown'
 		try:
@@ -322,7 +352,7 @@ class Executor:
 			if last_weights is not None:
 				logger.info('Saving most recent weights: %s', last_weights)
 				with CriticalSection():
-					self.model.save(last_weights)
+					self.variablized_save(self.model, last_weights, log)
 			if log is not None:
 				log.flush()
 
@@ -421,7 +451,7 @@ class Executor:
 			if saved_recent is None:
 				logger.trace('Saving weights to: %s', target)
 				with CriticalSection():
-					self.model.save(target)
+					self.variablized_save(self.model, target, log)
 				saved_recent = target
 			elif not os.path.exists(saved_recent):
 				logger.warning('Recently saved weight file seems to have '
@@ -772,8 +802,6 @@ class Executor:
 			timers['train'].resume()
 
 			# Create progress bar
-			train_loss = None
-			n_entries = 0
 			with tqdm.tqdm(
 						total=len(provider),
 						unit='samples',
@@ -826,22 +854,6 @@ class Executor:
 						allow_validation=True):
 						print_times()
 
-					# How many entries we've processed this epoch.
-					new_entries = n_entries + batch_size
-
-					# Average the per-batch loss across training.
-					# This will give us our average "training loss".
-					if train_loss is None:
-						train_loss = batch_loss
-					else:
-						train_loss = {
-							k : v * (n_entries / new_entries) + \
-								batch_loss[k] * (batch_size / new_entries)
-							for k, v in train_loss.items()
-						}
-
-					n_entries = new_entries
-
 					if clock and clock['seconds'] < \
 							(clock['timer'].get() - clock['mark']):
 						tqdm.tqdm.write('Timer expired. Finishing up '
@@ -854,7 +866,8 @@ class Executor:
 					# instantaneous training loss. `train_loss` is the average
 					# loss across the entire training set so far.
 					pbar.set_description('Epoch {}/{}, loss={:.3f}'.format(
-						epoch+1, epochs or 'inf', sum(train_loss.values())
+						epoch+1, epochs or 'inf',
+						log.get_latest_training_loss()
 					))
 					pbar.update(batch_size)
 
@@ -888,7 +901,10 @@ class Executor:
 			run_checkpoint('epochs', allow_validation=False)
 
 			# Check to see what our current training loss is.
-			cur_train_loss = run_posttrain(n_entries, train_loss)
+			cur_train_loss = run_posttrain(
+				log.get_samples_this_epoch(),
+				log.get_latest_training_loss(reduced=False)
+			)
 
 			# Validate
 			validation_loss = run_validation()

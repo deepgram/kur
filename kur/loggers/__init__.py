@@ -18,5 +18,6 @@ from .statistic import Statistic
 from .logger import Logger
 from .persistent_logger import PersistentLogger
 from .binary_logger import BinaryLogger
+from .memory_logger import MemoryLogger
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF
