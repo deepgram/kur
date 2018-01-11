@@ -22,6 +22,7 @@ import time
 import sys
 import argparse
 import logging
+import kur.__main__
 
 from . import __version__, __homepage__
 from .utils import logcolor
@@ -456,7 +457,8 @@ def main():
 	plugin_dir = plugin_dir or os.environ.get('KUR_PLUGIN')
 	load_plugins(plugin_dir)
 
-	parser, _ = build_parser()
+	#directly reference to module to allow this to work with python -m (and work with many debuggers)
+	parser, _ = kur.__main__.build_parser()
 	args = parse_args(parser)
 
 	loglevel = {
