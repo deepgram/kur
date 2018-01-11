@@ -132,6 +132,13 @@ class Logger:
 		self.timer = Timer(started=False)
 		self.timestamper = Timer(started=False)
 
+		self.latest_batch_loss = None
+		self.latest_epoch_loss = None
+		self.latest_training_loss = None
+		self.latest_validation_loss = None
+		self.new_epoch = True
+		self.samples_this_epoch = 0
+
 		self.clocks = None
 
 		self._clear()
@@ -247,9 +254,48 @@ class Logger:
 		self.clocks = clocks
 
 	###########################################################################
+	def get_latest_training_loss(self, reduced=True):
+		if self.latest_training_loss is None:
+			return None
+		if reduced:
+			return sum(self.latest_training_loss.values())
+		return self.latest_training_loss
+
+	###########################################################################
+	def get_latest_batch_loss(self):
+		return self.latest_batch_loss
+
+	###########################################################################
+	def get_latest_validation_loss(self):
+		return self.latest_validation_loss
+
+	###########################################################################
+	def get_latest_epoch_loss(self):
+		return self.latest_epoch_loss
+
+	###########################################################################
+	def get_samples_this_epoch(self):
+		return self.samples_this_epoch
+
+	###########################################################################
 	def log_batch(self, batch_size, data, tag=None, *, clocks=None):
 		""" Log training information after a batch.
 		"""
+		self.latest_batch_loss = sum(data.values())
+
+		if self.new_epoch:
+			self.new_epoch = False
+			self.samples_this_epoch = batch_size
+			self.latest_training_loss = data
+		else:
+			new_entries = self.samples_this_epoch + batch_size
+			self.latest_training_loss = {
+				k : v * (self.samples_this_epoch / new_entries) + \
+					data[k] * (batch_size / new_entries)
+				for k, v in self.latest_training_loss.items()
+			}
+			self.samples_this_epoch = new_entries
+
 		if clocks is not None:
 			self.record_clocks(clocks)
 		self.samples += batch_size
@@ -267,6 +313,9 @@ class Logger:
 	def log_training(self, data, tag=None, *, clocks=None):
 		""" Log training statistics after an epoch.
 		"""
+		self.latest_epoch_loss = sum(data.values())
+		self.new_epoch = True
+
 		if clocks is not None:
 			self.record_clocks(clocks)
 		self.epochs += 1
@@ -277,6 +326,8 @@ class Logger:
 	def log_validation(self, data, tag=None, *, clocks=None):
 		""" Log training statistics after a validation run.
 		"""
+		self.latest_validation_loss = sum(data[None].values())
+
 		if clocks is not None:
 			self.record_clocks(clocks)
 		for k, v in data.items():

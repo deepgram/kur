@@ -214,7 +214,14 @@ def get_audio_features(audio, feature_type, on_error=None, **kwargs):
 
 	if isinstance(audio, str):
 		original_path = audio
-		audio = load_audio(audio)
+		try:
+			audio = load_audio(audio)
+		except Exception:						# pylint: disable=broad-except
+			logger.exception('Failed to load audio file: %s', audio)
+			if on_error == 'suppress':
+				return None
+			else:
+				raise
 	else:
 		original_path = None
 

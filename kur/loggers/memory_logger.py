@@ -14,43 +14,40 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
+import re
+import shutil
 import logging
 
-import numpy
+import yaml
 
-from . import DerivedSource
+from .logger import Logger
+from .statistic import Statistic
+from ..utils import idx
 
 logger = logging.getLogger(__name__)
 
 ###############################################################################
-class UnzipSource(DerivedSource):
+class MemoryLogger(Logger):
+	""" A class for storing log data in-memory. It is non-persistent, but
+		useful for tracking session statistics.
+	"""
+
+	##########################################################################
+	@classmethod
+	def get_name(cls):
+		""" Returns the name of the logger.
+		"""
+		return 'memory'
 
 	###########################################################################
-	def __init__(self, source_name, target, force_numpy=False):
-
-		super().__init__()
-
-		self.source_name = source_name
-		self.target = target
-		self.force_numpy = force_numpy
-
-	############################################################################
-	def requires(self):
-		""" Returns a tuple of data sources that this source requires.
+	def process(self, data, data_type, tag=None):
+		""" Processes training statistics.
 		"""
-		return (self.source_name, )
+		pass
 
 	###########################################################################
-	def derive(self, inputs):
-		""" Compute the derived source given its inputs.
-		"""
-		try:
-			r = [x[self.target] for x in inputs[0]]
-			if self.force_numpy:
-				r = numpy.array(r)
-			return r
-		except IndexError:
-			logger.error('Failed to unzip input data: %s', inputs)
-			raise
+	def __init__(self):
+		super().__init__(keep_batch=False, rate=None)
 
 ### EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF.EOF

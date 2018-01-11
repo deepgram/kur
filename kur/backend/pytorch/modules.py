@@ -444,6 +444,11 @@ class swap_channels:
 	end = move_channel_backward
 
 ###############################################################################
+def swap_batch_dimension(x):
+	permutation = (1, 0) + tuple(range(2, x.dim()))
+	return x.permute(*permutation)
+
+###############################################################################
 def parallel(layer):
 	""" Creates a parallel operation (i.e., map/distributed operation).
 	"""

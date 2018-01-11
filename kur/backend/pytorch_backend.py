@@ -539,16 +539,20 @@ class PyTorchBackend(Backend):
 		return (predictions, metrics)
 
 	###########################################################################
-	def evaluate(self, model, data):
+	def evaluate(self, model, data, post_processor=None):
 		""" Evaluates the model on a batch ofdata.
 		"""
 		torch_model = model.compiled['evaluate']['model']
 
 		predictions = torch_model.predict(data)
 
-		predictions = {
-			k : v.data.cpu().numpy() for k, v in zip(model.outputs, predictions)
-		}
+		predictions = dict(zip(model.outputs, predictions))
+		if post_processor is None:
+			predictions = {
+				k : v.data.cpu().numpy() for k, v in predictions.items()
+			}
+		else:
+			predictions = post_processor(predictions)
 
 		return (predictions, {})
 

@@ -30,7 +30,8 @@ class Backend:
 	"""
 
 	###########################################################################
-	def __init__(self, variant=None, device=None, parallel=None, gpu_busy_load=5.0):
+	def __init__(self, variant=None, device=None, parallel=None,
+		gpu_busy_load=None, skip_check=None):
 		""" Create a new backend.
 
 			Part of this call should be to ensure that all the necessary
@@ -47,7 +48,11 @@ class Backend:
 				can query and modify their behavior in response, without
 				requiring an entirely new backend.
 		"""
-		self.gpuBusyLoad = gpu_busy_load
+		if gpu_busy_load is None:
+			gpu_busy_load = 5.0
+
+		if skip_check is None:
+			skip_check = False
 
 		if not self.is_supported():
 			logger.warning('Backend claims to not be supported. We will try '
@@ -124,14 +129,17 @@ class Backend:
 				n_devices = len(context)
 				if allowed is None:
 					allowed = set(range(n_devices))
-				preferred = [
-					(device.is_busy(self.gpuBusyLoad), device.index()) \
-						for device in context.rank_available()
-				]
-				preferred = [
-					index for busy, index in preferred
-					if index in allowed and not busy
-				]
+				if skip_check:
+					preferred = list(sorted(allowed))
+				else:
+					preferred = [
+						(device.is_busy(gpu_busy_load), device.index()) \
+							for device in context.rank_available()
+					]
+					preferred = [
+						index for busy, index in preferred
+						if index in allowed and not busy
+					]
 
 			if not preferred:
 				logger.error('Failed to find any available GPUs.')
@@ -555,7 +563,7 @@ class Backend:
 		raise NotImplementedError
 
 	###########################################################################
-	def evaluate(self, model, data):
+	def evaluate(self, model, data, post_processor=None):
 		""" Evaluates the model on a batch ofdata.
 		"""
 		raise NotImplementedError

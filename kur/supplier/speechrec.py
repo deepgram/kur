@@ -800,8 +800,14 @@ class SpeechRecognitionSupplier(Supplier):
 
 		manifest = None
 		if is_packed and unpack:
-			logger.trace('Unpacking input data: %s', local_path)
-			manifest = package.unpack(local_path, recursive=True)
+			if os.path.isfile(local_path) \
+					and os.path.splitext(local_path)[1].lower() == '.jsonl':
+				logger.trace('Data is actually unpacked JSONL.')
+				manifest = [local_path]
+				local_path = os.path.dirname(local_path)
+			else:
+				logger.trace('Unpacking input data: %s', local_path)
+				manifest = package.unpack(local_path, recursive=True)
 			is_packed = False
 		elif is_packed and not unpack:
 			logger.trace('Using packed input data.')
