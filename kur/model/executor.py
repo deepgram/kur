@@ -29,6 +29,8 @@ from ..providers import Provider
 from ..utils import get_any_value, CriticalSection, parallelize, Timer
 from ..loggers import PersistentLogger, MemoryLogger
 from .hooks import TrainingHook
+import tempfile
+
 
 logger = logging.getLogger(__name__)
 
@@ -526,7 +528,8 @@ class Executor:
 				hook.notify(
 					status,
 					log=log,
-					info=info
+					info=info,
+					model=self.model
 				)
 
 		#######################################################################

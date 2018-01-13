@@ -60,10 +60,10 @@ test: *validate
 
 # This is the evaluation section, used during `kur evaluate mnist.yml`.
 # The funky "<<: *validate" is just YAML, and basically means "copy all of the
-# keys from 'validate', and then add/replace the 
+# keys from 'validate', and then add/replace the
 evaluate:
   <<: *validate
-  
+
   # Use the entire testing set for evaluation.
   provider:
     num_batches: null

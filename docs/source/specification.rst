@@ -75,7 +75,7 @@ container looks like this:
 .. code-block:: yaml
 
 	- CONTAINER_TYPE:
-	
+
 	    # Parameters that are given to the container.
 	    param1: value1
 	    param2: value2
@@ -439,7 +439,7 @@ backend without having to re-write an entire backend.
 The ``DEVICE`` field tells Kur which devices it is allowed to use. If it is
 ``cpu``, only the CPU will be used. If it is ``gpu``, Kur will try to use GPU
 devices. For more refined control of GPU devices, Kur can take more advanced
-selection criteria. This is best illustrated by examples: 
+selection criteria. This is best illustrated by examples:
 
 - ``gpu2``: use GPU 2 only (all indices are zero-based).
 - ``gpu2,gpu4``: use GPUs 2 and 4 only.
@@ -569,7 +569,7 @@ There are a couple ways to specify includes
 	include:
 	  - A-file.yml
 	  - B-file.yml
-	
+
 	# Include two other files (list-of-dictionaries)
 	include:
 	  - source: A-file.yml
@@ -712,7 +712,7 @@ Here are some examples of using this field:
 	# Use the default log format (alternative format)
 	log:
 	  path: /my/log/path
-	
+
 	# Non-default log format, optionally with implementation-specific parameters
 	log:
 	  name: LOGGER_TYPE
@@ -730,7 +730,7 @@ Available loggers:
 
 - ``binary``: the default binary logger. It creates an entire directory
   structure at ``path`` to store its statistics.
-  
+
 All loggers accept the following arguments:
 
 - ``keep_batch``: bool (default: True). Whether or not per-batch statistics
@@ -857,7 +857,7 @@ training like this:
 
 	# Set the optimizer and use its default parameter values.
 	optimizer: NAME
-	
+
 	# Set the optimizer, and optionally provide parameter values
 	optimizer:
 	  name: NAME
@@ -1071,7 +1071,7 @@ These are all valid:
 	# Don't save weights based on the validation loss.
 	# These two examples are the same as if the ``weights`` section was not even
 	# present in the specification.
-	weights: 
+	weights:
 	weights: null
 
 	# Save the best validation weights to `PATH`:
@@ -1162,7 +1162,7 @@ These are all valid:
 	# Don't load any weights.
 	# These two examples are the same as if the ``weights`` section was not even
 	# present in the specification.
-	weights: 
+	weights:
 	weights: null
 
 	# Load the weights from `PATH`.
@@ -1549,24 +1549,24 @@ Valid suppliers are:
 	At the moment, all CSV data will be cast to floating-point numbers. This
 	means that if strings are encountered, you will get errors.
 
-- ``mind``: This supplier loads data from the Stanford EEG dataset available 
-  generally at https://exhibits.stanford.edu/data/catalog/tc919dd5388. Human 
-  subjects had 129 electrodes mounted to their scalp to read the electric 
-  field produced by their brains while images were displayed to their human 
-  eyeballs. Each subject was shown the same image (chosen from 72 images in 
-  6 categories) twelve times randomly throughout a session. The time series 
-  EEG data has been reduced into 2d FFT PNG images that capture the brain 
-  state of the human subject as s function of time while the image stimulus is 
-  shown to the subject. The reduced dataset used by this supplier is hosted by 
-  Deepgram at http://kur.deepgram.com/data/. Each sample is a 2d FFT image 
-  864x192 pixels in dimension `brain_probe_image` which is a concatenation of 
-  128 smaller 2d FFTs representing the time series state of each electrode 
-  during the time the stimulus is shown. This mega image is coupled with two 
-  labels—a one-hot `category_label` (1 out of 6) of the image being displayed 
-  to the human subjects eyeballs and a one-hot `precise_label` for the 
-  label of the precise image being shown (1 out of 72) to the humans. Either 
-  of these labels can be used as a target for the loss function.The collection 
-  of stimulus images and a statistical analysis of the dataset can be found at 
+- ``mind``: This supplier loads data from the Stanford EEG dataset available
+  generally at https://exhibits.stanford.edu/data/catalog/tc919dd5388. Human
+  subjects had 129 electrodes mounted to their scalp to read the electric
+  field produced by their brains while images were displayed to their human
+  eyeballs. Each subject was shown the same image (chosen from 72 images in
+  6 categories) twelve times randomly throughout a session. The time series
+  EEG data has been reduced into 2d FFT PNG images that capture the brain
+  state of the human subject as s function of time while the image stimulus is
+  shown to the subject. The reduced dataset used by this supplier is hosted by
+  Deepgram at http://kur.deepgram.com/data/. Each sample is a 2d FFT image
+  864x192 pixels in dimension `brain_probe_image` which is a concatenation of
+  128 smaller 2d FFTs representing the time series state of each electrode
+  during the time the stimulus is shown. This mega image is coupled with two
+  labels—a one-hot `category_label` (1 out of 6) of the image being displayed
+  to the human subjects eyeballs and a one-hot `precise_label` for the
+  label of the precise image being shown (1 out of 72) to the humans. Either
+  of these labels can be used as a target for the loss function.The collection
+  of stimulus images and a statistical analysis of the dataset can be found at
   http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0135697.
 
 - ``jsonl``. This supplier loads data from a JSONL file. JSONL files have a
@@ -1922,7 +1922,7 @@ as part of Kur:
   and:
 
   .. code-block:: yaml
-  
+
     plot:
 	  loss_per_batch: LOSS_PER_BATCH
 	  loss_per_time: LOSS_PER_TIME
@@ -1948,3 +1948,39 @@ as part of Kur:
 		- slack:
 		    extra_files: \*loss_file
 		    # Other Slack parameters...
+
+- ``plot_weights``: Generate plots for weights. It takes the following form:
+
+  .. code-block:: yaml
+
+    plot_weights:
+      plot_every_n_epochs: 100
+      plot_directory: PATH TO STORE PLOTS
+      weight_file: EMPTY OR PATH OF WEIGHTS FILES TO USE
+      with_weights:
+        # use list of keywords to specify the weights to plot
+        # to plot all convolutional weights
+        - ["convolution", "kernel"]
+        - ["convolution", "weight"]
+        # to plot all dense weights
+        - ["dense", "kernel"]
+        - ["dense", "weight"]
+
+Here we use ``kernel`` and ``weight`` refer to the weights arrays, because ``keras`` and ``pytorch`` have different naming convention. This is why we keep both ``kernel`` and ``weight``.
+
+  .. note::
+
+	A dense layer's weights should be 2-dim, and to be able to plot it, its first dim has to be equal to ``(an integer)^2``.
+	When ``weight_file`` sets to empty, weights trained in latest epoch will be plotted.
+	We can't plot weights of ``relu`` layer because it does not have weights, but we could plot the output of ``relu`` layer with an upcoming feature.
+
+	.. code-block:: yaml
+
+	  model:
+	    - input: images
+	    - flatten:
+	    - dense: 25
+	    - activation: relu
+	    - dense: 10 # to plot this layer's weights, `25` above is good, but not `24` nor `26`
+	    - activation: softmax
+	      name: labels

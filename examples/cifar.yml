@@ -34,7 +34,7 @@ model:
   - dense: 10
   - activation: softmax
     name: labels
-        
+
 train:
   data:
     - cifar:

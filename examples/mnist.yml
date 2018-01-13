@@ -17,6 +17,6 @@ model:
   - dense: 10
   - activation: softmax
     name: labels
-        
+
 include: mnist-defaults.yml
 ...
