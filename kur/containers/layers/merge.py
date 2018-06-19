@@ -119,14 +119,22 @@ class Merge(Layer):					# pylint: disable=too-few-public-methods
 				if axis < 0:
 					axis += len(inputs[0]['shape'])
 				axis += 1
+				func = {
+					'multiply': torch.mul,
+					'add': torch.add,
+					'concat': lambda *x: torch.cat(x, axis),
+					'average': lambda *args: torch.add(*args) / len(args)
+				}.get(self.mode)
+
 				return {
 					'shape' : self.shape([x['shape'] for x in inputs]),
 					'layer' : model.data.add_operation(
-						lambda *x: torch.cat(x, axis)
+					func
 					)(*[x['layer'] for x in inputs])
 				}
 
 			yield connect
+
 
 		else:
 			raise ValueError(
