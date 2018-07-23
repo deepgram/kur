@@ -29,6 +29,11 @@ from ..providers import BatchProvider
 
 logger = logging.getLogger(__name__)
 
+def _to_numpy(value):
+	if isinstance(value, tuple):
+		return tuple(v.data.cpu().numpy() for v in value)
+	return value.data.cpu().numpy()
+
 ###############################################################################
 class PyTorchBackend(Backend):
 	""" Backend which uses PyTorch.
@@ -500,7 +505,7 @@ class PyTorchBackend(Backend):
 		}
 
 		predictions = {
-			k : v.data.cpu().numpy() for k, v in zip(model.outputs, predictions)
+			k : _to_numpy(v) for k, v in zip(model.outputs, predictions)
 		}
 
 		return (predictions, metrics)
@@ -533,7 +538,7 @@ class PyTorchBackend(Backend):
 		}
 
 		predictions = {
-			k : v.data.cpu().numpy() for k, v in zip(model.outputs, predictions)
+			k : _to_numpy(v) for k, v in zip(model.outputs, predictions)
 		}
 
 		return (predictions, metrics)
@@ -549,7 +554,7 @@ class PyTorchBackend(Backend):
 		predictions = dict(zip(model.outputs, predictions))
 		if post_processor is None:
 			predictions = {
-				k : v.data.cpu().numpy() for k, v in predictions.items()
+				k : _to_numpy(v) for k, v in predictions.items()
 			}
 		else:
 			predictions = post_processor(predictions)
