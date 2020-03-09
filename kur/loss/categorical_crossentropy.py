@@ -58,7 +58,7 @@ class CategoricalCrossentropy(Loss):
 				# Flatten it out into: (lots of entries, number of classes)
 				truth = truth.view(-1, truth.size(truth.dim() - 1))
 				# Convert one-hot to class label: (lots of entries, )
-				truth = torch.max(truth, 1)[1].squeeze(1)
+				truth = torch.max(truth, 1)[1]
 
 				# Flatten out the prediction into:
 				#   (lots of entries, number of classes)

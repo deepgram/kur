@@ -11,7 +11,7 @@ model:
   - input: images
   - convolution:
       kernels: 64
-      size: [2, 2]
+      size: [3, 3]
   - activation: relu
   - flatten:
   - dense: 10
