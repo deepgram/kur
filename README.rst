@@ -296,7 +296,7 @@ specification file:
 	  - input: images
 	  - convolution:
 	      kernels: 64
-	      size: [2, 2]
+	      size: [3, 3]
 	  - activation: relu
 	  - flatten:
 	  - dense: 10
@@ -330,7 +330,7 @@ And then there's a spot to define your model:
 	  - input: images
 	  - convolution:
 	      kernels: 64
-	      size: [2, 2]
+	      size: [3, 3]
 	  - activation: relu
 	  - flatten:
 	  - dense: 10
@@ -374,11 +374,11 @@ the two convolutions.
 	  - input: images
 	  - convolution:
 	      kernels: 64
-	      size: [2, 2]
+	      size: [3, 3]
 	  - activation: relu
 	  - convolution:
 	      kernels: 64
-	      size: [2, 2]
+	      size: [3, 3]
 	  - activation: relu
 	  - flatten:
 	  - dense: 10
@@ -395,11 +395,11 @@ layer to our model, it now looks like this:
 	  - input: images
 	  - convolution:
 	      kernels: 64
-	      size: [2, 2]
+	      size: [3, 3]
 	  - activation: relu
 	  - convolution:
 	      kernels: 64
-	      size: [2, 2]
+	      size: [3, 3]
 	  - activation: relu
 	  - flatten:
 	  - dense: 32
@@ -447,19 +447,19 @@ convolutional layers, with occassional pooling layers.
 
 	  - convolution:
 	      kernels: 64
-	      size: [2, 2]
+	      size: [3, 3]
 	  - activation: relu
 
 	  - convolution:
 	      kernels: 96
-	      size: [2, 2]
+	      size: [3, 3]
 	  - activation: relu
 
 	  - pool: [3, 3]
 
 	  - convolution:
 	      kernels: 96
-	      size: [2, 2]
+	      size: [3, 3]
 	  - activation: relu
 
 	  - flatten:
@@ -519,7 +519,7 @@ similar model to the MNIST example:
 	  - input: images
 	  - convolution:
 	      kernels: 64
-	      size: [2, 2]
+	      size: [3, 3]
 	  - activation: relu
 	  - flatten:
 	  - dense: 10
@@ -533,7 +533,7 @@ variable, so we can easily change it later. We can do it like this:
 
 	settings:
 	  cnn:
-	    size: [2, 2]
+	    size: [3, 3]
 
 	model:
 	  - input: images
@@ -550,7 +550,7 @@ Okay, what just happened? First, we added a ``settings:`` section. This section
 is the appropriate place to declare variables, settings, and hyperparameters
 that will be used by the model (or for training, evaluation, etc.). We declared
 a variable named ``cnn`` with a nested ``size`` variable. In Python, this would
-be equivalent to a dictionary: ``{"cnn": {"size": [2, 2]}}``.
+be equivalent to a dictionary: ``{"cnn": {"size": [3, 3]}}``.
 
 Then we used the variable in the model's convolution layer: ``size: "{{
 cnn.size }}"``.  This is standard Jinja2 grammar. The double-brackets indicate
@@ -569,7 +569,7 @@ layer, too). So this would look like:
 
 	settings:
 	  cnn:
-	    size: [2, 2]
+	    size: [3, 3]
 
 	model:
 	  - input: images
@@ -612,7 +612,7 @@ convolution + activation layers at once. It looks like this:
 
 	settings:
 	  cnn:
-	    size: [2, 2]
+	    size: [3, 3]
 
 	model:
 	  - input: images
@@ -637,7 +637,7 @@ iterations like this:
 
 	settings:
 	  cnn:
-	    size: [2, 2]
+	    size: [3, 3]
 	    layers: 2
 
 	model:
@@ -678,7 +678,7 @@ each convolution, we can do this:
 
 	settings:
 	  cnn:
-	    size: [2, 2]
+	    size: [3, 3]
 	    kernels: [64, 32]
 	    layers: 2
 
@@ -722,7 +722,7 @@ like this:
 
 	settings:
 	  cnn:
-	    size: [2, 2]
+	    size: [3, 3]
 	    kernels: [64, 32]
 
 	model:
