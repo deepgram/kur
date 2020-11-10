@@ -416,7 +416,7 @@ class Kurfile:
 					else:
 						logger.info('Ignoring missing initial weights: %s. If '
 							'this is undesireable, set "must_exist" to "yes" '
-							'in the approriate "weights" section.',
+							'in the appropriate "weights" section.',
 							initial_weights)
 			defaults = {
 				'provider' : provider,
