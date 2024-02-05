@@ -50,6 +50,13 @@ for j in range(10):
     else:
         print((' ' * (seq_len + 5)) + 'INCORRECT (%s)' % correct_char)
 
-accuracy = sum(int(np.argmax(prediction_data['result']['out_char'][i]) == np.argmax(prediction_data['truth']['out_char'][i])) for i in range(batch_size)) / float(len(prediction_data['truth']['out_char']))
+accuracy = sum(
+    [
+        int(
+            np.argmax(prediction_data['result']['out_char'][i]) == np.argmax(prediction_data['truth']['out_char'][i])
+        )
+        for i in range(batch_size)
+    ]
+) / float(len(prediction_data['truth']['out_char']))
 
 print('accuracy = %s' % accuracy)
