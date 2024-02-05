@@ -39,17 +39,17 @@ for book in [
     'pride_and_prejudice.txt',
     'shakespeare.txt'
 ]:
-    with open('books/%s' % book, 'r') as infile:
+    with open('books/%s' % book, 'r', encoding='utf-8') as infile:
         chars = [
             c for c in ' '.join(infile.read().lower().split())
-            if c in set(vocab)
+            if c in vocab
         ]
         all_chars += [' ']
         all_chars += chars
 
 all_chars = list(' '.join(''.join(all_chars).split()))
 num_chars = len(all_chars)
-with open('cleaned.txt', 'w') as outfile:
+with open('cleaned.txt', 'w', encoding='utf-8') as outfile:
     outfile.write(''.join(all_chars))
 
 
@@ -71,10 +71,7 @@ if dev:
             data_portions[i][1] * 0.1
         )
 
-max_i = sum([
-    int(round(len(all_chars) * fraction))
-    for name, fraction in data_portions
-]) - seq_len
+max_i = sum(int(round(len(all_chars) * fraction)) for (name, fraction) in data_portions) - seq_len
 
 for i in range(max_i):
 
@@ -105,7 +102,7 @@ for name, fraction in data_portions:
 
     start_i = end_i
 
-    with open('data/%s.jsonl' % name, 'w') as outfile:
+    with open('data/%s.jsonl' % name, 'w', encoding='utf-8') as outfile:
         for sample_x, sample_y in zip(x0, y0):
             outfile.write(json.dumps({
                 'in_seq': sample_x.tolist(),

@@ -24,9 +24,9 @@ import argparse
 import logging
 import kur.__main__
 
-from . import __version__, __homepage__
+from . import Kurfile, __homepage__, __version__
 from .utils import logcolor
-from . import Kurfile
+
 from .plugins import Plugin
 from .engine import JinjaEngine
 
@@ -87,10 +87,7 @@ def build(args):
 	spec = parse_kurfile(args.kurfile, args.engine)
 
 	if args.compile == 'auto':
-		result = []
-		for section in ('train', 'test', 'evaluate'):
-			if section in spec.data:
-				result.append((section, 'data' in spec.data[section]))
+		result = [(section, 'data' in spec.data[section]) for section in ('train', 'test', 'evaluate') if section in spec.data]
 		if not result:
 			logger.info('Trying to build a bare model.')
 			args.compile = 'none'
@@ -118,7 +115,7 @@ def build(args):
 
 	if args.compile == 'none':
 		return
-	elif args.compile == 'train':
+	if args.compile == 'train':
 		target = spec.get_trainer(with_optimizer=True)
 	elif args.compile == 'test':
 		target = spec.get_trainer(with_optimizer=False)
@@ -452,7 +449,7 @@ def main():
 		if gotcha:
 			plugin_dir = arg
 			break
-		elif arg == '--plugin':
+		if arg == '--plugin':
 			gotcha = True
 	plugin_dir = plugin_dir or os.environ.get('KUR_PLUGIN')
 	load_plugins(plugin_dir)
